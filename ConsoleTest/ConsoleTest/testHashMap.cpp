@@ -139,7 +139,6 @@ int testHashMap()
 	strcpy(cmd2.cmd, "8a23");
 	strcpy(cmd2.subcmd, "0001");
 	myvmap.insert(pair<v2vCMD, string>(cmd2, "½áÊø"));
-
 	cout << myvmap[cmd1] << endl;
 	//
 	unordered_map<string, int> mymap;
