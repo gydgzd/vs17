@@ -139,6 +139,7 @@ int testHashMap()
 	strcpy(cmd2.cmd, "8a23");
 	strcpy(cmd2.subcmd, "0001");
 	myvmap.insert(pair<v2vCMD, string>(cmd2, "½áÊø"));
+
 	cout << myvmap[cmd1] << endl;
 	//
 	unordered_map<string, int> mymap;
@@ -150,6 +151,7 @@ int testHashMap()
 	mymap.insert(pair<string, int>(name, 18));
 	name = "koko";
 	mymap.insert(pair<string, int>(name, 19));
+
 	std::unordered_map<string, int>::iterator mapiterator;
 	for (mapiterator = mymap.begin(); mapiterator != mymap.end(); mapiterator++)
 		printf("%s, %d \n", mapiterator->first.c_str(), mapiterator->second);
@@ -170,6 +172,7 @@ int testHashMap()
 	mymtmap.insert(pair<string, int>("Anna", 23));
 	mymtmap.insert(pair<string, int>("Nick", 18));
 	mymtmap.insert(pair<string, int>("Nick", 19));
+	mymtmap.insert(pair<string, int>("Anna", 19));
 	std::unordered_multimap<string, int>::iterator mtmapiterator;
 	for (mtmapiterator = mymtmap.begin(); mtmapiterator != mymtmap.end(); mtmapiterator++)
 	{
