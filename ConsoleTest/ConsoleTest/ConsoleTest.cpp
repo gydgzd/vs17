@@ -57,11 +57,11 @@ extern int testList();
 int _tmain(int argc, _TCHAR* argv[])
 {
 //	testList();
-	testHashMap();
+//	testHashMap();
 //	testSet();
 	//	parse_liveout();
 //	writeFileStream();
-//	sockerServer();
+	sockerServer();
 //	testValist();
 
 /*	wcout.imbue(locale("")); 
