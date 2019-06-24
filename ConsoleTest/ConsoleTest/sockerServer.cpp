@@ -1,8 +1,7 @@
 #include "stdafx.h"
 #include <stdio.h>
-#include <winsock2.h>
+
 #include <WS2tcpip.h>
-#include <atlconv.h>    // for T2A ,USES_CONVERSION
 #pragma comment(lib,"ws2_32.lib")
 extern int sockerServer();
 
@@ -62,7 +61,7 @@ int sockerServer()
 	SOCKET slisten = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (slisten == INVALID_SOCKET)
 	{
-		printf("socket error !%d", GetLastError());
+		printf("socket error !%s", GetLastError());
 		return 0;
 	}
 
@@ -73,29 +72,13 @@ int sockerServer()
 	sin.sin_addr.S_un.S_addr = INADDR_ANY;
 	if (bind(slisten, (LPSOCKADDR)&sin, sizeof(sin)) == SOCKET_ERROR)
 	{
-		printf("bind error !%d", GetLastError());
+		printf("bind error !%s", GetLastError());
 	}
 
 	//¿ªÊ¼¼àÌý
 	if (listen(slisten, 5) == SOCKET_ERROR)
 	{
-		LPVOID lpMsgBuf;
-		FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			GetLastError(),
-			0, // Default language
-			(LPTSTR)&lpMsgBuf,
-			0,
-			NULL
-		);
-		USES_CONVERSION;
-		//  LOG(ERROR) << std:: string(T2A((LPCTSTR)lpMsgBuf));
-		MessageBox(NULL, (LPCTSTR)lpMsgBuf, L"Error", MB_OK | MB_ICONINFORMATION);
-		LocalFree(lpMsgBuf);
-		printf("listen error !%d", GetLastError());
+		printf("listen error !%s", GetLastError());
 		return 0;
 	}
 
@@ -111,7 +94,7 @@ int sockerServer()
 		*sClient = accept(slisten, (SOCKADDR *)&remoteAddr, &nAddrlen); 
 		if (*sClient == INVALID_SOCKET)
 		{
-			printf("accept error !%d", GetLastError());
+			printf("accept error !%s", GetLastError());
 			continue;
 		}
 		TCHAR ip[64] = L"";

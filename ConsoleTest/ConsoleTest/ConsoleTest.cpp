@@ -8,7 +8,7 @@
 #ifdef _DEBUG  
 #define New   new(_NORMAL_BLOCK, __FILE__, __LINE__)  
 #endif
-
+#include <winsock2.h>
 #include <windows.h>
 #include <iostream>
 #include <vector>
