@@ -12,7 +12,7 @@ int main()
 {
 	using namespace boost::lambda;
 	typedef std::istream_iterator<int> in;
-
+	std::cout << "Input some number please:" << std::endl;
 	std::for_each(
 		in(std::cin), in(), std::cout << (_1 * 3) << " ");
 
