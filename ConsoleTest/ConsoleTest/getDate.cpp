@@ -107,3 +107,4 @@ time_t dateToSeconds(const char *str)
 	time_t t_sec = mktime(&timeinfo); // change from tm to second since 1970-01-01 00:00:01 已经减了8个时区
 	return t_sec; //秒时间
 }
+

@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include <stdio.h>
-
+#include <winsock2.h>
 #include <WS2tcpip.h>
 #pragma comment(lib,"ws2_32.lib")
 extern int sockerServer();

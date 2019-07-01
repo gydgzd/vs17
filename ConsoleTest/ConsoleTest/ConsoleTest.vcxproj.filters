@@ -39,6 +39,9 @@
     <ClInclude Include="testMultiThread.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Mylog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -114,6 +117,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="testList.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="Mylog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

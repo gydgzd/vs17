@@ -1,27 +1,38 @@
-// ConsoleTest.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+ï»¿// ConsoleTest.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 
 #include "stdafx.h"
 //#define CRTDBG_MAP_ALLOC    
 //#include <stdlib.h>    
-//#include <crtdbg.h>        // ÄÚ´æ¼ì²â
+//#include <crtdbg.h>        // å†…å­˜æ£€æµ‹
 #ifdef _DEBUG  
 #define New   new(_NORMAL_BLOCK, __FILE__, __LINE__)  
 #endif
-#include <winsock2.h>
+#include "getDate.h"
+#ifdef WINVER
+#define    WIN32_LEAN_AND_MEAN   //å»é™¤ä¸€äº›ä¸å¸¸ç”¨çš„
 #include <windows.h>
+#include <direct.h>        // _mkdir
+//#include <strsafe.h>       // StringCchPrintf   conflict with sprintf,strcpy, and so on
+#endif // WINVER
+
 #include <iostream>
+#include <sstream>
+#include <fstream>
 #include <vector>
+#include <queue>
 #include <locale.h>
 #include <thread>
 #include <mutex>
 #include <stdio.h>
 #include <string.h>
-#include "getDate.h"
+
 #include "sql_conn_cpp.h"  // my sql class
 #include "MySort.h"
+#include "Mylog.h"
 #include "testMultiThread.h"
 #include "testStack.cpp"
+
 //#include "testValist.cpp"
 using namespace std;
 int sockerServer();
@@ -34,14 +45,13 @@ char* testLeak()
 char * testLocal()
 {
 	char * a = "hahaha";
-	//	char a[] = "hahaha";  //·µ»ØÖ¸Ïò¾Ö²¿±äÁ¿µÄµØÖ·£¬±àÒë¾¯¸æ
+	//	char a[] = "hahaha";  //è¿”å›æŒ‡å‘å±€éƒ¨å˜é‡çš„åœ°å€ï¼Œç¼–è¯‘è­¦å‘Š
 	return a;
 }
 extern int readFile();
 extern int str_replace(char str[], int size, int strlenth);
 extern int str_compare(char *str1, char *str2);
-extern int logException(sql::SQLException &e, const char* file, const char* func, const int& line);
-
+ 
 extern int log(const char * fmt, ...);
 extern void testValist();
 extern void printf_t(FILE *m_file, const char *fmt ...);
@@ -53,15 +63,55 @@ extern int testSet();
 extern int readFileStream();
 extern int writeFileStream();
 extern int testHashMap();
+extern void testMap();
 extern int testList();
-int _tmain(int argc, _TCHAR* argv[])
+extern time_t dateToSeconds(char *str);
+extern void testVolatile();
+
+SERVICE_STATUS ServiceStatus;
+SERVICE_STATUS_HANDLE hStatus;
+void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv);
+void WINAPI ServiceHandler(DWORD fdwControl);
+DWORD WINAPI MyWork(LPVOID lpParam);
+// æœåŠ¡æ³¨å†Œ: sc create abcTest binpath= D:\git_project\vs15\ConsoleTest\Release\ConsoleTest.exe
+Mylog mylog("D:/log/log.txt");
+int main(int argc, char** argv)
 {
-//	testList();
-//	testHashMap();
+	MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
+	mylog.logException("Service start");
+	SERVICE_TABLE_ENTRY ServTable[2];
+	ServTable[0].lpServiceName = _T("abcTest");
+	ServTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
+	ServTable[1].lpServiceName = NULL;
+	ServTable[1].lpServiceProc = NULL;
+	StartServiceCtrlDispatcher(ServTable);
+	/*
+
+	testVolatile();
+	char msg[32] = "Hick lenawd";
+	printf("%4.2s\n", msg);
+	time_t tm1 = dateToSeconds("2019-02-20 09:52:21");
+	printf("%lld\n", tm1);
+
+	Mycounter mc1; 
+	std::thread th{ &Mycounter::counter, &mc1,10, 1 };
+	th.detach();
+	Sleep(1000);
+	testList();
+	string str1 = "help";
+	string a;
+	stringstream ss(str1);
+	getline(ss, a, 'e');
+	ss >> a;
+	cout << str1.substr(0, 1);
+	if (str1.substr(0, 1) == "h")
+		cout << "same" << endl;
+	testMap();
+	testHashMap();
 //	testSet();
 	//	parse_liveout();
 //	writeFileStream();
-	sockerServer();
+//	sockerServer();
 //	testValist();
 
 /*	wcout.imbue(locale("")); 
@@ -70,21 +120,18 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		printf("setlocale() from environment failed.\n");
 	}
-	wchar_t szError[1024] = L"ÊÀ½ç"; // _T("ÄãºÃ");
-//	swprintf_s(szError, L"ÊÀ½ç");
-	memcpy_s(szError, 10, L"ÊÀ½ç", sizeof("ÊÀ½ç"));
-	_stprintf_s(szError, L"ÊÀ½ç,ÄãºÃ£¡");
+	wchar_t szError[1024] = L"ä¸–ç•Œ"; // _T("ä½ å¥½");
+//	swprintf_s(szError, L"ä¸–ç•Œ");
+	memcpy_s(szError, 10, L"ä¸–ç•Œ", sizeof("ä¸–ç•Œ"));
+	_stprintf_s(szError, L"ä¸–ç•Œ,ä½ å¥½ï¼");
 	wcout << szError << endl;
-	printf("printfÄãºÃ\n");
+	printf("printfä½ å¥½\n");
 */
 //	_CrtSetBreakAlloc(752);
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 //	char *test = testLeak();
 //	_CrtDumpMemoryLeaks();
 
-	
-//	Mycounter mc1; 
-//	mc1.testThread();
  /*
  */
 	// test of cin
@@ -93,11 +140,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	string s1;
 	getline(cin, s1);
 	cout << s1 << endl;
-	cin.ignore(100,'\n');    // Çå³ı\nÖ®Ç°100¸ö×Ö·û
+	cin.ignore(100,'\n');    // æ¸…é™¤\nä¹‹å‰100ä¸ªå­—ç¬¦
 
 	cin.getline(str,30);
 	cout << str << endl;
-	cin.ignore(100, '\n');   //µ÷ÓÃgetlineºó»á¼¤»î¼üÅÌÊäÈë£¬ÊäÈë'\n'£¬µ÷ÓÃget²»»á
+	cin.ignore(100, '\n');   //è°ƒç”¨getlineåä¼šæ¿€æ´»é”®ç›˜è¾“å…¥ï¼Œè¾“å…¥'\n'ï¼Œè°ƒç”¨getä¸ä¼š
 	
 
 	char array[12] = { 0x01 , 0x02 , 0x03 , 0x04 , 0x05 , 0x06 , 0x07 , 0x08 };
@@ -117,8 +164,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	cout << sta1.pop() << endl;
 	cout << sta1.pop() << endl;
 	*/
-//	interativeReverse();   // cin.get²»»áÓÃ
- 
+//	interativeReverse();   // cin.getä¸ä¼šç”¨
 
 	// test of sort
 /*	float fa[44] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35, 23, 755, 23, 121, 232.12, 193.23, 1201.23,122,232.21,21213,1242,11,242.24,2313824,232313,4242,32,42,423,43564,4755,2325,92.81 };
@@ -136,10 +182,200 @@ int _tmain(int argc, _TCHAR* argv[])
 
 #ifdef __linux
 	printf("Linux\n");
-#endif
-#ifdef WINVER
+#elif WINVER
 	printf("Windows\n");
 #endif
-	system("pause");
+//	system("pause");
 	return 0;
+}
+
+void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
+{
+	MessageBox(0, _T("Register Service!\n"), _T("INFO"), 0);
+	ServiceStatus.dwServiceType = SERVICE_WIN32;               // SERVICE_WIN32_OWN_PROCESS
+	ServiceStatus.dwCurrentState = SERVICE_START_PENDING;      // å³æœåŠ¡ç›®å‰çŠ¶æ€ä¸º æ­£åœ¨åˆå§‹åŒ–
+	ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_PAUSE_CONTINUE;
+	ServiceStatus.dwWin32ExitCode = 0;
+	ServiceStatus.dwCheckPoint = 0;
+	ServiceStatus.dwServiceSpecificExitCode = 0;
+	ServiceStatus.dwWaitHint = 5000;
+	hStatus = RegisterServiceCtrlHandler(_T("abcTest"),	ServiceHandler);  // (LPHANDLER_FUNCTION)ServiceHandler
+	if (!hStatus)
+	{
+		MessageBox(0,_T("Register Service Error!\n"), _T("Error"),0);
+		system("pause");
+		return;
+
+		LPVOID buf;
+		if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
+			NULL,
+			GetLastError(),
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR)&buf,
+			0,
+			NULL)) 
+		{
+			MessageBox(0, (LPTSTR)(buf), _T("Register Service Error!"), 0);
+			LocalFree(buf);
+		}
+		else
+			MessageBox(0, _T("Unknow Error!"), _T("Register Service Error!"), 0);;
+	}
+	else
+	{
+		MessageBox(0, _T("Register Service successful!\n"), _T("OK"), 0);
+	}
+	SetServiceStatus(hStatus, &ServiceStatus);
+	if (GetLastError() != NO_ERROR)
+	{
+		ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+		ServiceStatus.dwCheckPoint = 0;
+		ServiceStatus.dwWaitHint = 0;
+		SetServiceStatus(hStatus, &ServiceStatus);
+		printf("Start Service Error!\n");
+		system("pause");
+		return;
+	}
+	ServiceStatus.dwCurrentState = SERVICE_RUNNING;
+	ServiceStatus.dwCheckPoint = 0;
+	ServiceStatus.dwWaitHint = 0;
+	SetServiceStatus(hStatus, &ServiceStatus);
+	// ä»è¿™é‡Œå¼€å§‹å¯ä»¥æ”¾å…¥ä½ æƒ³æœåŠ¡ä¸ºä½ æ‰€åšçš„äº‹æƒ…ã€‚
+	HANDLE hThread = CreateThread(NULL, 0, MyWork, NULL, 0, NULL);
+	if (hThread == NULL)
+		return;
+	MessageBox(0, _T("hi"), _T("hi"), 0);
+}
+
+void WINAPI ServiceHandler(DWORD fdwControl)
+{
+	switch (fdwControl)
+	{
+	case SERVICE_CONTROL_PAUSE:
+		ServiceStatus.dwCurrentState = SERVICE_PAUSED;
+		break;
+	case SERVICE_CONTROL_CONTINUE:
+		ServiceStatus.dwCurrentState = SERVICE_RUNNING;
+		break;
+	case SERVICE_CONTROL_STOP:
+	case SERVICE_CONTROL_SHUTDOWN:
+		ServiceStatus.dwCurrentState = SERVICE_STOPPED;
+		ServiceStatus.dwCheckPoint = 0;
+		ServiceStatus.dwWaitHint = 0;
+		SetServiceStatus(hStatus, &ServiceStatus);
+		return;
+	default:
+		break;
+	}
+
+	if (SetServiceStatus(hStatus, &ServiceStatus))
+	{
+		LPVOID buf;
+		if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,
+			NULL,
+			GetLastError(),
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR)&buf,
+			0,
+			NULL))
+		{
+			MessageBox(0, (LPTSTR)(buf), _T("SetServiceStatus Error!"), 0);
+			LocalFree(buf);
+		}
+	}
+	return;
+}
+
+DWORD WINAPI MyWork(LPVOID lpParam)
+{
+	cout << "Do sth." << endl;
+#ifdef WINVER
+	_mkdir("./log");
+#endif // WINVER
+	
+	ofstream ofs("log/log.txt", ios::app);
+	if (ofs.fail())
+	{
+		cerr << "Failed to open log file: " << strerror(errno) << endl;
+		return -1;
+	}
+	string mytime = getLocalTime("%Y-%m-%d %H:%M:%S");
+	ofs << mytime << "  ";
+	ofs << endl;
+	ofs.close();
+
+	return 0;
+}
+BOOL IsInstall()
+{
+	BOOL bResult = FALSE;
+
+	SC_HANDLE schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (schSCManager)
+	{
+		SC_HANDLE schService = OpenService(schSCManager, TEXT("abcTest"), SERVICE_ALL_ACCESS);
+		if (schService)
+		{
+			bResult = TRUE;
+			CloseServiceHandle(schService);
+		}
+		CloseServiceHandle(schSCManager);
+	}
+	else
+	{
+		MessageBox(NULL, TEXT("OpenSCManager error"), TEXT("error"), MB_OK | MB_ICONERROR);
+	}
+
+	return bResult;
+}
+
+BOOL Install()
+{
+	SC_HANDLE schSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
+	if (!schSCManager)
+	{
+		MessageBox(NULL, TEXT("OpenSCManager error"), TEXT("error"), MB_OK | MB_ICONERROR);
+		return FALSE;
+	}
+
+	TCHAR szFilePath[MAX_PATH];
+	GetModuleFileName(NULL, szFilePath, MAX_PATH);
+
+	SC_HANDLE schService = CreateService(schSCManager, TEXT("abcTest"), TEXT("abcTest"), SERVICE_ALL_ACCESS, SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL, szFilePath, NULL, NULL, TEXT(""), NULL, NULL);
+	if (!schService)
+	{
+		CloseServiceHandle(schSCManager);
+		MessageBox(NULL, TEXT("CreateService error"), TEXT("error"), MB_OK | MB_ICONERROR);
+		return FALSE;
+	}
+
+	CloseServiceHandle(schService);
+	CloseServiceHandle(schSCManager);
+
+	return TRUE;
+}
+
+void myERR(LPTSTR lpszFunction)
+{
+	//Â RetrieveÂ theÂ systemÂ errorÂ messageÂ forÂ theÂ last-errorÂ code
+
+	LPVOID lpMsgBuf;
+	DWORD dw = GetLastError();
+
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		dw,
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		(LPTSTR)&lpMsgBuf,
+		0, NULL );
+
+	//Â DisplayÂ theÂ errorÂ messageÂ andÂ exitÂ theÂ process
+ 
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, TEXT("Error"), MB_OK);
+
+	LocalFree(lpMsgBuf);
+	ExitProcess(dw);
 }

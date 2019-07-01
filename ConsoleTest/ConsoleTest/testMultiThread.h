@@ -12,7 +12,10 @@ class Mycounter
 {
 public:
 	Mycounter() {};
-	~Mycounter() {};
+	~Mycounter() 
+	{
+		printf("~Mycounter()\n");
+	};
 	static int count(int n, int id)
 	{
 		for (int i = 0; i < n; i++)
@@ -36,11 +39,17 @@ public:
 	void counter(int iterations, int id)
 	{
 		for (int i = 0; i < iterations; i++)
-			cout << "counter:" << id << "" << i << endl;
+		{
+			printf("%d %d\n", i, id);
+		}
 	}
 	void testThread()
 	{
 		Mycounter mc1;
 		mc1.mtdCount();
+
+		std::thread th{ &Mycounter::counter, &mc1,10, 1 };
+		th.detach();
+		Sleep(10);
 	}
 };
