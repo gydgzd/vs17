@@ -32,7 +32,7 @@
 #include "Mylog.h"
 #include "testMultiThread.h"
 #include "testStack.cpp"
-
+#include "processMonitor.h"
 //#include "testValist.cpp"
 using namespace std;
 int sockerServer();
@@ -67,26 +67,59 @@ extern void testMap();
 extern int testList();
 extern time_t dateToSeconds(char *str);
 extern void testVolatile();
-
+void showError() 
+{
+	LPVOID lpMsgBuf;
+	FormatMessage(
+		FORMAT_MESSAGE_ALLOCATE_BUFFER |
+		FORMAT_MESSAGE_FROM_SYSTEM |
+		FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		GetLastError(),
+		0, // Default language
+		(LPTSTR)&lpMsgBuf,
+		0,
+		NULL
+	);
+	USES_CONVERSION;
+	//  LOG(ERROR) << std:: string(T2A((LPCTSTR)lpMsgBuf));
+	MessageBox(NULL, (LPCTSTR)lpMsgBuf, L"Error", MB_OK | MB_ICONINFORMATION);
+	LocalFree(lpMsgBuf);
+}
 SERVICE_STATUS ServiceStatus;
 SERVICE_STATUS_HANDLE hStatus;
 void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv);
 void WINAPI ServiceHandler(DWORD fdwControl);
 DWORD WINAPI MyWork(LPVOID lpParam);
-// 服务注册: sc create abcTest binpath= D:\git_project\vs15\ConsoleTest\Release\ConsoleTest.exe
+// 服务注册: sc create abcTest binpath= D:\git_project\vs17\ConsoleTest\Release\ConsoleTest.exe
+// 修改显示名称: sc config abcTest DisplayName="abcTest"
+// 修改描述: sc description abcTest "probe"
+// 开机启动: sc config abcTest start= auto
 Mylog mylog("D:/log/log.txt");
 int main(int argc, char** argv)
 {
-	MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
-	mylog.logException("Service start");
+	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
+	
 	SERVICE_TABLE_ENTRY ServTable[2];
 	ServTable[0].lpServiceName = _T("abcTest");
 	ServTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
 	ServTable[1].lpServiceName = NULL;
 	ServTable[1].lpServiceProc = NULL;
-	StartServiceCtrlDispatcher(ServTable);
+	if (StartServiceCtrlDispatcher(ServTable))
+	{
+		mylog.logException("Service start succeed.");
+	}
+	else
+	{
+        showError();
+	}
+	
 	/*
-
+	processMonitor pm;
+	pm.getProcess_Win();
+	pm.getProcessList_Win();
+*/
+	/*
 	testVolatile();
 	char msg[32] = "Hick lenawd";
 	printf("%4.2s\n", msg);
@@ -191,19 +224,12 @@ int main(int argc, char** argv)
 
 void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 {
-	MessageBox(0, _T("Register Service!\n"), _T("INFO"), 0);
-	ServiceStatus.dwServiceType = SERVICE_WIN32;               // SERVICE_WIN32_OWN_PROCESS
-	ServiceStatus.dwCurrentState = SERVICE_START_PENDING;      // 即服务目前状态为 正在初始化
-	ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_PAUSE_CONTINUE;
-	ServiceStatus.dwWin32ExitCode = 0;
-	ServiceStatus.dwCheckPoint = 0;
-	ServiceStatus.dwServiceSpecificExitCode = 0;
-	ServiceStatus.dwWaitHint = 5000;
+	mylog.logException("Service start");
 	hStatus = RegisterServiceCtrlHandler(_T("abcTest"),	ServiceHandler);  // (LPHANDLER_FUNCTION)ServiceHandler
 	if (!hStatus)
 	{
-		MessageBox(0,_T("Register Service Error!\n"), _T("Error"),0);
-		system("pause");
+		mylog.logException("Register Service Error!");
+	//	MessageBox(0,_T("Register Service Error!\n"), _T("Error"),0);
 		return;
 
 		LPVOID buf;
@@ -219,12 +245,20 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 			LocalFree(buf);
 		}
 		else
-			MessageBox(0, _T("Unknow Error!"), _T("Register Service Error!"), 0);;
+			MessageBox(0, _T("Unknow Error!"), _T("Register Service Succeed!"), 0);;
 	}
 	else
 	{
-		MessageBox(0, _T("Register Service successful!\n"), _T("OK"), 0);
+		mylog.logException("Register Service successful!");
 	}
+
+	ServiceStatus.dwServiceType = SERVICE_WIN32;               // SERVICE_WIN32_OWN_PROCESS
+	ServiceStatus.dwCurrentState = SERVICE_START_PENDING;      // 即服务目前状态为 正在初始化
+	ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_PAUSE_CONTINUE;
+	ServiceStatus.dwWin32ExitCode = 0;
+	ServiceStatus.dwCheckPoint = 0;
+	ServiceStatus.dwServiceSpecificExitCode = 0;
+	ServiceStatus.dwWaitHint = 5000;
 	SetServiceStatus(hStatus, &ServiceStatus);
 	if (GetLastError() != NO_ERROR)
 	{
@@ -232,7 +266,7 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 		ServiceStatus.dwCheckPoint = 0;
 		ServiceStatus.dwWaitHint = 0;
 		SetServiceStatus(hStatus, &ServiceStatus);
-		printf("Start Service Error!\n");
+		mylog.logException("Start Service Error!");
 		system("pause");
 		return;
 	}
@@ -244,7 +278,6 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	HANDLE hThread = CreateThread(NULL, 0, MyWork, NULL, 0, NULL);
 	if (hThread == NULL)
 		return;
-	MessageBox(0, _T("hi"), _T("hi"), 0);
 }
 
 void WINAPI ServiceHandler(DWORD fdwControl)
@@ -288,12 +321,11 @@ void WINAPI ServiceHandler(DWORD fdwControl)
 
 DWORD WINAPI MyWork(LPVOID lpParam)
 {
-	cout << "Do sth." << endl;
 #ifdef WINVER
-	_mkdir("./log");
+	_mkdir("D:/log");     // the relative path is C:\Windows\SysWOW64\    
 #endif // WINVER
 	
-	ofstream ofs("log/log.txt", ios::app);
+	ofstream ofs("D:/log/serverlog.txt", ios::app);
 	if (ofs.fail())
 	{
 		cerr << "Failed to open log file: " << strerror(errno) << endl;
