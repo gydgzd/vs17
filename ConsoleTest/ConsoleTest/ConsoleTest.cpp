@@ -114,11 +114,11 @@ int main(int argc, char** argv)
         showError();
 	}
 	
-	/*
+	/**/
 	processMonitor pm;
-	pm.getProcess_Win();
+//	pm.getProcess_Win();
 	pm.getProcessList_Win();
-*/
+
 	/*
 	testVolatile();
 	char msg[32] = "Hick lenawd";

@@ -1,7 +1,8 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "processMonitor.h"
 
 //https://blog.csdn.net/nicolas16/article/details/1587323
+//getProcessList - https://docs.microsoft.com/zh-cn/windows/win32/toolhelp/taking-a-snapshot-and-viewing-processes
 #include <TCHAR.H>
 #include <iostream>
 using namespace std;
@@ -19,6 +20,19 @@ processMonitor::~processMonitor()
 
 int processMonitor::getProcess_Win()
 {
+	SYSTEM_INFO si;
+	GetSystemInfo(&si);
+
+	OSVERSIONINFO osvi;//å®šä¹‰OSVERSIONINFOæ•°æ®ç»“æž„å¯¹è±¡
+	memset(&osvi, 0, sizeof(OSVERSIONINFO));//å¼€ç©ºé—´Â 
+	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);//å®šä¹‰å¤§å°Â 
+	GetVersionEx(&osvi);//èŽ·å¾—ç‰ˆæœ¬ä¿¡æ¯Â 
+	
+
+
+
+
+
 	getProcess();
 	return 0;
 }
@@ -60,7 +74,16 @@ int processMonitor::getProcessList_Win()
 
 		// Retrieve the priority class.
 		dwPriorityClass = 0;
-		hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
+		/*
+		The size of the PROCESS_ALL_ACCESS flag increased on Windows Server 2008 and Windows Vista. 
+		If an application compiled for Windows Server 2008 and Windows Vista is run on Windows Server 2003 or Windows XP, 
+		the PROCESS_ALL_ACCESS flag is too large and the function specifying this flag fails with ERROR_ACCESS_DENIED.
+		To avoid this problem, specify the minimum set of access rights required for the operation. 
+		If PROCESS_ALL_ACCESS must be used, set _WIN32_WINNT to the minimum operating system targeted by your application 
+		(for example, #define _WIN32_WINNT _WIN32_WINNT_WINXP). For more information
+		*/
+	//	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
+		hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pe32.th32ProcessID);
 		if (hProcess == NULL)
 			printError_Win(_T("OpenProcess"));
 		else
@@ -72,15 +95,15 @@ int processMonitor::getProcessList_Win()
 		}
 
 		printf("\n  process ID        = 0x%08X", pe32.th32ProcessID);
-		printf("\n  thread count      = %d", pe32.cntThreads);
+		printf("\n  thread count      = %d",     pe32.cntThreads);
 		printf("\n  parent process ID = 0x%08X", pe32.th32ParentProcessID);
-		printf("\n  Priority Base     = %d", pe32.pcPriClassBase);
+		printf("\n  Priority Base     = %d",     pe32.pcPriClassBase);
 		if (dwPriorityClass)
 			printf("\n  Priority Class    = %d", dwPriorityClass);
 
 		// List the modules and threads associated with this process
-		listProcessModules_Win(pe32.th32ProcessID);
-		listProcessThreads_Win(pe32.th32ProcessID);
+	//	listProcessModules_Win(pe32.th32ProcessID);
+	//	listProcessThreads_Win(pe32.th32ProcessID);
 
 	} while (Process32Next(hProcessSnap, &pe32));
 
@@ -174,24 +197,27 @@ int processMonitor::listProcessThreads_Win(unsigned long dwOwnerPID)
 void processMonitor::printError_Win(TCHAR* msg)
 {
 	DWORD eNum;
-	TCHAR sysMsg[256];
+	TCHAR sysMsg[256] = _T("");
 	TCHAR* p;
-
+	LPVOID lpMsgBuf;
 	eNum = GetLastError();
-	FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 		NULL, eNum,
-		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-		sysMsg, 256, NULL);
+		0, //MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		(LPTSTR)&lpMsgBuf, 0, NULL);
 
 	// Trim the end of the line and terminate it with a null
 	p = sysMsg;
+	
 	while ((*p > 31) || (*p == 9))
 		++p;
 	do { *p-- = 0; } while ((p >= sysMsg) &&
 		((*p == '.') || (*p < 33)));
 
 	// Display the message
-	wprintf(_T("\n  WARNING: %s failed with error %d (%s)"), msg, eNum, sysMsg);
+	USES_CONVERSION;
+	printf( "\n  ERROR: %s failed with error %d (%s)", msg, eNum, T2A((LPCTSTR)lpMsgBuf));
+	LocalFree(lpMsgBuf);
 }
 
 
@@ -296,15 +322,15 @@ void GetInformationTemplate(IN SYSTEM_INFORMATION_CLASS SystemInformationClass, 
 void GetSystemBasicInformation(SYSTEM_BASIC_INFORMATION* psbi)//0
 {
 	cout << "\t\t0 SystemBasicInformation" << endl;
-	cout << "\tÊ±¼ä½âÎö¶Èms:" << psbi->TimerResolution << endl;
-	cout << "\tÎïÀíÒ³´óÐ¡:" << psbi->PageSize << endl;
-	cout << "\tÎïÀíÒ³¸öÊý:" << psbi->NumberOfPhysicalPages << endl;
-	cout << "\t×îÐ¡ÎïÀíÒ³¸öÊý:" << psbi->LowestPhysicalPageNumber << endl;
-	cout << "\t×î´óÎïÀíÒ³¸öÊý:" << psbi->HighestPhysicalPageNumber << endl;
-	cout << "\tÂß¼­Ò³´óÐ¡:" << psbi->AllocationGranularity << endl;
-	cout << "\t×îÐ¡ÓÃ»§µØÖ·:" << psbi->MinimumUserModeAddress << endl;
-	cout << "\t×î´óÓÃ»§µØÖ·:" << psbi->MaximumUserModeAddress << endl;
-	cout << "\t´¦ÀíÆ÷¸öÊý:" << (int)psbi->NumberOfProcessors << endl;
+	cout << "\tæ—¶é—´è§£æžåº¦ms:" << psbi->TimerResolution << endl;
+	cout << "\tç‰©ç†é¡µå¤§å°:" << psbi->PageSize << endl;
+	cout << "\tç‰©ç†é¡µä¸ªæ•°:" << psbi->NumberOfPhysicalPages << endl;
+	cout << "\tæœ€å°ç‰©ç†é¡µä¸ªæ•°:" << psbi->LowestPhysicalPageNumber << endl;
+	cout << "\tæœ€å¤§ç‰©ç†é¡µä¸ªæ•°:" << psbi->HighestPhysicalPageNumber << endl;
+	cout << "\té€»è¾‘é¡µå¤§å°:" << psbi->AllocationGranularity << endl;
+	cout << "\tæœ€å°ç”¨æˆ·åœ°å€:" << psbi->MinimumUserModeAddress << endl;
+	cout << "\tæœ€å¤§ç”¨æˆ·åœ°å€:" << psbi->MaximumUserModeAddress << endl;
+	cout << "\tå¤„ç†å™¨ä¸ªæ•°:" << (int)psbi->NumberOfProcessors << endl;
 }
 
 void GetSystemProcessorInformation(SYSTEM_PROCESSOR_INFORMATION* pspri)//1
@@ -335,19 +361,19 @@ void GetSystemProcessorInformation(SYSTEM_PROCESSOR_INFORMATION* pspri)//1
 void GetSystemPerformanceInformation(SYSTEM_PERFORMANCE_INFORMATION* pspei)//2
 {
 	cout << "\t\t2 SystemPerformanceInformation" << endl;
-	cout << "\tIdle½ø³ÌÊ±¼ä:" << pspei->IdleProcessTime.QuadPart << endl;
-	cout << "\tIO¶Á×Ö½Ú" << pspei->IoReadTransferCount.QuadPart << endl;
-	cout << "\tIOÐ´×Ö½Ú" << pspei->IoWriteTransferCount.QuadPart << endl;
-	cout << "\tIOÆäËû×Ö½Ú" << pspei->IoOtherTransferCount.QuadPart << endl;
-	cout << "\tIO¶Á´ÎÊý" << pspei->IoReadOperationCount << endl;
-	cout << "\tIOÐ´´ÎÊý" << pspei->IoWriteOperationCount << endl;
-	cout << "\tIOÆäËû´ÎÊý" << pspei->IoOtherOperationCount << endl;
-	cout << "\tÎ´ÓÃÒ³" << pspei->AvailablePages << endl;
-	cout << "\tÒÑÓÃÒ³" << pspei->CommittedPages << endl;
-	cout << "\t×î¶àÊ¹ÓÃÒ³" << pspei->CommitLimit << endl;
-	cout << "\tÒÑÓÃÒ³·åÖµ" << pspei->PeakCommitment << endl;
-	cout << "\tÒ³´íÎóÊý" << pspei->PageFaultCount << endl;
-	cout << "\tCopyOnWriteÊý" << pspei->CopyOnWriteCount << endl;
+	cout << "\tIdleè¿›ç¨‹æ—¶é—´:" << pspei->IdleProcessTime.QuadPart << endl;
+	cout << "\tIOè¯»å­—èŠ‚" << pspei->IoReadTransferCount.QuadPart << endl;
+	cout << "\tIOå†™å­—èŠ‚" << pspei->IoWriteTransferCount.QuadPart << endl;
+	cout << "\tIOå…¶ä»–å­—èŠ‚" << pspei->IoOtherTransferCount.QuadPart << endl;
+	cout << "\tIOè¯»æ¬¡æ•°" << pspei->IoReadOperationCount << endl;
+	cout << "\tIOå†™æ¬¡æ•°" << pspei->IoWriteOperationCount << endl;
+	cout << "\tIOå…¶ä»–æ¬¡æ•°" << pspei->IoOtherOperationCount << endl;
+	cout << "\tæœªç”¨é¡µ" << pspei->AvailablePages << endl;
+	cout << "\tå·²ç”¨é¡µ" << pspei->CommittedPages << endl;
+	cout << "\tæœ€å¤šä½¿ç”¨é¡µ" << pspei->CommitLimit << endl;
+	cout << "\tå·²ç”¨é¡µå³°å€¼" << pspei->PeakCommitment << endl;
+	cout << "\té¡µé”™è¯¯æ•°" << pspei->PageFaultCount << endl;
+	cout << "\tCopyOnWriteæ•°" << pspei->CopyOnWriteCount << endl;
 	printseg(pspei->TransitionCount);
 	printseg(pspei->CacheTransitionCount);
 	printseg(pspei->DemandZeroCount);
@@ -414,8 +440,8 @@ void GetSystemPerformanceInformation(SYSTEM_PERFORMANCE_INFORMATION* pspei)//2
 void GetSystemTimeOfDayInformation(SYSTEM_TIMEOFDAY_INFORMATION* psti)//3
 {
 	cout << "\t\t3 SystemTimeOfDayInformation" << endl;
-	cout << "\tÆô¶¯Ê±¼ä:" << psti->BootTime.QuadPart << endl;
-	cout << "\tµ±Ç°Ê±¼ä:" << psti->CurrentTime.QuadPart << endl;
+	cout << "\tå¯åŠ¨æ—¶é—´:" << psti->BootTime.QuadPart << endl;
+	cout << "\tå½“å‰æ—¶é—´:" << psti->CurrentTime.QuadPart << endl;
 	printseg(psti->TimeZoneBias.QuadPart);
 	printseg(psti->TimeZoneId);
 	printseg(psti->BootTimeBias);
@@ -435,56 +461,56 @@ void GetSystemProcessInformation(SYSTEM_PROCESS_INFORMATION* pspri1)//5
 			wcout << "\tImageName:" << wstring((wchar_t*)pspri1->ImageName.Buffer) << endl;
 		else
 			wcout << "\tno name" << endl;
-		cout << "\tÏß³ÌÊý:" << pspri1->NumberOfThreads << endl;
+		cout << "\tçº¿ç¨‹æ•°:" << pspri1->NumberOfThreads << endl;
 		printseg(pspri1->SpareLi1.QuadPart);
 		printseg(pspri1->SpareLi2.QuadPart);
 		printseg(pspri1->SpareLi3.QuadPart);
-		cout << "\t´´½¨Ê±¼ä:" << pspri1->CreateTime.QuadPart << endl;
-		cout << "\tÓÃ»§Ì¬Ê±¼ä:" << pspri1->UserTime.QuadPart << endl;
-		cout << "\tÄÚºËÌ¬Ê±¼ä:" << pspri1->KernelTime.QuadPart << endl;
-		cout << "\t»ù´¡ÓÅÏÈ¼¶:" << pspri1->BasePriority << endl;
-		cout << "\t½ø³ÌId:" << (int)pspri1->UniqueProcessId << endl;
-		cout << "\t¸¸½ø³ÌId:" << (int)pspri1->InheritedFromUniqueProcessId << endl;
-		cout << "\t¾ä±úÊý:" << pspri1->HandleCount << endl;
-		cout << "\t»á»°Id:" << pspri1->SessionId << endl;
-		cout << "\tÒ³Ä¿Â¼»úÖÆ:" << pspri1->PageDirectoryBase << endl;
-		cout << "\tÐéÄâÄÚ´æ·åÖµ:" << pspri1->PeakVirtualSize << endl;
-		cout << "\tÐéÄâÄÚ´æ´óÐ¡:" << pspri1->VirtualSize << endl;
-		cout << "\tÒ³´íÎóÊý:" << pspri1->PageFaultCount << endl;
-		cout << "\tÎïÀíÄÚ´æ·åÖµ:" << pspri1->PeakWorkingSetSize << endl;
-		cout << "\tÎïÀíÄÚ´æ´óÐ¡:" << pspri1->WorkingSetSize << endl;
-		cout << "\t·ÖÒ³³ØÅä¶î·åÖµ:" << pspri1->QuotaPeakPagedPoolUsage << endl;
-		cout << "\t·ÖÒ³³ØÅä¶î:" << pspri1->QuotaPagedPoolUsage << endl;
-		cout << "\t·Ç·ÖÒ³³ØÅä¶î·åÖµ:" << pspri1->QuotaPeakNonPagedPoolUsage << endl;
-		cout << "\t·Ç·ÖÒ³³ØÅä¶î:" << pspri1->QuotaNonPagedPoolUsage << endl;
-		cout << "\tÒ³ÃæÎÄ¼þÊ¹ÓÃ:" << pspri1->PagefileUsage << endl;
-		cout << "\tÒ³ÃæÎÄ¼þÊ¹ÓÃ·åÖµ:" << pspri1->PeakPagefileUsage << endl;
-		cout << "\tË½ÓÐÒ³ÃæÊý:" << pspri1->PrivatePageCount << endl;
-		cout << "\t¶Á²Ù×÷Êý:" << pspri1->ReadOperationCount.QuadPart << endl;
-		cout << "\tÐ´²Ù×÷Êý:" << pspri1->WriteOperationCount.QuadPart << endl;
-		cout << "\tÆäËû²Ù×÷Êý:" << pspri1->OtherOperationCount.QuadPart << endl;
-		cout << "\t¶Á×Ö½ÚÊý:" << pspri1->ReadTransferCount.QuadPart << endl;
-		cout << "\tÐ´×Ö½ÚÊý:" << pspri1->WriteTransferCount.QuadPart << endl;
-		cout << "\tÆäËû×Ö½ÚÊý:" << pspri1->OtherTransferCount.QuadPart << endl;
+		cout << "\tåˆ›å»ºæ—¶é—´:" << pspri1->CreateTime.QuadPart << endl;
+		cout << "\tç”¨æˆ·æ€æ—¶é—´:" << pspri1->UserTime.QuadPart << endl;
+		cout << "\tå†…æ ¸æ€æ—¶é—´:" << pspri1->KernelTime.QuadPart << endl;
+		cout << "\tåŸºç¡€ä¼˜å…ˆçº§:" << pspri1->BasePriority << endl;
+		cout << "\tè¿›ç¨‹Id:" << (int)pspri1->UniqueProcessId << endl;
+		cout << "\tçˆ¶è¿›ç¨‹Id:" << (int)pspri1->InheritedFromUniqueProcessId << endl;
+		cout << "\tå¥æŸ„æ•°:" << pspri1->HandleCount << endl;
+		cout << "\tä¼šè¯Id:" << pspri1->SessionId << endl;
+		cout << "\té¡µç›®å½•æœºåˆ¶:" << pspri1->PageDirectoryBase << endl;
+		cout << "\tè™šæ‹Ÿå†…å­˜å³°å€¼:" << pspri1->PeakVirtualSize << endl;
+		cout << "\tè™šæ‹Ÿå†…å­˜å¤§å°:" << pspri1->VirtualSize << endl;
+		cout << "\té¡µé”™è¯¯æ•°:" << pspri1->PageFaultCount << endl;
+		cout << "\tç‰©ç†å†…å­˜å³°å€¼:" << pspri1->PeakWorkingSetSize << endl;
+		cout << "\tç‰©ç†å†…å­˜å¤§å°:" << pspri1->WorkingSetSize << endl;
+		cout << "\tåˆ†é¡µæ± é…é¢å³°å€¼:" << pspri1->QuotaPeakPagedPoolUsage << endl;
+		cout << "\tåˆ†é¡µæ± é…é¢:" << pspri1->QuotaPagedPoolUsage << endl;
+		cout << "\téžåˆ†é¡µæ± é…é¢å³°å€¼:" << pspri1->QuotaPeakNonPagedPoolUsage << endl;
+		cout << "\téžåˆ†é¡µæ± é…é¢:" << pspri1->QuotaNonPagedPoolUsage << endl;
+		cout << "\té¡µé¢æ–‡ä»¶ä½¿ç”¨:" << pspri1->PagefileUsage << endl;
+		cout << "\té¡µé¢æ–‡ä»¶ä½¿ç”¨å³°å€¼:" << pspri1->PeakPagefileUsage << endl;
+		cout << "\tç§æœ‰é¡µé¢æ•°:" << pspri1->PrivatePageCount << endl;
+		cout << "\tè¯»æ“ä½œæ•°:" << pspri1->ReadOperationCount.QuadPart << endl;
+		cout << "\tå†™æ“ä½œæ•°:" << pspri1->WriteOperationCount.QuadPart << endl;
+		cout << "\tå…¶ä»–æ“ä½œæ•°:" << pspri1->OtherOperationCount.QuadPart << endl;
+		cout << "\tè¯»å­—èŠ‚æ•°:" << pspri1->ReadTransferCount.QuadPart << endl;
+		cout << "\tå†™å­—èŠ‚æ•°:" << pspri1->WriteTransferCount.QuadPart << endl;
+		cout << "\tå…¶ä»–å­—èŠ‚æ•°:" << pspri1->OtherTransferCount.QuadPart << endl;
 		SYSTEM_PROCESS_INFORMATION* newpspri1 = (SYSTEM_PROCESS_INFORMATION*)((BYTE*)pspri1 + pspri1->NextEntryOffset);
 		SYSTEM_THREAD_INFORMATION* pesti = (SYSTEM_THREAD_INFORMATION*)(pspri1 + 1);
 		int threadindex = 0;
 		while ((LPVOID)pesti < (LPVOID)newpspri1)
 		{
 			++threadindex;
-			cout << "\tÄÚºËÌ¬Ê±¼ä:" << pesti->KernelTime.QuadPart << endl;
-			cout << "\tÓÃ»§Ì¬Ê±¼ä:" << pesti->UserTime.QuadPart << endl;
-			cout << "\t´´½¨Ê±¼ä:" << pesti->CreateTime.QuadPart << endl;
-			cout << "\tµÈ´ýÊ±¼ä:" << pesti->WaitTime << endl;
-			cout << "\tÆðÊ¼µØÖ·:" << hex << pesti->StartAddress << endl;
+			cout << "\tå†…æ ¸æ€æ—¶é—´:" << pesti->KernelTime.QuadPart << endl;
+			cout << "\tç”¨æˆ·æ€æ—¶é—´:" << pesti->UserTime.QuadPart << endl;
+			cout << "\tåˆ›å»ºæ—¶é—´:" << pesti->CreateTime.QuadPart << endl;
+			cout << "\tç­‰å¾…æ—¶é—´:" << pesti->WaitTime << endl;
+			cout << "\tèµ·å§‹åœ°å€:" << hex << pesti->StartAddress << endl;
 			cout << "\tUniqueProcess:" << hex << pesti->ClientId.UniqueProcess << endl;
 			cout << "\tUniqueThread:" << hex << pesti->ClientId.UniqueThread << endl;
 			cout << dec;
-			cout << "\tÓÅÏÈ¼¶:" << pesti->Priority << endl;
-			cout << "\t»ù´¡ÓÅÏÈ¼¶:" << pesti->BasePriority << endl;
-			cout << "\tÄ£Ê½ÇÐ»»´ÎÊý:" << pesti->ContextSwitches << endl;
-			cout << "\tÏß³Ì×´Ì¬:" << pesti->ThreadState << endl;
-			cout << "\tµÈ´ýÔ­Òò:" << pesti->WaitReason << endl;
+			cout << "\tä¼˜å…ˆçº§:" << pesti->Priority << endl;
+			cout << "\tåŸºç¡€ä¼˜å…ˆçº§:" << pesti->BasePriority << endl;
+			cout << "\tæ¨¡å¼åˆ‡æ¢æ¬¡æ•°:" << pesti->ContextSwitches << endl;
+			cout << "\tçº¿ç¨‹çŠ¶æ€:" << pesti->ThreadState << endl;
+			cout << "\tç­‰å¾…åŽŸå› :" << pesti->WaitReason << endl;
 			cout << dec;
 			pesti++;
 		}
@@ -513,23 +539,23 @@ void GetSystemCallCountInformation(SYSTEM_CALL_COUNT_INFORMATION* pscci)//6
 void GetSystemDeviceInformation(SYSTEM_DEVICE_INFORMATION* psdi)//7
 {
 	cout << "\t\t7 SystemDeviceInformation" << endl;
-	cout << "\t´ÅÅÌÊý:" << psdi->NumberOfDisks << endl;
-	cout << "\tÈíÅÌÊý:" << psdi->NumberOfFloppies << endl;
-	cout << "\t¹âÇýÊý:" << psdi->NumberOfCdRoms << endl;
-	cout << "\t´Å´øÊý:" << psdi->NumberOfTapes << endl;
-	cout << "\t´®ÐÐ¶Ë¿ÚÊý:" << psdi->NumberOfSerialPorts << endl;
-	cout << "\t²¢ÐÐ¶Ë¿ÚÊý:" << psdi->NumberOfParallelPorts << endl;
+	cout << "\tç£ç›˜æ•°:" << psdi->NumberOfDisks << endl;
+	cout << "\tè½¯ç›˜æ•°:" << psdi->NumberOfFloppies << endl;
+	cout << "\tå…‰é©±æ•°:" << psdi->NumberOfCdRoms << endl;
+	cout << "\tç£å¸¦æ•°:" << psdi->NumberOfTapes << endl;
+	cout << "\tä¸²è¡Œç«¯å£æ•°:" << psdi->NumberOfSerialPorts << endl;
+	cout << "\tå¹¶è¡Œç«¯å£æ•°:" << psdi->NumberOfParallelPorts << endl;
 }
 
 void GetSystemProcessorPerformanceInformation(SYSTEM_PROCESSOR_PERFORMANCE_INFORMATION* psppei)//8
 {
 	cout << "\t\t8 SystemProcessorPerformanceInformation" << endl;
-	cout << "\t¿ÕÏÐÊ±¼ä:" << psppei->IdleTime.QuadPart << endl;
-	cout << "\tÄÚºËÌ¬Ê±¼ä:" << psppei->KernelTime.QuadPart << endl;
-	cout << "\tÓÃ»§Ì¬Ê±¼ä:" << psppei->UserTime.QuadPart << endl;
-	cout << "\tDPCÊ±¼ä:" << psppei->DpcTime.QuadPart << endl;
-	cout << "\tÖÐ¶ÏÊ±¼ä:" << psppei->InterruptTime.QuadPart << endl;
-	cout << "\tÖÐ¶Ï´ÎÊý:" << psppei->InterruptCount << endl;
+	cout << "\tç©ºé—²æ—¶é—´:" << psppei->IdleTime.QuadPart << endl;
+	cout << "\tå†…æ ¸æ€æ—¶é—´:" << psppei->KernelTime.QuadPart << endl;
+	cout << "\tç”¨æˆ·æ€æ—¶é—´:" << psppei->UserTime.QuadPart << endl;
+	cout << "\tDPCæ—¶é—´:" << psppei->DpcTime.QuadPart << endl;
+	cout << "\tä¸­æ–­æ—¶é—´:" << psppei->InterruptTime.QuadPart << endl;
+	cout << "\tä¸­æ–­æ¬¡æ•°:" << psppei->InterruptCount << endl;
 }
 
 void GetSystemFlagsInformation(SYSTEM_FLAGS_INFORMATION* psfi)//9
@@ -625,7 +651,7 @@ void GetSystemModuleInformation(RTL_PROCESS_MODULES* prpm)//11
 		cout << "\tLoadOrderIndex:" << (int)prpm->Modules[i].LoadOrderIndex << endl;
 		cout << "\tInitOrderIndex:" << (int)prpm->Modules[i].InitOrderIndex << endl;
 		cout << "\tLoadCount:" << (int)prpm->Modules[i].LoadCount << endl;
-		cout << "\tOffsetToFile:" << prpm->Modules[i].OffsetToFileName << endl;//¾àÀëÎÄ¼þÃûÆ«ÒÆ(È¡×îºóÒ»¸ö\Ö®ºóµÄ²¿·Ö)   
+		cout << "\tOffsetToFile:" << prpm->Modules[i].OffsetToFileName << endl;//è·ç¦»æ–‡ä»¶ååç§»(å–æœ€åŽä¸€ä¸ª\ä¹‹åŽçš„éƒ¨åˆ†)   
 	}
 }
 
@@ -1120,58 +1146,58 @@ void GetSystemExtendedProcessInformation(SYSTEM_PROCESS_INFORMATION* pspri1)//57
 			wcout << "\tImageName:" << wstring((wchar_t*)pspri1->ImageName.Buffer) << endl;
 		else
 			wcout << "no name" << endl;
-		cout << "\tÏß³ÌÊý:" << pspri1->NumberOfThreads << endl;
+		cout << "\tçº¿ç¨‹æ•°:" << pspri1->NumberOfThreads << endl;
 		printseg(pspri1->SpareLi1.QuadPart);
 		printseg(pspri1->SpareLi2.QuadPart);
 		printseg(pspri1->SpareLi3.QuadPart);
-		cout << "\t´´½¨Ê±¼ä:" << pspri1->CreateTime.QuadPart << endl;
-		cout << "\tÓÃ»§Ì¬Ê±¼ä:" << pspri1->UserTime.QuadPart << endl;
-		cout << "\tÄÚºËÌ¬Ê±¼ä:" << pspri1->KernelTime.QuadPart << endl;
-		cout << "\t»ù´¡ÓÅÏÈ¼¶:" << pspri1->BasePriority << endl;
-		cout << "\t½ø³ÌId:" << (int)pspri1->UniqueProcessId << endl;
-		cout << "\t¸¸½ø³ÌId:" << (int)pspri1->InheritedFromUniqueProcessId << endl;
-		cout << "\t¾ä±úÊý:" << pspri1->HandleCount << endl;
-		cout << "\t»á»°Id:" << pspri1->SessionId << endl;
-		cout << "\tÒ³Ä¿Â¼»úÖÆ:" << pspri1->PageDirectoryBase << endl;
-		cout << "\tÐéÄâÄÚ´æ·åÖµ:" << pspri1->PeakVirtualSize << endl;
-		cout << "\tÐéÄâÄÚ´æ´óÐ¡:" << pspri1->VirtualSize << endl;
-		cout << "\tÒ³´íÎóÊý:" << pspri1->PageFaultCount << endl;
-		cout << "\tÎïÀíÄÚ´æ·åÖµ:" << pspri1->PeakWorkingSetSize << endl;
-		cout << "\tÎïÀíÄÚ´æ´óÐ¡:" << pspri1->WorkingSetSize << endl;
-		cout << "\t·ÖÒ³³ØÅä¶î·åÖµ:" << pspri1->QuotaPeakPagedPoolUsage << endl;
-		cout << "\t·ÖÒ³³ØÅä¶î:" << pspri1->QuotaPagedPoolUsage << endl;
-		cout << "\t·Ç·ÖÒ³³ØÅä¶î·åÖµ:" << pspri1->QuotaPeakNonPagedPoolUsage << endl;
-		cout << "\t·Ç·ÖÒ³³ØÅä¶î:" << pspri1->QuotaNonPagedPoolUsage << endl;
-		cout << "\tÒ³ÃæÎÄ¼þÊ¹ÓÃ:" << pspri1->PagefileUsage << endl;
-		cout << "\tÒ³ÃæÎÄ¼þÊ¹ÓÃ·åÖµ:" << pspri1->PeakPagefileUsage << endl;
-		cout << "\tË½ÓÐÒ³ÃæÊý:" << pspri1->PrivatePageCount << endl;
-		cout << "\t¶Á²Ù×÷Êý:" << pspri1->ReadOperationCount.QuadPart << endl;
-		cout << "\tÐ´²Ù×÷Êý:" << pspri1->WriteOperationCount.QuadPart << endl;
-		cout << "\tÆäËû²Ù×÷Êý:" << pspri1->OtherOperationCount.QuadPart << endl;
-		cout << "\t¶Á×Ö½ÚÊý:" << pspri1->ReadTransferCount.QuadPart << endl;
-		cout << "\tÐ´×Ö½ÚÊý:" << pspri1->WriteTransferCount.QuadPart << endl;
-		cout << "\tÆäËû×Ö½ÚÊý:" << pspri1->OtherTransferCount.QuadPart << endl;
+		cout << "\tåˆ›å»ºæ—¶é—´:" << pspri1->CreateTime.QuadPart << endl;
+		cout << "\tç”¨æˆ·æ€æ—¶é—´:" << pspri1->UserTime.QuadPart << endl;
+		cout << "\tå†…æ ¸æ€æ—¶é—´:" << pspri1->KernelTime.QuadPart << endl;
+		cout << "\tåŸºç¡€ä¼˜å…ˆçº§:" << pspri1->BasePriority << endl;
+		cout << "\tè¿›ç¨‹Id:" << (int)pspri1->UniqueProcessId << endl;
+		cout << "\tçˆ¶è¿›ç¨‹Id:" << (int)pspri1->InheritedFromUniqueProcessId << endl;
+		cout << "\tå¥æŸ„æ•°:" << pspri1->HandleCount << endl;
+		cout << "\tä¼šè¯Id:" << pspri1->SessionId << endl;
+		cout << "\té¡µç›®å½•æœºåˆ¶:" << pspri1->PageDirectoryBase << endl;
+		cout << "\tè™šæ‹Ÿå†…å­˜å³°å€¼:" << pspri1->PeakVirtualSize << endl;
+		cout << "\tè™šæ‹Ÿå†…å­˜å¤§å°:" << pspri1->VirtualSize << endl;
+		cout << "\té¡µé”™è¯¯æ•°:" << pspri1->PageFaultCount << endl;
+		cout << "\tç‰©ç†å†…å­˜å³°å€¼:" << pspri1->PeakWorkingSetSize << endl;
+		cout << "\tç‰©ç†å†…å­˜å¤§å°:" << pspri1->WorkingSetSize << endl;
+		cout << "\tåˆ†é¡µæ± é…é¢å³°å€¼:" << pspri1->QuotaPeakPagedPoolUsage << endl;
+		cout << "\tåˆ†é¡µæ± é…é¢:" << pspri1->QuotaPagedPoolUsage << endl;
+		cout << "\téžåˆ†é¡µæ± é…é¢å³°å€¼:" << pspri1->QuotaPeakNonPagedPoolUsage << endl;
+		cout << "\téžåˆ†é¡µæ± é…é¢:" << pspri1->QuotaNonPagedPoolUsage << endl;
+		cout << "\té¡µé¢æ–‡ä»¶ä½¿ç”¨:" << pspri1->PagefileUsage << endl;
+		cout << "\té¡µé¢æ–‡ä»¶ä½¿ç”¨å³°å€¼:" << pspri1->PeakPagefileUsage << endl;
+		cout << "\tç§æœ‰é¡µé¢æ•°:" << pspri1->PrivatePageCount << endl;
+		cout << "\tè¯»æ“ä½œæ•°:" << pspri1->ReadOperationCount.QuadPart << endl;
+		cout << "\tå†™æ“ä½œæ•°:" << pspri1->WriteOperationCount.QuadPart << endl;
+		cout << "\tå…¶ä»–æ“ä½œæ•°:" << pspri1->OtherOperationCount.QuadPart << endl;
+		cout << "\tè¯»å­—èŠ‚æ•°:" << pspri1->ReadTransferCount.QuadPart << endl;
+		cout << "\tå†™å­—èŠ‚æ•°:" << pspri1->WriteTransferCount.QuadPart << endl;
+		cout << "\tå…¶ä»–å­—èŠ‚æ•°:" << pspri1->OtherTransferCount.QuadPart << endl;
 		SYSTEM_PROCESS_INFORMATION* newpspri1 = (SYSTEM_PROCESS_INFORMATION*)((BYTE*)pspri1 + pspri1->NextEntryOffset);
 		SYSTEM_EXTENDED_THREAD_INFORMATION* pesti = (SYSTEM_EXTENDED_THREAD_INFORMATION*)(pspri1 + 1);
 		int threadindex = 0;
 		while ((LPVOID)pesti < (LPVOID)newpspri1)
 		{
 			++threadindex;
-			cout << "\tÄÚºËÌ¬Ê±¼ä:" << pesti->ThreadInfo.KernelTime.QuadPart << endl;
-			cout << "\tÓÃ»§Ì¬Ê±¼ä:" << pesti->ThreadInfo.UserTime.QuadPart << endl;
-			cout << "\t´´½¨Ê±¼ä:" << pesti->ThreadInfo.CreateTime.QuadPart << endl;
-			cout << "\tµÈ´ýÊ±¼ä:" << pesti->ThreadInfo.WaitTime << endl;
-			cout << "\tÆðÊ¼µØÖ·:" << hex << pesti->ThreadInfo.StartAddress << endl;
+			cout << "\tå†…æ ¸æ€æ—¶é—´:" << pesti->ThreadInfo.KernelTime.QuadPart << endl;
+			cout << "\tç”¨æˆ·æ€æ—¶é—´:" << pesti->ThreadInfo.UserTime.QuadPart << endl;
+			cout << "\tåˆ›å»ºæ—¶é—´:" << pesti->ThreadInfo.CreateTime.QuadPart << endl;
+			cout << "\tç­‰å¾…æ—¶é—´:" << pesti->ThreadInfo.WaitTime << endl;
+			cout << "\tèµ·å§‹åœ°å€:" << hex << pesti->ThreadInfo.StartAddress << endl;
 			cout << "\tUniqueProcess:" << hex << pesti->ThreadInfo.ClientId.UniqueProcess << endl;
 			cout << "\tUniqueThread:" << hex << pesti->ThreadInfo.ClientId.UniqueThread << endl;
 			cout << dec;
-			cout << "\tÓÅÏÈ¼¶:" << pesti->ThreadInfo.Priority << endl;
-			cout << "\t»ù´¡ÓÅÏÈ¼¶:" << pesti->ThreadInfo.BasePriority << endl;
-			cout << "\tÄ£Ê½ÇÐ»»´ÎÊý:" << pesti->ThreadInfo.ContextSwitches << endl;
-			cout << "\tÏß³Ì×´Ì¬:" << pesti->ThreadInfo.ThreadState << endl;
-			cout << "\tµÈ´ýÔ­Òò:" << pesti->ThreadInfo.WaitReason << endl;
-			cout << "\tÕ»»ùÖ·:" << hex << pesti->StackBase << endl;
-			cout << "\tÕ»·¶Î§:" << hex << pesti->StackLimit << endl;
+			cout << "\tä¼˜å…ˆçº§:" << pesti->ThreadInfo.Priority << endl;
+			cout << "\tåŸºç¡€ä¼˜å…ˆçº§:" << pesti->ThreadInfo.BasePriority << endl;
+			cout << "\tæ¨¡å¼åˆ‡æ¢æ¬¡æ•°:" << pesti->ThreadInfo.ContextSwitches << endl;
+			cout << "\tçº¿ç¨‹çŠ¶æ€:" << pesti->ThreadInfo.ThreadState << endl;
+			cout << "\tç­‰å¾…åŽŸå› :" << pesti->ThreadInfo.WaitReason << endl;
+			cout << "\tæ ˆåŸºå€:" << hex << pesti->StackBase << endl;
+			cout << "\tæ ˆèŒƒå›´:" << hex << pesti->StackLimit << endl;
 			cout << "\tWin32StartAddress" << hex << pesti->Win32StartAddress << endl;
 			cout << dec;
 			pesti++;
@@ -1230,15 +1256,15 @@ void GetSystemProcessorPowerInformation(SYSTEM_PROCESSOR_POWER_INFORMATION* pspp
 void GetSystemEmulationBasicInformation(SYSTEM_BASIC_INFORMATION* psbi)//62
 {
 	cout << "\t\t62 SystemEmulationBasicInformation" << endl;
-	cout << "\tÊ±¼ä½âÎö¶Èms:" << psbi->TimerResolution << endl;
-	cout << "\tÎïÀíÒ³´óÐ¡:" << psbi->PageSize << endl;
-	cout << "\tÎïÀíÒ³¸öÊý:" << psbi->NumberOfPhysicalPages << endl;
-	cout << "\t×îÐ¡ÎïÀíÒ³¸öÊý:" << psbi->LowestPhysicalPageNumber << endl;
-	cout << "\t×î´óÎïÀíÒ³¸öÊý:" << psbi->HighestPhysicalPageNumber << endl;
-	cout << "\tÂß¼­Ò³´óÐ¡:" << psbi->AllocationGranularity << endl;
-	cout << "\t×îÐ¡ÓÃ»§µØÖ·:" << psbi->MinimumUserModeAddress << endl;
-	cout << "\t×î´óÓÃ»§µØÖ·:" << psbi->MaximumUserModeAddress << endl;
-	cout << "\t´¦ÀíÆ÷¸öÊý:" << (int)psbi->NumberOfProcessors << endl;
+	cout << "\tæ—¶é—´è§£æžåº¦ms:" << psbi->TimerResolution << endl;
+	cout << "\tç‰©ç†é¡µå¤§å°:" << psbi->PageSize << endl;
+	cout << "\tç‰©ç†é¡µä¸ªæ•°:" << psbi->NumberOfPhysicalPages << endl;
+	cout << "\tæœ€å°ç‰©ç†é¡µä¸ªæ•°:" << psbi->LowestPhysicalPageNumber << endl;
+	cout << "\tæœ€å¤§ç‰©ç†é¡µä¸ªæ•°:" << psbi->HighestPhysicalPageNumber << endl;
+	cout << "\té€»è¾‘é¡µå¤§å°:" << psbi->AllocationGranularity << endl;
+	cout << "\tæœ€å°ç”¨æˆ·åœ°å€:" << psbi->MinimumUserModeAddress << endl;
+	cout << "\tæœ€å¤§ç”¨æˆ·åœ°å€:" << psbi->MaximumUserModeAddress << endl;
+	cout << "\tå¤„ç†å™¨ä¸ªæ•°:" << (int)psbi->NumberOfProcessors << endl;
 }
 
 void GetSystemEmulationProcessorInformation(SYSTEM_PROCESSOR_INFORMATION* pspri)//63
@@ -1475,9 +1501,9 @@ typedef NTSTATUS(WINAPI *PFUN_NtQuerySystemInformation)(
 int getProc( )
 {
 	PFUN_NtQuerySystemInformation pFun = NULL;
-	pFun = (PFUN_NtQuerySystemInformation)GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQuerySystemInformation");
+//	pFun = (PFUN_NtQuerySystemInformation)GetProcAddress(GetModuleHandle(L"ntdll.dll"), "NtQuerySystemInformation");
  
-	// ÓÉÓÚÃ»ÓÐµ¼³ö,ËùÒÔµÃ×Ô¼º¶¨Òåº¯ÊýµÄÔ­ÐÍ
+	// ç”±äºŽæ²¡æœ‰å¯¼å‡º,æ‰€ä»¥å¾—è‡ªå·±å®šä¹‰å‡½æ•°çš„åŽŸåž‹
 //	typedef DWORD(WINAPI* PQUERYSYSTEM)(UINT, PVOID, DWORD, PDWORD);
 //	PQUERYSYSTEM NtQuerySystemInformation = NULL;
 //	PSYSTEM_PROCESS_INFORMATION pInfo = { 0 };
