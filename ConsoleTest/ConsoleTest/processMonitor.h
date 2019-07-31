@@ -1,20 +1,89 @@
 #pragma once
+
+#include <string>
+#include <list>
+#include <vector>
+#include <iostream>
+#include <sstream>
+#include <map>
+#if (defined WIN32 || defined _WIN32)
+#include <TCHAR.H>
 #include <Windows.h>
 #include <tlhelp32.h>     //  PROCESSENTRY32
-#include <string>
-#include <atlconv.h>    // for T2A ,USES_CONVERSION
-class processMonitor
+#include <atlconv.h>      // for T2A ,USES_CONVERSION
+#include <psapi.h>
+#pragma comment(lib, "psapi.lib")
+#endif
+struct ProcessInfo
+{
+#if (defined WIN32 || defined _WIN32)
+	HANDLE handle;
+#endif
+
+	int PID;
+	int threadCount;
+	std::string user;
+	std::string processName;  // process name
+	std::string cmdLine;      // command or path
+	float cpuRate;            // in % format
+//	std::string memRate;      // in % format
+	unsigned long long RSS;   // physical memory(Resident Set Size), KB
+//	std::string VSS;          // Virtual Memory Size, KB
+	std::string status;       // running or sleeping and so on
+	std::string port;         // the port process used
+	std::string startTime;    // the time that process begin
+	std::string runTime;      // the time that process cost
+};
+
+// info that netstat shows
+struct PortInfo
+{
+	char szProto[16] = "";
+	char szLocal[64] = "";
+	char szForeign[64] = "";
+	char szState[32] = "";
+	int PID;
+	PortInfo()
+	{
+		init();
+	}
+	void init()
+	{
+		memset(szProto, 0, sizeof(szProto));
+		memset(szLocal, 0, sizeof(szLocal));
+		memset(szForeign, 0, sizeof(szForeign));
+		memset(szState, 0, sizeof(szState));
+		PID = 0;
+	}
+};
+
+extern SYSTEM_INFO g_SysInfo;
+extern OSVERSIONINFO g_OSVersion;//定义OSVERSIONINFO数据结构对象
+
+class ProcessMonitor
 {
 public:
-	processMonitor();
-	virtual ~processMonitor();
-
-	int getProcessList_Win();
-	int listProcessModules_Win(unsigned long dwPID);
-	int listProcessThreads_Win(unsigned long dwOwnerPID);
-	void printError_Win( TCHAR* msg);
+	ProcessMonitor();
+	virtual ~ProcessMonitor();
 
 	int getProcess_Win();
+	int getProcessList_Win();
+
+	int listProcessModules_Win(unsigned long dwPID);
+	int listProcessThreads_Win(unsigned long dwPID);
+
+	static void printError_Win( TCHAR* msg);
+
+	std::list<ProcessInfo> mlistProcess;
+	std::multimap<int, PortInfo>    m_mapPort;                          // port that netstat shows,<PID, PortInfo> 
+private:
+	
+
+	int getProcessCPU_Win();
+	unsigned long long getProcessMemory_Win(HANDLE hProcess);
+
+	int getPortList();                          // get port that netstat shows
+	std::string getProcessPort(int pid);        // get port the process used
 
 };
 
@@ -1073,3 +1142,4 @@ typedef struct _SYSTEM_FIRMWARE_TABLE_HANDLER
 	PFNFTH      FirmwareTableHandler;
 	PVOID       DriverObject;
 } SYSTEM_FIRMWARE_TABLE_HANDLER, *PSYSTEM_FIRMWARE_TABLE_HANDLER;
+

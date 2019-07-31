@@ -2,9 +2,9 @@
 //
 
 #include "stdafx.h"
-//#define CRTDBG_MAP_ALLOC    
-//#include <stdlib.h>    
-//#include <crtdbg.h>        // 内存检测
+//#define _CRTDBG_MAP_ALLOC    
+#include <stdlib.h>    
+#include <crtdbg.h>        // 内存检测
 #ifdef _DEBUG  
 #define New   new(_NORMAL_BLOCK, __FILE__, __LINE__)  
 #endif
@@ -26,20 +26,20 @@
 #include <mutex>
 #include <stdio.h>
 #include <string.h>
-
+#include <iomanip>
 #include "sql_conn_cpp.h"  // my sql class
 #include "MySort.h"
 #include "Mylog.h"
 #include "testMultiThread.h"
 #include "testStack.cpp"
-#include "processMonitor.h"
+#include "ProcessMonitor.h"
 //#include "testValist.cpp"
 using namespace std;
 int sockerServer();
 
 char* testLeak()
 {
-	char *test = new char[4];
+	char *test = New char[4];
 	return test;
 }
 char * testLocal()
@@ -67,6 +67,8 @@ extern void testMap();
 extern int testList();
 extern time_t dateToSeconds(char *str);
 extern void testVolatile();
+extern int testWMI();
+extern void getProcess();
 void showError() 
 {
 	LPVOID lpMsgBuf;
@@ -98,6 +100,13 @@ DWORD WINAPI MyWork(LPVOID lpParam);
 Mylog mylog("D:/log/log.txt");
 int main(int argc, char** argv)
 {
+//	_CrtSetBreakAlloc(153);	
+	
+	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+	char *test = testLeak();	
+	_CrtDumpMemoryLeaks();
+	
+	cout << uppercase << hex << 12 << endl;
 	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
 	
 	SERVICE_TABLE_ENTRY ServTable[2];
@@ -113,11 +122,18 @@ int main(int argc, char** argv)
 	{
         showError();
 	}
-	
+//	testWMI();
 	/**/
-	processMonitor pm;
-//	pm.getProcess_Win();
-	pm.getProcessList_Win();
+//	getProcess();
+	ProcessMonitor pm;
+	while (true)
+	{
+		pm.getProcess_Win();
+		pm.mlistProcess.clear();
+		Sleep(3000);
+		system("cls");
+	}
+	
 
 	/*
 	testVolatile();
@@ -160,10 +176,6 @@ int main(int argc, char** argv)
 	wcout << szError << endl;
 	printf("printf你好\n");
 */
-//	_CrtSetBreakAlloc(752);
-	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-//	char *test = testLeak();
-//	_CrtDumpMemoryLeaks();
 
  /*
  */
@@ -218,7 +230,7 @@ int main(int argc, char** argv)
 #elif WINVER
 	printf("Windows\n");
 #endif
-//	system("pause");
+	system("pause");
 	return 0;
 }
 

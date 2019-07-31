@@ -134,5 +134,8 @@
     <ClCompile Include="processMonitor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="testWMI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

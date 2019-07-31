@@ -1,49 +1,76 @@
 ﻿#include "stdafx.h"
-#include "processMonitor.h"
+#include "ProcessMonitor.h"
 
 //https://blog.csdn.net/nicolas16/article/details/1587323
 //getProcessList - https://docs.microsoft.com/zh-cn/windows/win32/toolhelp/taking-a-snapshot-and-viewing-processes
-#include <TCHAR.H>
-#include <iostream>
+
 using namespace std;
+
+SYSTEM_INFO g_SysInfo;
+OSVERSIONINFO g_OSVersion;//定义OSVERSIONINFO数据结构对象
 
 extern void getProcess();
 
-processMonitor::processMonitor()
+ProcessMonitor::ProcessMonitor()
 {
-}
+	GetSystemInfo(&g_SysInfo);                            // to get dwPageSize
 
-
-processMonitor::~processMonitor()
-{
-}
-
-int processMonitor::getProcess_Win()
-{
-	SYSTEM_INFO si;
-	GetSystemInfo(&si);
-
-	OSVERSIONINFO osvi;//定义OSVERSIONINFO数据结构对象
-	memset(&osvi, 0, sizeof(OSVERSIONINFO));//开空间 
-	osvi.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);//定义大小 
-	GetVersionEx(&osvi);//获得版本信息 
+	memset(&g_OSVersion, 0, sizeof(OSVERSIONINFO));
+	g_OSVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
+	GetVersionEx(&g_OSVersion);                           // to get os version
 	
+}
 
 
+ProcessMonitor::~ProcessMonitor()
+{
+}
+/*
+open all the process to get infomation
+the handles opened in getProcessList_Win and stored in the list, close after get all the info.
+*/
+int ProcessMonitor::getProcess_Win()
+{
+	getProcessList_Win();
+
+	// get cpuRate
+	getProcessCPU_Win();
+
+	// get memory that process used
+	for (auto iterProcess = mlistProcess.begin(); iterProcess != mlistProcess.end(); iterProcess++)
+	{
+		iterProcess->RSS = getProcessMemory_Win(iterProcess->handle);
+	}
+
+	// get exe path or cmd line
 
 
+	// get the port the process used
+	getPortList();
 
-	getProcess();
+	// close all the handle
+	for (auto iterProcess = mlistProcess.begin(); iterProcess != mlistProcess.end(); iterProcess++)
+	{
+		iterProcess->port = getProcessPort(iterProcess->PID);
+		if(iterProcess->cpuRate > 0)
+			printf("%-24s    PID: %6d    CPU: %f    RSS:%llu KB    ThreadCount:%4d    Port:%s\n", iterProcess->processName.c_str(), iterProcess->PID, iterProcess->cpuRate, iterProcess->RSS, iterProcess->threadCount, iterProcess->port.c_str());
+    	CloseHandle(iterProcess->handle);
+	}
+	
 	return 0;
 }
-
-int processMonitor::getProcessList_Win()
+/*
+get some info of all the processed that have access
+store into the list
+*/
+int ProcessMonitor::getProcessList_Win()
 {
 	HANDLE hProcessSnap;
 	HANDLE hProcess;
 	PROCESSENTRY32 pe32;
-	DWORD dwPriorityClass;
 
+	int nProcess = 0;
+	int nProcessGot = 0;
 	// Take a snapshot of all processes in the system.
 	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (hProcessSnap == INVALID_HANDLE_VALUE)
@@ -55,64 +82,52 @@ int processMonitor::getProcessList_Win()
 	// Set the size of the structure before using it.
 	pe32.dwSize = sizeof(PROCESSENTRY32);
 
-	// Retrieve information about the first process,
-	// and exit if unsuccessful
+	// Retrieve information about the first process, exit if unsuccessful
 	if (!Process32First(hProcessSnap, &pe32))
 	{
 		printError_Win(_T("Process32First"));  // Show cause of failure
-		CloseHandle(hProcessSnap);     // Must clean up the snapshot object!
+		CloseHandle(hProcessSnap);             // Must clean up the snapshot object!
 		return(FALSE);
 	}
-
+//	printf("OS Version: %ld %ld %ld \n", g_OSVersion.dwMajorVersion, g_OSVersion.dwMinorVersion, g_OSVersion.dwBuildNumber);
 	// Now walk the snapshot of processes, and
-	// display information about each process in turn
+	ProcessInfo tmpProcess;
 	do
 	{
-		printf("\n\n=====================================================");
-		wprintf(_T("\nPROCESS NAME:  %s"), pe32.szExeFile);
-		printf("\n-----------------------------------------------------");
-
-		// Retrieve the priority class.
-		dwPriorityClass = 0;
-		/*
-		The size of the PROCESS_ALL_ACCESS flag increased on Windows Server 2008 and Windows Vista. 
-		If an application compiled for Windows Server 2008 and Windows Vista is run on Windows Server 2003 or Windows XP, 
-		the PROCESS_ALL_ACCESS flag is too large and the function specifying this flag fails with ERROR_ACCESS_DENIED.
-		To avoid this problem, specify the minimum set of access rights required for the operation. 
-		If PROCESS_ALL_ACCESS must be used, set _WIN32_WINNT to the minimum operating system targeted by your application 
-		(for example, #define _WIN32_WINNT _WIN32_WINNT_WINXP). For more information
-		*/
+		nProcess++;
 	//	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
-		hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pe32.th32ProcessID);
+	//	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pe32.th32ProcessID);
+		hProcess = OpenProcess(PROCESS_QUERY_INFORMATION , FALSE, pe32.th32ProcessID);
 		if (hProcess == NULL)
-			printError_Win(_T("OpenProcess"));
-		else
 		{
-			dwPriorityClass = GetPriorityClass(hProcess);
-			if (!dwPriorityClass)
-				printError_Win(_T("GetPriorityClass"));
-			CloseHandle(hProcess);
+		//	printError_Win(_T("OpenProcess"));   // 提示拒绝访问是因为系统进程本身权限限制
+			continue;
 		}
+		nProcessGot++;
+		USES_CONVERSION;
+		tmpProcess.handle = hProcess;
+		tmpProcess.processName = T2A(pe32.szExeFile);
+		tmpProcess.PID = pe32.th32ProcessID;
+		tmpProcess.threadCount = pe32.cntThreads;
 
-		printf("\n  process ID        = 0x%08X", pe32.th32ProcessID);
-		printf("\n  thread count      = %d",     pe32.cntThreads);
-		printf("\n  parent process ID = 0x%08X", pe32.th32ParentProcessID);
-		printf("\n  Priority Base     = %d",     pe32.pcPriClassBase);
-		if (dwPriorityClass)
-			printf("\n  Priority Class    = %d", dwPriorityClass);
-
-		// List the modules and threads associated with this process
-	//	listProcessModules_Win(pe32.th32ProcessID);
-	//	listProcessThreads_Win(pe32.th32ProcessID);
-
+		mlistProcess.push_back(tmpProcess);
 	} while (Process32Next(hProcessSnap, &pe32));
-
-	CloseHandle(hProcessSnap);
+	printf("There are %d processes running, %d opened successfully.\n", nProcess, nProcessGot);
+	CloseHandle(hProcessSnap); 
 	return(TRUE);
 }
 
 
-int processMonitor::listProcessModules_Win(unsigned long dwPID)
+/// 时间转换    
+static uint64_t file_time_2_utc(const FILETIME* ftime)
+{
+	LARGE_INTEGER li;
+	li.LowPart = ftime->dwLowDateTime;
+	li.HighPart = ftime->dwHighDateTime;
+	return li.QuadPart;
+}
+
+int ProcessMonitor::listProcessModules_Win(unsigned long dwPID)
 {
 	HANDLE hModuleSnap = INVALID_HANDLE_VALUE;
 	MODULEENTRY32 me32;
@@ -141,21 +156,20 @@ int processMonitor::listProcessModules_Win(unsigned long dwPID)
 	// and display information about each module
 	do
 	{
-		wprintf(_T("\n\n     MODULE NAME:     %s"), me32.szModule);
-		wprintf(_T("\n     executable     = %s"), me32.szExePath);
-		printf("\n     process ID     = 0x%08X", me32.th32ProcessID);
-		printf("\n     ref count (g)  =     0x%04X", me32.GlblcntUsage);
-		printf("\n     ref count (p)  =     0x%04X", me32.ProccntUsage);
-		printf("\n     base address   = 0x%08X", (unsigned long)me32.modBaseAddr);
-		printf("\n     base size      = %d", me32.modBaseSize);
-
+		wprintf(_T("\n MODULE NAME: %s, "), me32.szModule);
+		wprintf(_T(" executable = %s, "),   me32.szExePath);
+		printf(" process ID = 0x%08X, ",    me32.th32ProcessID);
+		printf(" ref count (g) = 0x%04X, ", me32.GlblcntUsage);
+		printf(" ref count (p) = 0x%04X, ", me32.ProccntUsage);
+		printf(" base address = 0x%08X, ", (unsigned long)me32.modBaseAddr);
+		printf(" base size = %d\n", me32.modBaseSize);
 	} while (Module32Next(hModuleSnap, &me32));
 
 	CloseHandle(hModuleSnap);
 	return(TRUE);
 }
 
-int processMonitor::listProcessThreads_Win(unsigned long dwOwnerPID)
+int ProcessMonitor::listProcessThreads_Win(unsigned long dwOwnerPID)
 {
 	HANDLE hThreadSnap = INVALID_HANDLE_VALUE;
 	THREADENTRY32 te32;
@@ -194,7 +208,193 @@ int processMonitor::listProcessThreads_Win(unsigned long dwOwnerPID)
 	return(TRUE);
 }
 
-void processMonitor::printError_Win(TCHAR* msg)
+/*
+calc the cpu of process: time that process used  / CPU time elapsed  
+*/
+int ProcessMonitor::getProcessCPU_Win()
+{
+
+	FILETIME creation_time;
+	FILETIME exit_time;
+	FILETIME kernel_time;
+	FILETIME user_time;
+
+	FILETIME sysTime;
+	GetSystemTimeAsFileTime(&sysTime);
+	__int64 last_sysTime = file_time_2_utc(&sysTime);
+	__int64 last_process_time_ = 0;
+	int cpuCores = g_SysInfo.dwNumberOfProcessors;
+	std::vector<__int64> vlast_process_time;
+	for (auto iterProcess = mlistProcess.begin(); iterProcess != mlistProcess.end(); iterProcess++)
+	{
+		GetProcessTimes(iterProcess->handle, &creation_time, &exit_time, &kernel_time, &user_time); //
+		last_process_time_ = (file_time_2_utc(&kernel_time) + file_time_2_utc(&user_time)) / cpuCores;
+		vlast_process_time.push_back(last_process_time_);
+	}
+	// calc after one second
+	HANDLE hEvent;
+	hEvent = CreateEventA(NULL, FALSE, FALSE, NULL);
+	WaitForSingleObject(hEvent, 1000);
+
+	GetSystemTimeAsFileTime(&sysTime);
+	__int64 this_sysTime = file_time_2_utc(&sysTime);
+	__int64 sys_time_delta = this_sysTime - last_sysTime;
+
+	int index = 0;
+	__int64 this_process_time = 0;
+	__int64 process_time_delta = 0;
+	for (auto iterProcess = mlistProcess.begin(); iterProcess != mlistProcess.end(); iterProcess++)
+	{
+		GetProcessTimes(iterProcess->handle, &creation_time, &exit_time, &kernel_time, &user_time);
+		this_process_time = (file_time_2_utc(&kernel_time) + file_time_2_utc(&user_time)) / cpuCores;
+		process_time_delta = this_process_time - vlast_process_time[index++];
+		iterProcess->cpuRate = process_time_delta * 100.0 / sys_time_delta;
+	}
+	return 0;
+}
+
+
+unsigned long long ProcessMonitor::getProcessMemory_Win(HANDLE hProcess)
+{
+	PROCESS_MEMORY_COUNTERS_EX pmc;
+	if (g_OSVersion.dwMajorVersion < 6 || (g_OSVersion.dwMajorVersion == 6 && g_OSVersion.dwMinorVersion <= 1))  // os is  win7 and early
+	{
+		//	printf("Version is after win7 or windows server 2008R2.");
+		PSAPI_WORKING_SET_INFORMATION workSetInfo;
+		memset(&workSetInfo, 0, sizeof(workSetInfo));
+		PSAPI_WORKING_SET_BLOCK *pWorkSetBlock = workSetInfo.WorkingSetInfo;
+		PBYTE pByte = NULL;
+		BOOL bOk = QueryWorkingSet(hProcess, &workSetInfo, sizeof(workSetInfo));   // If the function succeeds, the return value is nonzero.
+		if (!bOk)
+		{
+			if (GetLastError() == ERROR_BAD_LENGTH) // 需要重新分配缓冲区，重新获取
+			{
+				DWORD realSize = sizeof(workSetInfo.NumberOfEntries) + workSetInfo.NumberOfEntries * sizeof(PSAPI_WORKING_SET_BLOCK);
+				try
+				{
+					pByte = new BYTE[realSize];
+					memset(pByte, 0, realSize);
+					pWorkSetBlock = (PSAPI_WORKING_SET_BLOCK *)(pByte + sizeof(workSetInfo.NumberOfEntries));
+					if (!::QueryWorkingSet(hProcess, pByte, realSize))
+					{
+						delete[] pByte; // 清理内存
+						return 0;
+					}
+				}
+				catch (char *e) // 分配内存失败
+				{
+					// e->Delete();
+					return 0;
+				}
+			}
+			else
+				return 0;
+		}
+		SIZE_T workSetPrivate = 0;
+		SIZE_T workSetShared = 0;
+		for (ULONG_PTR i = 0; i < workSetInfo.NumberOfEntries; ++i)
+		{
+			if (!pWorkSetBlock[i].Shared) // 如果不是共享页
+				workSetPrivate += g_SysInfo.dwPageSize;
+			else
+				workSetShared += g_SysInfo.dwPageSize;
+		}
+		if (pByte)
+			delete[] pByte;
+		return workSetPrivate / 1024;
+	}
+	else
+	{
+	//	printf("Version is before win7 and windows server 2008R2.");
+		if (GetProcessMemoryInfo(hProcess, (PROCESS_MEMORY_COUNTERS*)&pmc, sizeof(pmc)))
+		{
+		/*	cout << "WorkingSetSize"             << (SIZE_T)(pmc.WorkingSetSize / 1024) << std::endl;
+			cout << "PagefileUsage"              << (SIZE_T)(pmc.PagefileUsage / 1024) << std::endl;
+			cout << "PeakWorkingSetSize"         << (SIZE_T)(pmc.PeakWorkingSetSize / 1024) << std::endl;
+			cout << "QuotaPagedPoolUsage"        << (SIZE_T)(pmc.QuotaPagedPoolUsage / 1024) << std::endl;
+			cout << "QuotaPeakPagedPoolUsage"    << (SIZE_T)(pmc.QuotaPeakPagedPoolUsage / 1024) << std::endl;
+			cout << "QuotaNonPagedPoolUsage"     << (SIZE_T)(pmc.QuotaNonPagedPoolUsage / 1024) << std::endl;
+			cout << "QuotaPeakNonPagedPoolUsage" << (SIZE_T)(pmc.QuotaPeakNonPagedPoolUsage / 1024) << std::endl;
+			cout << "PagefileUsage"              << (SIZE_T)(pmc.PagefileUsage / 1024) << std::endl;
+			cout << "PeakPagefileUsage"          << (SIZE_T)(pmc.PeakPagefileUsage / 1024) << std::endl;
+			cout << "PrivateUsage"               << (SIZE_T)(pmc.PrivateUsage / 1024) << std::endl;
+		*/
+			return (pmc.WorkingSetSize / 1024);
+		}
+		else
+		{
+			//	printError();
+		}		
+	}
+	return -1;
+}
+
+/*
+netstat -anop tcp
+search the list of process, if found a port match with netstat
+set the port to process
+*/
+int ProcessMonitor::getPortList()
+{
+	FILE *fp;
+	const char *cmd = "netstat -anop tcp";
+	fp = _popen(cmd, "r");
+	if (NULL == fp)
+	{   // if fork(2) or pipe(2) calls fail, or cannot callocate memory.
+		// it does not set errno if memory allocation fails.
+		// if the underlying fork(2) or pipe(2) fails, errno is set appropriately.
+		// if the type arguments is invalid, and this condition is detected,errno is set to EINVAL.
+		char buffer[64] = { '\0' };
+		snprintf(buffer, sizeof(buffer), "popen failed. %s, with errno %d.\n", strerror(errno), errno);
+		return -1;
+	}
+	PortInfo tmp_port;
+	char linebuffer[512] = "";
+	m_mapPort.clear();
+	while (fgets(linebuffer, sizeof(linebuffer), fp) != NULL)
+	{
+		stringstream ss(linebuffer);
+		ss >> tmp_port.szProto;
+		ss >> tmp_port.szLocal;
+		ss >> tmp_port.szForeign;
+		if (strcmp(tmp_port.szProto, "TCP") == 0)
+		{
+			ss >> tmp_port.szState;
+			ss >> tmp_port.PID;
+		}
+		else if (strcmp(tmp_port.szProto, "UDP") == 0)
+		{
+			ss >> tmp_port.PID;
+		}
+		else
+			continue;
+		m_mapPort.insert(std::pair<int, PortInfo>(tmp_port.PID, tmp_port));
+	}
+	fclose(fp);
+	return 0;
+}
+
+std::string ProcessMonitor::getProcessPort(int pid)
+{
+	auto count = m_mapPort.count(pid);
+	auto iter = m_mapPort.find(pid);
+	char ip[16] = "";
+	char port[16] = "";
+	string ret_ports;
+	for (; count > 0; count--, iter++)
+	{
+		// sscanf(field3.c_str(),"%[^:]:%d", tmpip, &tmp_map.ServerPort); 
+		sscanf_s(iter->second.szLocal, "%[^:]:%s", ip, sizeof(ip), port, sizeof(port));  //  sscanf_s have more params than sscanf
+		ret_ports += std::string(port);
+		ret_ports += ",";
+	}
+	auto r_iter = ret_ports.rbegin();
+	if (r_iter != ret_ports.rend() && *r_iter == ',')
+		ret_ports.erase(ret_ports.length() - 1);
+	return ret_ports;
+}
+
+void ProcessMonitor::printError_Win(TCHAR* msg)
 {
 	DWORD eNum;
 	TCHAR sysMsg[256] = _T("");
@@ -216,7 +416,7 @@ void processMonitor::printError_Win(TCHAR* msg)
 
 	// Display the message
 	USES_CONVERSION;
-	printf( "\n  ERROR: %s failed with error %d (%s)", msg, eNum, T2A((LPCTSTR)lpMsgBuf));
+	printf( "\n  ERROR: %s failed with error %d (%s)", T2A(msg), eNum, T2A((LPCTSTR)lpMsgBuf));
 	LocalFree(lpMsgBuf);
 }
 
@@ -1180,7 +1380,7 @@ void GetSystemExtendedProcessInformation(SYSTEM_PROCESS_INFORMATION* pspri1)//57
 		SYSTEM_PROCESS_INFORMATION* newpspri1 = (SYSTEM_PROCESS_INFORMATION*)((BYTE*)pspri1 + pspri1->NextEntryOffset);
 		SYSTEM_EXTENDED_THREAD_INFORMATION* pesti = (SYSTEM_EXTENDED_THREAD_INFORMATION*)(pspri1 + 1);
 		int threadindex = 0;
-		while ((LPVOID)pesti < (LPVOID)newpspri1)
+	/*	while ((LPVOID)pesti < (LPVOID)newpspri1)
 		{
 			++threadindex;
 			cout << "\t内核态时间:" << pesti->ThreadInfo.KernelTime.QuadPart << endl;
@@ -1201,7 +1401,7 @@ void GetSystemExtendedProcessInformation(SYSTEM_PROCESS_INFORMATION* pspri1)//57
 			cout << "\tWin32StartAddress" << hex << pesti->Win32StartAddress << endl;
 			cout << dec;
 			pesti++;
-		}
+		}*/
 		pspri1 = newpspri1;
 	} while (pspri1->NextEntryOffset);
 }
@@ -1400,7 +1600,7 @@ void getProcess()
 	//  do(SystemPerformanceInformation);//2
 	//  do(SystemTimeOfDayInformation);//3
 	//  do(SystemPathInformation);//4
-	  do(SystemProcessInformation);//5
+	//  do(SystemProcessInformation);//5
 	//  do(SystemCallCountInformation);//6
 	//  do(SystemDeviceInformation);//7
 	//  do(SystemProcessorPerformanceInformation);//8
@@ -1452,7 +1652,7 @@ void getProcess()
 	//  do(SystemLoadGdiDriverInSystemSpace);//54
 	//  do(SystemNumaProcessorMap);//55
 	//  do(SystemPrefetcherInformation);//56
-	//  do(SystemExtendedProcessInformation);//57
+	  do(SystemExtendedProcessInformation);//57
 	//  do(SystemRecommendedSharedDataAlignment);//58
 	//  do(SystemComPlusPackage);//59
 	//  do(SystemNumaAvailableMemory);//60
@@ -1498,6 +1698,8 @@ typedef NTSTATUS(WINAPI *PFUN_NtQuerySystemInformation)(
 	_Out_opt_ PULONG                   ReturnLength
 	);
 
+// [NtQuerySystemInformation may be altered or unavailable in future versions of Windows. Applications should use the alternate functions listed in this topic.]
+// 参考 https://docs.microsoft.com/zh-cn/windows/win32/api/winternl/nf-winternl-ntquerysysteminformation
 int getProc( )
 {
 	PFUN_NtQuerySystemInformation pFun = NULL;
@@ -1508,8 +1710,11 @@ int getProc( )
 //	PQUERYSYSTEM NtQuerySystemInformation = NULL;
 //	PSYSTEM_PROCESS_INFORMATION pInfo = { 0 };
 //	NtQuerySystemInformation = (PQUERYSYSTEM)GetProcAddress(LoadLibrary(L"ntdll.dll"), "NtQuerySystemInformation");
-	pFun = (PFUN_NtQuerySystemInformation)GetProcAddress(LoadLibrary(L"ntdll.dll"), "NtQuerySystemInformation");
- 
+	pFun = (PFUN_NtQuerySystemInformation)GetProcAddress(LoadLibrary(L"ntdll.dll"), "NtQuerySystemInformation");    // return NULL indicates failure
+	if (pFun == NULL)
+	{
+		ProcessMonitor::printError_Win(_T("GetProcAddress error: "));
+	}
 	char szInfo[0x20000] = { 0 };
 	ULONG uReturnedLEngth = 0;
 	NTSTATUS status = pFun(SystemProcessInformation, szInfo, sizeof(szInfo), &uReturnedLEngth);

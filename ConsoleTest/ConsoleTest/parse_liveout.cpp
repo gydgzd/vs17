@@ -98,9 +98,9 @@ int parse_liveout()
 	int count_same_prov = 0;
 	int count_via_BigTa = 0;
 	//
-	char * section_begin;
-	char * last_begin;
-	char * end;
+	char * section_begin = NULL;
+	char * last_begin = NULL;
+	char * end = NULL;
 
 	vector<statistic_datetime> v_ss_sec;
 	vector<statistic_minutes> v_ss_min;
