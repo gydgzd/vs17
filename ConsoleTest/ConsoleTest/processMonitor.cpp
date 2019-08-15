@@ -43,7 +43,7 @@ int ProcessMonitor::getProcess_Win()
 	}
 
 	// get exe path or cmd line
-
+	getCMDLine();
 
 	// get the port the process used
 	getPortList();
@@ -206,6 +206,14 @@ int ProcessMonitor::listProcessThreads_Win(unsigned long dwOwnerPID)
 
 	CloseHandle(hThreadSnap);
 	return(TRUE);
+}
+
+int ProcessMonitor::getCMDLine()
+{
+
+
+
+	return 0;
 }
 
 /*

@@ -78,7 +78,7 @@ public:
 	std::multimap<int, PortInfo>    m_mapPort;                          // port that netstat shows,<PID, PortInfo> 
 private:
 	
-
+	int getCMDLine();
 	int getProcessCPU_Win();
 	unsigned long long getProcessMemory_Win(HANDLE hProcess);
 
