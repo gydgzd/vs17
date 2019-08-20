@@ -1,6 +1,9 @@
 ﻿#include "stdafx.h"
 #include "ProcessMonitor.h"
 
+#include "atlbase.h"
+#include "atlstr.h"    // for CW2A
+
 //https://blog.csdn.net/nicolas16/article/details/1587323
 //getProcessList - https://docs.microsoft.com/zh-cn/windows/win32/toolhelp/taking-a-snapshot-and-viewing-processes
 
@@ -75,7 +78,7 @@ int ProcessMonitor::getProcessList_Win()
 	hProcessSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
 	if (hProcessSnap == INVALID_HANDLE_VALUE)
 	{
-		printError_Win(_T("CreateToolhelp32Snapshot (of processes)"));
+		printError_Win(("CreateToolhelp32Snapshot (of processes)"));
 		return(FALSE);
 	}
 
@@ -85,7 +88,7 @@ int ProcessMonitor::getProcessList_Win()
 	// Retrieve information about the first process, exit if unsuccessful
 	if (!Process32First(hProcessSnap, &pe32))
 	{
-		printError_Win(_T("Process32First"));  // Show cause of failure
+		printError_Win(("Process32First"));  // Show cause of failure
 		CloseHandle(hProcessSnap);             // Must clean up the snapshot object!
 		return(FALSE);
 	}
@@ -96,11 +99,11 @@ int ProcessMonitor::getProcessList_Win()
 	{
 		nProcess++;
 	//	hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, pe32.th32ProcessID);
-	//	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pe32.th32ProcessID);
-		hProcess = OpenProcess(PROCESS_QUERY_INFORMATION , FALSE, pe32.th32ProcessID);
+		hProcess = OpenProcess(PROCESS_QUERY_INFORMATION | PROCESS_QUERY_LIMITED_INFORMATION | PROCESS_VM_READ, FALSE, pe32.th32ProcessID);
+	//	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION , FALSE, pe32.th32ProcessID);
 		if (hProcess == NULL)
 		{
-		//	printError_Win(_T("OpenProcess"));   // 提示拒绝访问是因为系统进程本身权限限制
+		//	printError_Win(("OpenProcess"));   // 提示拒绝访问是因为系统进程本身权限限制
 			continue;
 		}
 		nProcessGot++;
@@ -136,7 +139,7 @@ int ProcessMonitor::listProcessModules_Win(unsigned long dwPID)
 	hModuleSnap = CreateToolhelp32Snapshot(TH32CS_SNAPMODULE, dwPID);
 	if (hModuleSnap == INVALID_HANDLE_VALUE)
 	{
-		printError_Win(_T("CreateToolhelp32Snapshot (of modules)"));
+		printError_Win(("CreateToolhelp32Snapshot (of modules)"));
 		return(FALSE);
 	}
 
@@ -147,7 +150,7 @@ int ProcessMonitor::listProcessModules_Win(unsigned long dwPID)
 	// and exit if unsuccessful
 	if (!Module32First(hModuleSnap, &me32))
 	{
-		printError_Win(_T("Module32First"));  // Show cause of failure
+		printError_Win(("Module32First"));  // Show cause of failure
 		CloseHandle(hModuleSnap);     // Must clean up the snapshot object!
 		return(FALSE);
 	}
@@ -186,7 +189,7 @@ int ProcessMonitor::listProcessThreads_Win(unsigned long dwOwnerPID)
 	// and exit if unsuccessful
 	if (!Thread32First(hThreadSnap, &te32))
 	{
-		printError_Win(_T("Thread32First"));  // Show cause of failure
+		printError_Win(("Thread32First"));  // Show cause of failure
 		CloseHandle(hThreadSnap);     // Must clean up the snapshot object!
 		return(FALSE);
 	}
@@ -207,12 +210,65 @@ int ProcessMonitor::listProcessThreads_Win(unsigned long dwOwnerPID)
 	CloseHandle(hThreadSnap);
 	return(TRUE);
 }
-
+/*
+get CMDLine for all the process in mlistProcess
+result store in the list
+*/
 int ProcessMonitor::getCMDLine()
 {
+	TCHAR cmdLine[1024] = _T("");
+	DWORD cmdLen;
 
+	FILE *fp;
+	if (!(fp = fopen("process.cmdline", "w")))     //判断文件打开
+	{
+		std::cout << __FUNCTION__ << " Error in open file(process.cmdline)";
+		return -1;    // #include <stdlib.h>                     
+	}
 
+	for (auto iterProcess = mlistProcess.begin(); iterProcess != mlistProcess.end(); iterProcess++)
+	{
+		memset(cmdLine, 0, sizeof(cmdLine));
+		cmdLen = 1024 / sizeof(TCHAR);
+		bool ret = QueryFullProcessImageName(iterProcess->handle, 0, cmdLine,  &cmdLen);
+		if (false == ret)
+		{
+			printError_Win("getCMDLine");
+		}
+		else
+		{
+		//	cout << iterProcess->PID << "  " <<iterProcess->processName<<"  " ;
+		//	_tprintf(_T("%s\n"), cmdLine);
+			iterProcess->cmdLine = CW2A(cmdLine, CP_ACP);
+			fwrite(iterProcess->processName.c_str(), sizeof(char), iterProcess->processName.length(), fp);    //写文件 (注意格式，可能乱码)
+			fwrite("  ",                             sizeof(char), strlen("  "), fp);    //写文件 (注意格式，可能乱码)
+			fwrite(iterProcess->cmdLine.c_str()    , sizeof(char), iterProcess->cmdLine.length(), fp);    //写文件 (注意格式，可能乱码)
+			fwrite("\n", sizeof(char), strlen("\n"), fp);
+		}
+		// 
+		GetStartupInfo(&iterProcess->startInfo);
+	}
+	fclose(fp);                          //文件关闭
+	return 0;
+}
+/*
+get CMDLine for the process specified
+*/
+int ProcessMonitor::getCMDLine(ProcessInfo & process)
+{
+	TCHAR cmdLine[1024] = _T("");
+	DWORD cmdLen;
 
+	cmdLen = 40960 / sizeof(TCHAR);
+	bool ret = QueryFullProcessImageName(process.handle, 0, cmdLine, &cmdLen);
+	if (false == ret)
+	{
+		printError_Win("getCMDLine");
+	}
+	else
+	{
+		process.cmdLine = CW2A(cmdLine, CP_UTF8);
+	}
 	return 0;
 }
 
@@ -402,7 +458,7 @@ std::string ProcessMonitor::getProcessPort(int pid)
 	return ret_ports;
 }
 
-void ProcessMonitor::printError_Win(TCHAR* msg)
+void ProcessMonitor::printError_Win(char* msg)
 {
 	DWORD eNum;
 	TCHAR sysMsg[256] = _T("");
@@ -424,7 +480,7 @@ void ProcessMonitor::printError_Win(TCHAR* msg)
 
 	// Display the message
 	USES_CONVERSION;
-	printf( "\n  ERROR: %s failed with error %d (%s)", T2A(msg), eNum, T2A((LPCTSTR)lpMsgBuf));
+	printf( "\n  ERROR: %s failed with error %d (%s)", msg, eNum, T2A((LPCTSTR)lpMsgBuf));
 	LocalFree(lpMsgBuf);
 }
 
@@ -1721,7 +1777,7 @@ int getProc( )
 	pFun = (PFUN_NtQuerySystemInformation)GetProcAddress(LoadLibrary(L"ntdll.dll"), "NtQuerySystemInformation");    // return NULL indicates failure
 	if (pFun == NULL)
 	{
-		ProcessMonitor::printError_Win(_T("GetProcAddress error: "));
+		ProcessMonitor::printError_Win(("GetProcAddress error: "));
 	}
 	char szInfo[0x20000] = { 0 };
 	ULONG uReturnedLEngth = 0;
@@ -1764,4 +1820,5 @@ int getProc( )
 		printf("ProcessID: %d\tprocessName: %ws \n", dwID, pImageName);
 	}
 	getchar();
+	return 0;
 }

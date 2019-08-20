@@ -103,10 +103,10 @@ int main(int argc, char** argv)
 //	_CrtSetBreakAlloc(153);	
 	
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-	char *test = testLeak();	
+//	char *test = testLeak();	
 	_CrtDumpMemoryLeaks();
 	
-	cout << uppercase << hex << 12 << endl;
+//	cout << uppercase << hex << 12 << endl;
 	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
 	
 	SERVICE_TABLE_ENTRY ServTable[2];

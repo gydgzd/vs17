@@ -18,6 +18,7 @@ struct ProcessInfo
 {
 #if (defined WIN32 || defined _WIN32)
 	HANDLE handle;
+	STARTUPINFO startInfo;    // start info
 #endif
 
 	int PID;
@@ -33,6 +34,7 @@ struct ProcessInfo
 	std::string port;         // the port process used
 	std::string startTime;    // the time that process begin
 	std::string runTime;      // the time that process cost
+	
 };
 
 // info that netstat shows
@@ -72,13 +74,14 @@ public:
 	int listProcessModules_Win(unsigned long dwPID);
 	int listProcessThreads_Win(unsigned long dwPID);
 
-	static void printError_Win( TCHAR* msg);
+	static void printError_Win( char* msg);
 
 	std::list<ProcessInfo> mlistProcess;
 	std::multimap<int, PortInfo>    m_mapPort;                          // port that netstat shows,<PID, PortInfo> 
 private:
 	
 	int getCMDLine();
+	int getCMDLine(ProcessInfo& process);
 	int getProcessCPU_Win();
 	unsigned long long getProcessMemory_Win(HANDLE hProcess);
 
