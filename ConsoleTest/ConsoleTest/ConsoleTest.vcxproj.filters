@@ -45,6 +45,9 @@
     <ClInclude Include="processMonitor.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CFileVersion.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -135,6 +138,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="testWMI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CFileVersion.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

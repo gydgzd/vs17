@@ -33,6 +33,7 @@
 #include "testMultiThread.h"
 #include "testStack.cpp"
 #include "ProcessMonitor.h"
+#include "CFileVersion.h"
 //#include "testValist.cpp"
 using namespace std;
 int sockerServer();
@@ -122,6 +123,9 @@ int main(int argc, char** argv)
 	{
         showError();
 	}
+	CFileVersion fv;
+	fv.Open(_T("E:\\MediaServer_V5.16.3.0\\SLW.MediaServer.exe"));
+	CString descption = fv.getFileDescription();
 //	testWMI();
 	/**/
 //	getProcess();

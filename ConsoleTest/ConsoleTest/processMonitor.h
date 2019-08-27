@@ -82,8 +82,11 @@ private:
 	
 	int getCMDLine();
 	int getCMDLine(ProcessInfo& process);
+	
 	int getProcessCPU_Win();
 	unsigned long long getProcessMemory_Win(HANDLE hProcess);
+
+	int getProcessDescription();
 
 	int getPortList();                          // get port that netstat shows
 	std::string getProcessPort(int pid);        // get port the process used

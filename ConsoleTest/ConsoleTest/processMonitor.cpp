@@ -3,7 +3,7 @@
 
 #include "atlbase.h"
 #include "atlstr.h"    // for CW2A
-
+#include "CFileVersion.h"
 //https://blog.csdn.net/nicolas16/article/details/1587323
 //getProcessList - https://docs.microsoft.com/zh-cn/windows/win32/toolhelp/taking-a-snapshot-and-viewing-processes
 
@@ -240,13 +240,15 @@ int ProcessMonitor::getCMDLine()
 		//	cout << iterProcess->PID << "  " <<iterProcess->processName<<"  " ;
 		//	_tprintf(_T("%s\n"), cmdLine);
 			iterProcess->cmdLine = CW2A(cmdLine, CP_ACP);
-			fwrite(iterProcess->processName.c_str(), sizeof(char), iterProcess->processName.length(), fp);    //写文件 (注意格式，可能乱码)
-			fwrite("  ",                             sizeof(char), strlen("  "), fp);    //写文件 (注意格式，可能乱码)
-			fwrite(iterProcess->cmdLine.c_str()    , sizeof(char), iterProcess->cmdLine.length(), fp);    //写文件 (注意格式，可能乱码)
+			fwrite(iterProcess->processName.c_str(), sizeof(char), iterProcess->processName.length(), fp);
+			fwrite("  ",                             sizeof(char), strlen("  "), fp);
+			fwrite(iterProcess->cmdLine.c_str()    , sizeof(char), iterProcess->cmdLine.length(), fp);
 			fwrite("\n", sizeof(char), strlen("\n"), fp);
 		}
 		// 
-		GetStartupInfo(&iterProcess->startInfo);
+	//	GetStartupInfo(&iterProcess->startInfo); 
+
+
 	}
 	fclose(fp);                          //文件关闭
 	return 0;
@@ -391,6 +393,17 @@ unsigned long long ProcessMonitor::getProcessMemory_Win(HANDLE hProcess)
 		}		
 	}
 	return -1;
+}
+/*
+- get description of a process 
+- which is also the description of the execurate file
+- 
+*/
+int ProcessMonitor::getProcessDescription()
+{
+
+
+	return 0;
 }
 
 /*

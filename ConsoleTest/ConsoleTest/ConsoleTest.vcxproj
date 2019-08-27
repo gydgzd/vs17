@@ -159,6 +159,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="CFileVersion.h" />
     <ClInclude Include="getDate.h" />
     <ClInclude Include="Mylog.h" />
     <ClInclude Include="MyTimer.h" />
@@ -170,6 +171,7 @@
     <ClInclude Include="testMultiThread.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="CFileVersion.cpp" />
     <ClCompile Include="ConsoleTest.cpp" />
     <ClCompile Include="getDate.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
