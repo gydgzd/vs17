@@ -3,12 +3,12 @@
 #include <winsock2.h>
 #include <WS2tcpip.h>
 #pragma comment(lib,"ws2_32.lib")
-extern int sockerServer();
+extern int socketServer();
 
 DWORD WINAPI clientProc(LPARAM lparam)
 {
 	SOCKET sockClient = (SOCKET)lparam;
-	char recv_buf[1024] = "";
+	char recv_buf[10] = "";
 	char send_buf[1024] = "hi, welcome";
 	while (TRUE)
 	{
@@ -48,7 +48,7 @@ DWORD WINAPI clientProc(LPARAM lparam)
 	return 0;
 }
 
-int sockerServer()
+int socketServer()
 {
 	//≥ı ºªØWSA
 	WORD sockVersion = MAKEWORD(2, 2);

@@ -95,14 +95,16 @@ ServiceHub.VSDetouredHost.exe  C:\Program Files (x86)\Microsoft Visual Studio\20
 ServiceHub.SettingsHost.exe  C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\ServiceHub\Hosts\ServiceHub.Host.CLR.x86\ServiceHub.SettingsHost.exe
 ServiceHub.Host.CLR.x86.exe  C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\ServiceHub\Hosts\ServiceHub.Host.CLR.x86\ServiceHub.Host.CLR.x86.exe
 Microsoft.Alm.Shared.Remoting.RemoteContainer.dll  C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\PrivateAssemblies\Microsoft.Alm.Shared.Remoting.RemoteContainer.dll
-vcpkgsrv.exe  C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\vcpackages\vcpkgsrv.exe
 chrome.exe  C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
 chrome.exe  C:\Program Files (x86)\Google\Chrome\Application\chrome.exe
 MSBuild.exe  C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\MSBuild\15.0\Bin\MSBuild.exe
 conhost.exe  C:\Windows\System32\conhost.exe
 mspdbsrv.exe  C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\bin\mspdbsrv.exe
 ServiceHub.DataWarehouseHost.exe  C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\ServiceHub\Hosts\ServiceHub.Host.CLR.x64\ServiceHub.DataWarehouseHost.exe
-ConsoleTest.exe  D:\git_project\vs17\ConsoleTest\Debug\ConsoleTest.exe
-conhost.exe  C:\Windows\System32\conhost.exe
 ScriptedSandbox64.exe  C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\PrivateAssemblies\ScriptedSandbox64.exe
 vcpkgsrv.exe  C:\Program Files (x86)\Microsoft Visual Studio\2017\Professional\Common7\IDE\VC\vcpackages\vcpkgsrv.exe
+ConsoleTest.exe  D:\git_project\vs17\ConsoleTest\Release\ConsoleTest.exe
+conhost.exe  C:\Windows\System32\conhost.exe
+smartscreen.exe  C:\Windows\System32\smartscreen.exe
+ConsoleTest.exe  D:\git_project\vs17\ConsoleTest\Release\ConsoleTest.exe
+conhost.exe  C:\Windows\System32\conhost.exe

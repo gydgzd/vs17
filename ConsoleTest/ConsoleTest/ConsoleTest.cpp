@@ -25,6 +25,7 @@
 #include <thread>
 #include <mutex>
 #include <stdio.h>
+#include <string>
 #include <string.h>
 #include <iomanip>
 #include "sql_conn_cpp.h"  // my sql class
@@ -36,11 +37,11 @@
 #include "CFileVersion.h"
 //#include "testValist.cpp"
 using namespace std;
-int sockerServer();
+int socketServer();
 
 char* testLeak()
 {
-	char *test = New char[4];
+	char *test = new char[4];
 	return test;
 }
 char * testLocal()
@@ -106,8 +107,8 @@ int main(int argc, char** argv)
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 //	char *test = testLeak();	
 	_CrtDumpMemoryLeaks();
-	
-//	cout << uppercase << hex << 12 << endl;
+
+	cout << uppercase << hex << "12av" << endl;
 	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
 	
 	SERVICE_TABLE_ENTRY ServTable[2];
@@ -127,18 +128,19 @@ int main(int argc, char** argv)
 	fv.Open(_T("E:\\MediaServer_V5.16.3.0\\SLW.MediaServer.exe"));
 	CString descption = fv.getFileDescription();
 //	testWMI();
-	/**/
+	/*
 //	getProcess();
 	ProcessMonitor pm;
 	while (true)
 	{
 		pm.getProcess_Win();
 		pm.mlistProcess.clear();
+		mylog.logException("Run one time.");
 		Sleep(3000);
 		system("cls");
 	}
-	
-
+	*/
+socketServer();
 	/*
 	testVolatile();
 	char msg[32] = "Hick lenawd";
@@ -164,7 +166,7 @@ int main(int argc, char** argv)
 //	testSet();
 	//	parse_liveout();
 //	writeFileStream();
-//	sockerServer();
+	
 //	testValist();
 
 /*	wcout.imbue(locale("")); 
