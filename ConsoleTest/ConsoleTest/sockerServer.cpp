@@ -2,9 +2,12 @@
 #include <stdio.h>
 #include <winsock2.h>
 #include <WS2tcpip.h>
+#include <atlconv.h>      // for T2A ,USES_CONVERSION
+#include <tchar.h>
+
 #pragma comment(lib,"ws2_32.lib")
 extern int socketServer();
-
+void printError_Win(const char * msg);
 DWORD WINAPI clientProc(LPARAM lparam)
 {
 	SOCKET sockClient = (SOCKET)lparam;
@@ -90,11 +93,12 @@ int socketServer()
 	char revData[255];
 	while (true)
 	{
+		shutdown(slisten, 2);
 		printf("µÈ´ýÁ¬½Ó...\n");
 		*sClient = accept(slisten, (SOCKADDR *)&remoteAddr, &nAddrlen); 
 		if (*sClient == INVALID_SOCKET)
 		{
-			printf("accept error !%s", GetLastError());
+			printError_Win("accept error !");
 			continue;
 		}
 		TCHAR ip[64] = L"";
@@ -121,3 +125,28 @@ int socketServer()
 	return 0;
 }
 
+void printError_Win(const char * msg)
+{
+	DWORD eNum;
+	TCHAR sysMsg[256] = _T("");
+	TCHAR* p;
+	LPVOID lpMsgBuf;
+	eNum = GetLastError();
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, eNum,
+		0, //MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+
+	// Trim the end of the line and terminate it with a null
+	p = sysMsg;
+
+	while ((*p > 31) || (*p == 9))
+		++p;
+	do { *p-- = 0; } while ((p >= sysMsg) && ((*p == '.') || (*p < 33)));
+
+	// Display the message
+	USES_CONVERSION;
+	printf("ERROR: %s failed with error %d - %s", msg, eNum, T2A((LPCTSTR)lpMsgBuf));
+
+	LocalFree(lpMsgBuf);
+}
