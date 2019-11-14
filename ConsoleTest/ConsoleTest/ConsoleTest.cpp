@@ -35,6 +35,7 @@
 #include "testStack.cpp"
 #include "ProcessMonitor.h"
 #include "CFileVersion.h"
+#include "TestWinPcap.h"
 //#include "testValist.cpp"
 using namespace std;
 int socketServer();
@@ -107,6 +108,10 @@ int main(int argc, char** argv)
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 //	char *test = testLeak();	
 	_CrtDumpMemoryLeaks();
+
+	TestWinPcap test;
+	test.process();
+
 
 	cout << uppercase << hex << "12av" << endl;
 	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
