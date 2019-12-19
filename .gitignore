@@ -38,3 +38,4 @@
 *.tlog
 /ConsoleTest/.vs/ConsoleTest/v15/ipch
 /ConsoleTest/.vs/ConsoleTest/v15
+*.user
