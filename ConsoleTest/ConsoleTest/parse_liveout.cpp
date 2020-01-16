@@ -99,7 +99,7 @@ int parse_liveout()
 	int count_via_BigTa = 0;
 	//
 	char * section_begin;
-	char * last_begin;
+	char * last_begin = NULL;
 	char * end;
 
 	vector<statistic_datetime> v_ss_sec;

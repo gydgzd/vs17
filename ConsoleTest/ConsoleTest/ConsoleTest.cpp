@@ -21,6 +21,7 @@
 #include "sql_conn_cpp.h"  // my sql class
 #include "MySort.h"
 #include "testMultiThread.h"
+#include "testNDIS.h"
 #include "testStack.cpp"
 //#include "testValist.cpp"
 using namespace std;
@@ -56,6 +57,9 @@ extern int testHashMap();
 extern int testList();
 int _tmain(int argc, _TCHAR* argv[])
 {
+	testNDIS mytun;
+	mytun.dev_alloc("mytun", 0);
+
 //	testList();
 //	testHashMap();
 //	testSet();
