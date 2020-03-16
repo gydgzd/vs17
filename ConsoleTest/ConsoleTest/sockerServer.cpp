@@ -2,14 +2,16 @@
 #include <stdio.h>
 #include <winsock2.h>
 #include <WS2tcpip.h>
-#include <atlconv.h>    // for T2A ,USES_CONVERSION
-#pragma comment(lib,"ws2_32.lib")
-extern int sockerServer();
+#include <atlconv.h>      // for T2A ,USES_CONVERSION
+#include <tchar.h>
 
+#pragma comment(lib,"ws2_32.lib")
+extern int socketServer();
+void printError_Win(const char * msg);
 DWORD WINAPI clientProc(LPARAM lparam)
 {
 	SOCKET sockClient = (SOCKET)lparam;
-	char recv_buf[1024] = "";
+	char recv_buf[10] = "";
 	char send_buf[1024] = "hi, welcome";
 	while (TRUE)
 	{
@@ -49,7 +51,7 @@ DWORD WINAPI clientProc(LPARAM lparam)
 	return 0;
 }
 
-int sockerServer()
+int socketServer()
 {
 	//初始化WSA
 	WORD sockVersion = MAKEWORD(2, 2);
@@ -62,7 +64,7 @@ int sockerServer()
 	SOCKET slisten = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (slisten == INVALID_SOCKET)
 	{
-		printf("socket error !%d", GetLastError());
+		printf("socket error !%s", GetLastError());
 		return 0;
 	}
 
@@ -73,29 +75,13 @@ int sockerServer()
 	sin.sin_addr.S_un.S_addr = INADDR_ANY;
 	if (bind(slisten, (LPSOCKADDR)&sin, sizeof(sin)) == SOCKET_ERROR)
 	{
-		printf("bind error !%d", GetLastError());
+		printf("bind error !%s", GetLastError());
 	}
 
 	//开始监听
 	if (listen(slisten, 5) == SOCKET_ERROR)
 	{
-		LPVOID lpMsgBuf;
-		FormatMessage(
-			FORMAT_MESSAGE_ALLOCATE_BUFFER |
-			FORMAT_MESSAGE_FROM_SYSTEM |
-			FORMAT_MESSAGE_IGNORE_INSERTS,
-			NULL,
-			GetLastError(),
-			0, // Default language
-			(LPTSTR)&lpMsgBuf,
-			0,
-			NULL
-		);
-		USES_CONVERSION;
-		//  LOG(ERROR) << std:: string(T2A((LPCTSTR)lpMsgBuf));
-		MessageBox(NULL, (LPCTSTR)lpMsgBuf, L"Error", MB_OK | MB_ICONINFORMATION);
-		LocalFree(lpMsgBuf);
-		printf("listen error !%d", GetLastError());
+		printf("listen error !%s", GetLastError());
 		return 0;
 	}
 
@@ -107,11 +93,12 @@ int sockerServer()
 	char revData[255];
 	while (true)
 	{
+		shutdown(slisten, 2);
 		printf("等待连接...\n");
 		*sClient = accept(slisten, (SOCKADDR *)&remoteAddr, &nAddrlen); 
 		if (*sClient == INVALID_SOCKET)
 		{
-			printf("accept error !%d", GetLastError());
+			printError_Win("accept error !");
 			continue;
 		}
 		TCHAR ip[64] = L"";
@@ -138,3 +125,28 @@ int sockerServer()
 	return 0;
 }
 
+void printError_Win(const char * msg)
+{
+	DWORD eNum;
+	TCHAR sysMsg[256] = _T("");
+	TCHAR* p;
+	LPVOID lpMsgBuf;
+	eNum = GetLastError();
+	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL, eNum,
+		0, //MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+		(LPTSTR)&lpMsgBuf, 0, NULL);
+
+	// Trim the end of the line and terminate it with a null
+	p = sysMsg;
+
+	while ((*p > 31) || (*p == 9))
+		++p;
+	do { *p-- = 0; } while ((p >= sysMsg) && ((*p == '.') || (*p < 33)));
+
+	// Display the message
+	USES_CONVERSION;
+	printf("ERROR: %s failed with error %d - %s", msg, eNum, T2A((LPCTSTR)lpMsgBuf));
+
+	LocalFree(lpMsgBuf);
+}

@@ -150,7 +150,8 @@ int testHashMap()
 	mymap.insert(pair<string, int>(name, 18));
 	name = "koko";
 	mymap.insert(pair<string, int>(name, 19));
-
+	mymap.insert(pair<string, int>(name, 21));
+	mymap[name] = 21;
 	std::unordered_map<string, int>::iterator mapiterator;
 	for (mapiterator = mymap.begin(); mapiterator != mymap.end(); mapiterator++)
 		printf("%s, %d \n", mapiterator->first.c_str(), mapiterator->second);
@@ -165,19 +166,44 @@ int testHashMap()
 	for (mmapiterator = mmap.begin(); mmapiterator != mmap.end(); mmapiterator++)
 		printf("%s, %d \n", mmapiterator->first.c_str(), mmapiterator->second);
 //	printf("%d\n", mmap["Lisa"]);
+	printf("\n");
 	//unordered_multimap
 	unordered_multimap<string, int> mymtmap;
 	mymtmap.insert(pair<string, int>("Lisa", 28));
 	mymtmap.insert(pair<string, int>("Anna", 23));
 	mymtmap.insert(pair<string, int>("Nick", 18));
 	mymtmap.insert(pair<string, int>("Nick", 19));
-	mymtmap.insert(pair<string, int>("Anna", 19));
+	mymtmap.insert(pair<string, int>("Nick", 1));
 	std::unordered_multimap<string, int>::iterator mtmapiterator;
 	for (mtmapiterator = mymtmap.begin(); mtmapiterator != mymtmap.end(); mtmapiterator++)
 	{
 		printf("%s, %d \n", mtmapiterator->first.c_str(), mtmapiterator->second);
-
 	}
+	printf("\n");
+	unordered_multimap<int, int> mymtmap_num; 
+	mymtmap_num.insert(mymtmap_num.begin(),pair<int, int>(5, 2));
+	mymtmap_num.insert(mymtmap_num.begin(),pair<int, int>(4, 2));
+	mymtmap_num.insert(mymtmap_num.begin(), pair<int, int>(3, 2));
+	mymtmap_num.insert(mymtmap_num.begin(), pair<int, int>(1, 2));
+	mymtmap_num.insert(mymtmap_num.begin(), pair<int, int>(2, 2));
+	mymtmap_num.insert(mymtmap_num.begin(), pair<int, int>(3, 2));
+	mymtmap_num.insert(mymtmap_num.begin(), pair<int, int>(4, 2));
+	mymtmap_num.insert(mymtmap_num.begin(), pair<int, int>(5, 2));
+	mymtmap_num.insert(mymtmap_num.begin(), pair<int, int>(6, 2));
+	mymtmap_num.insert(mymtmap_num.begin(), pair<int, int>(7, 2));
+	std::unordered_multimap<int, int>::iterator mtmap_num_iter;
+	for (size_t n = mymtmap_num.size(); n > 0; n--)   //逆序输出
+	{
+		mtmap_num_iter = mymtmap_num.begin();    
+		for (int i = 0; i < n - 1; i++)
+			mtmap_num_iter++;
+		printf("%d, %d \n", mtmap_num_iter->first, mtmap_num_iter->second);
+	}
+	for (mtmap_num_iter = mymtmap_num.begin(); mtmap_num_iter != mymtmap_num.end(); mtmap_num_iter++)
+	{
+		printf("%d, %d \n", mtmap_num_iter->first, mtmap_num_iter->second);
+	}
+	printf("\n");
 	// 查找多个重复值
 	// 方法1
 	std::unordered_multimap<string, int>::size_type count = mymtmap.count("Nick");

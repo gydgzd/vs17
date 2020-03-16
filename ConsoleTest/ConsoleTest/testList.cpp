@@ -25,7 +25,7 @@ int testList()
 	mylist.push_back(ls2);
 
 	list<string>::iterator iter;           // auto iter
-
+	list<string>::reverse_iterator iter2 = ls1.rbegin();
 	for (iterll = mylist.begin(); iterll != mylist.end(); iterll++)
 	{
 		for (iter = iterll->begin(); iter != iterll->end(); iter++)
@@ -42,7 +42,7 @@ int testList()
 			}
 		printf("\n");
 	}
-	*/
+*/	
 	for (iterll = mylist.begin(); iterll != mylist.end(); iterll++)
 	{
 		for (iter = iterll->begin(); iter != iterll->end(); )
