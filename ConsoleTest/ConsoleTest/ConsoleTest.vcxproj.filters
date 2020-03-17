@@ -51,6 +51,9 @@
     <ClInclude Include="TestWinPcap.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="str_fun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -74,13 +77,7 @@
     <ClCompile Include="readFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="str_replace.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="logException.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="str_compare.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="testValist.cpp">
@@ -156,6 +153,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="testExec.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="str_fun.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
