@@ -152,5 +152,11 @@
     <ClCompile Include="TestWinPcap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="testSelect.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testExec.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

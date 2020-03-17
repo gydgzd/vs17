@@ -72,6 +72,7 @@ extern time_t dateToSeconds(char *str);
 extern void testVolatile();
 extern int testWMI();
 extern void getProcess();
+extern void myExec(char *cmd);
 void showError() 
 {
 	LPVOID lpMsgBuf;
@@ -104,7 +105,8 @@ Mylog mylog("D:/log/log.txt");
 int main(int argc, char** argv)
 {
 //	_CrtSetBreakAlloc(153);	
-	
+	myExec("ipconfig /all");
+	showError();
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 //	char *test = testLeak();	
 	_CrtDumpMemoryLeaks();
