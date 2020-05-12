@@ -16,6 +16,20 @@ Mylog::Mylog():max_filesize(204800000)
 #endif
 #ifdef WINVER
 	_mkdir("./log");
+
+	errno_t err;
+	if ((err = fopen_s(&m_fp, mstr_logfile.c_str(), "a")) != NULL)     //判断文件打开
+	{
+		char szLog[1280] = "";
+		printf_s(szLog, "Couldn't open %s!\n%s\n", mstr_logfile.c_str(), strerror(err));
+	}
+
+
+	m_ofs.open(mstr_logfile.c_str(), std::ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
+	if (m_ofs.fail())
+	{
+		std::cerr << "Failed to open log file. " << mstr_logfile << ":" << strerror(errno) << std::endl;
+	}
 #endif
 }
 Mylog::Mylog(const char * filename):max_filesize(204800000)
@@ -27,11 +41,34 @@ Mylog::Mylog(const char * filename):max_filesize(204800000)
 #endif
 #ifdef WINVER
 	_mkdir("./log");
+
+	errno_t err;
+	m_fp = NULL;
+	if ((err = fopen_s(&m_fp, mstr_logfile.c_str(), "a")) != NULL)     //判断文件打开
+	{
+		char szLog[1280] = "";
+		printf_s(szLog, "Couldn't open %s!\n%s\n", mstr_logfile.c_str(), strerror(err));
+	}
+/*	
+	m_ofs.open(mstr_logfile.c_str(), std::ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
+	if (m_ofs.fail())
+	{
+		std::cerr << "Failed to open log file. " << mstr_logfile << ":" << strerror(errno) << std::endl;
+	}
+*/
 #endif
 }
 Mylog::~Mylog()
 {
-
+	if (m_fp == NULL)
+	{
+		fclose(m_fp);
+		m_fp = NULL;
+	}
+	if (m_ofs.is_open())
+	{
+		m_ofs.close();
+	}
 }
 void Mylog::setLogFile(const char *filename)
 {
@@ -94,7 +131,7 @@ int Mylog::shrinkLogFile()
 	fclose(fp);
 	if( rsize != strlen(pos) )
 	{
-		this->logException("ERROR: write size does not match when shrink the file!");
+		this->logException_ofs("ERROR: write size does not match when shrink the file!");
 	}
 	return 0;
 }
@@ -106,7 +143,7 @@ int Mylog::logException(const unsigned char * logMsg, int length)
 
 	return 0;
 }
-int Mylog::logException(const std::string& logMsg)
+int Mylog::logException_ofs(const std::string& logMsg)
 {
 	//open log file
 #ifdef __linux
@@ -115,20 +152,33 @@ int Mylog::logException(const std::string& logMsg)
 #ifdef WINVER
 	_mkdir("./log");
 #endif
-	std::ofstream ofs(mstr_logfile.c_str(), std::ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
-	if (ofs.fail())
-	{
-	    std::cerr << "Failed to open log file. " <<mstr_logfile<<":"<<strerror(errno)<< std::endl;
-	    return -1;
-	}
+
 	std::string mytime = getLocalTimeUs("%Y-%m-%d %H:%M:%S");
-	ofs << mytime <<"  ";
-	ofs << logMsg << std::endl;
-	ofs.close();
+	m_ofs << mytime <<"  ";
+	m_ofs << logMsg << std::endl;
+	m_ofs.flush();
 	checkSize();
 	return 0;
 }
-
+int Mylog::logException_fopen(const std::string& logMsg)
+{
+	std::string mytime = getLocalTimeUs("%Y-%m-%d %H:%M:%S");
+	//open log file
+#ifdef __linux
+	mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
+#endif
+#ifdef WINVER
+	_mkdir("./log");
+	
+	fwrite(mytime.c_str(), 1, mytime.length(), m_fp);
+	fwrite("  ", 1, 2, m_fp);
+	fwrite(logMsg.c_str(), 1, logMsg.length(), m_fp);
+	fwrite("\n\r", 1, 1, m_fp);
+#endif
+	fflush(m_fp);
+	checkSize();
+	return 0;
+}
 int Mylog::logException(sql::SQLException &e, const char* file, const char* func, const int& line)
 {
 	//open log file

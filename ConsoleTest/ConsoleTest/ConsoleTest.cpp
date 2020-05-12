@@ -67,6 +67,7 @@ extern int readFileStream();
 extern int writeFileStream();
 extern int testHashMap();
 extern void testMap();
+extern void testVector();
 extern int testList();
 extern time_t dateToSeconds(char *str);
 extern void testVolatile();
@@ -105,15 +106,19 @@ Mylog mylog("D:/log/log.txt");
 int main(int argc, char** argv)
 {
 //	_CrtSetBreakAlloc(153);	
-	myExec("ipconfig /all");
+//	myExec("ipconfig /all");
 	showError();
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 //	char *test = testLeak();	
 	_CrtDumpMemoryLeaks();
 
 	TestWinPcap test;
-	test.process();
+//	test.process();
+	for(int i = 0; i < 100; i++)
+		mylog.logException_fopen("hei, fopen");
+	mylog.logException_fopen("hei, fopen");
 
+	testVector();
 
 	cout << uppercase << hex << "12av" << endl;
 	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
@@ -125,7 +130,7 @@ int main(int argc, char** argv)
 	ServTable[1].lpServiceProc = NULL;
 	if (StartServiceCtrlDispatcher(ServTable))
 	{
-		mylog.logException("Service start succeed.");
+	//	mylog.logException("Service start succeed.");
 	}
 	else
 	{
@@ -249,11 +254,11 @@ socketServer();
 
 void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 {
-	mylog.logException("Service start");
+//	mylog.logException("Service start");
 	hStatus = RegisterServiceCtrlHandler(_T("abcTest"),	ServiceHandler);  // (LPHANDLER_FUNCTION)ServiceHandler
 	if (!hStatus)
 	{
-		mylog.logException("Register Service Error!");
+	//	mylog.logException("Register Service Error!");
 	//	MessageBox(0,_T("Register Service Error!\n"), _T("Error"),0);
 		return;
 
@@ -274,7 +279,7 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	}
 	else
 	{
-		mylog.logException("Register Service successful!");
+	//	mylog.logException("Register Service successful!");
 	}
 
 	ServiceStatus.dwServiceType = SERVICE_WIN32;               // SERVICE_WIN32_OWN_PROCESS
@@ -291,7 +296,7 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 		ServiceStatus.dwCheckPoint = 0;
 		ServiceStatus.dwWaitHint = 0;
 		SetServiceStatus(hStatus, &ServiceStatus);
-		mylog.logException("Start Service Error!");
+//		mylog.logException("Start Service Error!");
 		system("pause");
 		return;
 	}

@@ -28,7 +28,7 @@ void testVector()
 	clock_t start, end;
 	start = clock();
 	vector<int> vb;
-	for (int i = 0; i < 16; i++)
+	for (int i = 0; i < 64; i++)
 	{
 		cout << "Capacity: " << vb.capacity() << " Size: " << vb.size() << endl;
 		vb.push_back(i);

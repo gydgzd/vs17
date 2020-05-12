@@ -39,7 +39,8 @@ public:
 	~Mylog();
 	void setLogFile(const char *filename);
 	void setMaxFileSize(long maxsize);
-	int logException(const std::string& logMsg);
+	int logException_ofs(const std::string& logMsg);
+	int logException_fopen(const std::string& logMsg);
 	int logException(const unsigned char * logMsg, int length);  // mainly for log hexadecimal
 	int logException(sql::SQLException &e, const char* file, const char* func, const int& line);
 	int checkSize();
@@ -49,7 +50,9 @@ public:
 private:
 	long m_filesize;
 	long max_filesize;
-
+	FILE *m_fp;
+	std::ofstream m_ofs;
+	unique_ptr<FILE> m_ufp;
 };
 
 
