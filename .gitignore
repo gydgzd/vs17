@@ -36,5 +36,7 @@
 *.pdb
 *.idb
 *.tlog
-/ConsoleTest/.vs/ConsoleTest/v15/ipch
-/ConsoleTest/.vs/ConsoleTest/v15
+/ConsoleTest/.vs/
+ConsoleTest/Debug/ConsoleTest.ilk
+*.ilk
+

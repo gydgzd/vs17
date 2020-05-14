@@ -54,6 +54,9 @@
     <ClInclude Include="str_fun.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="Include\easylogging++.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -156,6 +159,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="str_fun.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="easylogging++.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

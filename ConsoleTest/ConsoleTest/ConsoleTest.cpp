@@ -2,16 +2,18 @@
 //
 
 #include "stdafx.h"
-//#define _CRTDBG_MAP_ALLOC    
+   
 #include <stdlib.h>    
 #include <crtdbg.h>        // 内存检测
 #ifdef _DEBUG  
-#define New   new(_NORMAL_BLOCK, __FILE__, __LINE__)  
+#define _CRTDBG_MAP_ALLOC 
+
 #endif
 #include "getDate.h"
 #ifdef WINVER
-#define    WIN32_LEAN_AND_MEAN   //去除一些不常用的
+#define    WIN32_LEAN_AND_MEAN   //去除一些不常用的, 如winsock.h
 #include <windows.h>
+
 #include <direct.h>        // _mkdir
 //#include <strsafe.h>       // StringCchPrintf   conflict with sprintf,strcpy, and so on
 #endif // WINVER
@@ -27,7 +29,8 @@
 #include <stdio.h>
 #include <string>
 #include <string.h>
-#include <iomanip>
+
+//#include <iomanip>
 #include "sql_conn_cpp.h"  // my sql class
 #include "MySort.h"
 #include "Mylog.h"
@@ -35,10 +38,21 @@
 #include "testStack.cpp"
 #include "ProcessMonitor.h"
 #include "CFileVersion.h"
+#include "testNDIS.h"
 #include "TestWinPcap.h"
+
+#include "easylogging++.h"    // v9.96.7
+INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 //#include "testValist.cpp"
 using namespace std;
 int socketServer();
+// INITIALIZE_EASYLOGGINGPP add to easylogging++.h
+/**/void LogInit()
+{
+	el::Configurations conf("log.conf");
+	el::Loggers::reconfigureAllLoggers(conf);
+}
+#define new   new(_NORMAL_BLOCK, __FILE__, __LINE__)  
 
 char* testLeak()
 {
@@ -105,18 +119,21 @@ DWORD WINAPI MyWork(LPVOID lpParam);
 Mylog mylog("D:/log/log.txt");
 int main(int argc, char** argv)
 {
-//	_CrtSetBreakAlloc(153);	
+	LogInit();
+//	_CrtSetBreakAlloc(1785);	   //在内存分配之前设置内存中断块号
 //	myExec("ipconfig /all");
-	showError();
-	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-//	char *test = testLeak();	
-	_CrtDumpMemoryLeaks();
+//	showError();
+//	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+//	char *pleak = testLeak();	
+//	_CrtDumpMemoryLeaks();
 
 	TestWinPcap test;
 //	test.process();
 	for(int i = 0; i < 100; i++)
 		mylog.logException_fopen("hei, fopen");
-	mylog.logException_fopen("hei, fopen");
+	char logmsg[256] = "hi, mylog";
+	for (int i = 0; i < 100; i++)
+		LOG(INFO) << logmsg;
 
 	testVector();
 
@@ -134,7 +151,7 @@ int main(int argc, char** argv)
 	}
 	else
 	{
-        showError();
+    //    showError();
 	}
 	CFileVersion fv;
 	fv.Open(_T("E:\\MediaServer_V5.16.3.0\\SLW.MediaServer.exe"));
@@ -152,7 +169,7 @@ int main(int argc, char** argv)
 		system("cls");
 	}
 	*/
-socketServer();
+    //socketServer();
 	/*
 	testVolatile();
 	char msg[32] = "Hick lenawd";
@@ -242,13 +259,13 @@ socketServer();
 	cout << tt << "s"<< endl;
 	cout << pa[12] << *(fa + 12)<< endl;
 	*/
-
+    LOG(INFO) << "main finished.";
 #ifdef __linux
 	printf("Linux\n");
 #elif WINVER
 	printf("Windows\n");
 #endif
-	system("pause");
+//	system("pause");
 	return 0;
 }
 
@@ -297,7 +314,7 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 		ServiceStatus.dwWaitHint = 0;
 		SetServiceStatus(hStatus, &ServiceStatus);
 //		mylog.logException("Start Service Error!");
-		system("pause");
+		LOG(INFO) << "Start Service Error!";
 		return;
 	}
 	ServiceStatus.dwCurrentState = SERVICE_RUNNING;
@@ -308,6 +325,7 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	HANDLE hThread = CreateThread(NULL, 0, MyWork, NULL, 0, NULL);
 	if (hThread == NULL)
 		return;
+	MessageBox(0, _T("hi"), _T("hi"), 0);
 }
 
 void WINAPI ServiceHandler(DWORD fdwControl)
