@@ -39,22 +39,22 @@
     <ClInclude Include="testMultiThread.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="testNDIS.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CFileVersion.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="Mylog.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="MySort.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="processMonitor.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CFileVersion.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
     <ClInclude Include="TestWinPcap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="str_fun.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\easylogging++.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -80,13 +80,7 @@
     <ClCompile Include="readFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="str_replace.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="logException.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="str_compare.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="testValist.cpp">
@@ -134,37 +128,40 @@
     <ClCompile Include="testList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testNDIS.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CFileVersion.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="Mylog.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="MySort.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="processMonitor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="strHandle.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="strToTime.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testFriend.cpp">
+    <ClCompile Include="testVolatile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testVolatile.cpp">
+    <ClCompile Include="processMonitor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testWMI.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CFileVersion.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testFriend.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="TestWinPcap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testWMI.cpp">
+    <ClCompile Include="testSelect.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testExec.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="str_fun.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="easylogging++.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

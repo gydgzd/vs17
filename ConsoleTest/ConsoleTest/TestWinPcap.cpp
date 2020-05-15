@@ -82,29 +82,36 @@ int TestWinPcap::MyPcap_getMac(char *if_name, char *mac)
 	return (0);
 }
 /*生成数据包*/
-void gen_packet(unsigned char *buf, int len)
+void gen_packet(unsigned char *buff, int len)
 {
 	int i = 0;
 
-	//设置目标MAC地址为01:01:01:01:01:01
-	for (i = 0; i < 6; i++)
-	{
-		buf[i] = 0x01;
-	}
-	//设置源MAC地址为02:02:02:02:02:02
-	for (i = 6; i < 12; i++)
-	{
-		buf[i] = 0x02;
-	}
+	//设置目标MAC地址7c:11:cd:06:71:00
+
+	buff[0] = 0x7c;
+	buff[1] = 0x11;
+	buff[2] = 0xcd;
+	buff[3] = 0x06;
+	buff[4] = 0x71;
+	buff[5] = 0x00;
+
+
+	//设置源MAC地址
+	buff[6] = 0xac;
+	buff[7] = 0xb5;
+	buff[8] = 0x7d;
+	buff[9] = 0x2c;
+	buff[10] = 0x31;
+	buff[11] = 0x72;
 
 	//设置协议标识为0xc0xd，无任何实际意义
-	buf[12] = 0xc;
-	buf[13] = 0xd;
+	buff[12] = 0xc;
+	buff[13] = 0xd;
 
 	//填充数据包的内容
 	for (i = 14; i < len; i++)
 	{
-		buf[i] = i - 14;
+		buff[i] = i - 14;
 	}
 }
 
