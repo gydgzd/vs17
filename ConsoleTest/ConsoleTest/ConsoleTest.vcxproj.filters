@@ -39,13 +39,19 @@
     <ClInclude Include="testMultiThread.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Mylog.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="processMonitor.h">
+    <ClInclude Include="testNDIS.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="CFileVersion.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Mylog.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MySort.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="processMonitor.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="TestWinPcap.h">
@@ -128,28 +134,37 @@
     <ClCompile Include="testList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Mylog.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="strToTime.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="testVolatile.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="processMonitor.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="testWMI.cpp">
+    <ClCompile Include="testNDIS.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="CFileVersion.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Mylog.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="MySort.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="processMonitor.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="strHandle.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="strToTime.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="testFriend.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="testVolatile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
     <ClCompile Include="TestWinPcap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="testWMI.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

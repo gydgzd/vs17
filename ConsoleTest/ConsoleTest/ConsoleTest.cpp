@@ -58,7 +58,7 @@ extern int str_compare(char *str1, char *str2);
 extern int log(const char * fmt, ...);
 extern void testValist();
 extern void printf_t(FILE *m_file, const char *fmt ...);
-
+extern void testVector();
 extern void simpleInterativeReverse();
 extern void interativeReverse();
 extern int parse_liveout();
@@ -109,9 +109,9 @@ int main(int argc, char** argv)
 //	char *test = testLeak();	
 	_CrtDumpMemoryLeaks();
 
-	TestWinPcap test;
-	test.process();
-
+//	TestWinPcap test;
+//	test.process();
+	testVector();
 
 	cout << uppercase << hex << "12av" << endl;
 	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
