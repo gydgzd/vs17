@@ -162,8 +162,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CFileVersion.h" />
+    <ClInclude Include="easylogging++.h" />
     <ClInclude Include="getDate.h" />
-    <ClInclude Include="Include\easylogging++.h" />
     <ClInclude Include="Mylog.h" />
     <ClInclude Include="MyTimer.h" />
     <ClInclude Include="MyWinSock_Server.h" />
