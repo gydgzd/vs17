@@ -44,7 +44,7 @@ Mylog::Mylog(const char * filename):max_filesize(204800000)
 
 	errno_t err;
 	m_fp = NULL;
-	if ((err = fopen_s(&m_fp, mstr_logfile.c_str(), "a")) != NULL)     //判断文件打开
+	if ((err = fopen_s(&m_fp, mstr_logfile.c_str(), "a+")) != NULL)     //判断文件打开
 	{
 		char szLog[1280] = "";
 		printf_s(szLog, "Couldn't open %s!\n%s\n", mstr_logfile.c_str(), strerror(err));

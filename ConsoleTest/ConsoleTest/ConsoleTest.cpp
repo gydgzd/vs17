@@ -116,7 +116,7 @@ DWORD WINAPI MyWork(LPVOID lpParam);
 // 修改显示名称: sc config abcTest DisplayName="abcTest"
 // 修改描述: sc description abcTest "probe"
 // 开机启动: sc config abcTest start= auto
-Mylog mylog("D:/log/log.txt");
+Mylog mylog;
 int main(int argc, char** argv)
 {
 	LogInit();
@@ -194,7 +194,8 @@ int main(int argc, char** argv)
 	testHashMap();
 //	testSet();
 	//	parse_liveout();
-//	writeFileStream();
+	*/
+	writeFileStream();
 	
 //	testValist();
 
@@ -212,8 +213,7 @@ int main(int argc, char** argv)
 	printf("printf你好\n");
 */
 
- /*
- */
+
 	// test of cin
  /*
 	char str[30];
@@ -372,7 +372,14 @@ DWORD WINAPI MyWork(LPVOID lpParam)
 #ifdef WINVER
 	_mkdir("D:/log");     // the relative path is C:\Windows\SysWOW64\    
 #endif // WINVER
-	
+	TCHAR tstr[512];
+	GetModuleFileName(NULL, tstr, 512);
+	USES_CONVERSION;
+	char *str = W2A(tstr);
+	TCHAR dir[512] = _T("");
+	GetCurrentDirectory(512, dir);
+
+	char *curDir = W2A(dir);
 	ofstream ofs("D:/log/serverlog.txt", ios::app);
 	if (ofs.fail())
 	{
@@ -380,8 +387,8 @@ DWORD WINAPI MyWork(LPVOID lpParam)
 		return -1;
 	}
 	string mytime = getLocalTime("%Y-%m-%d %H:%M:%S");
-	ofs << mytime << "  ";
-	ofs << endl;
+	ofs << mytime << " GetModuleFileName:" << str << endl;
+	ofs << mytime << " GetCurrentDirectory:" << curDir << endl;
 	ofs.close();
 
 	return 0;
