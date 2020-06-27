@@ -157,18 +157,17 @@ int main(int argc, char** argv)
 	fv.Open(_T("E:\\MediaServer_V5.16.3.0\\SLW.MediaServer.exe"));
 	CString descption = fv.getFileDescription();
 //	testWMI();
-	/*
+	/**/
 //	getProcess();
 	ProcessMonitor pm;
 	while (true)
 	{
 		pm.getProcess_Win();
 		pm.mlistProcess.clear();
-		mylog.logException("Run one time.");
 		Sleep(3000);
 		system("cls");
 	}
-	*/
+	
     //socketServer();
 	/*
 	testVolatile();

@@ -55,7 +55,7 @@ int ProcessMonitor::getProcess_Win()
 	for (auto iterProcess = mlistProcess.begin(); iterProcess != mlistProcess.end(); iterProcess++)
 	{
 		iterProcess->port = getProcessPort(iterProcess->PID);
-		if(iterProcess->cpuRate > 0)
+		if(iterProcess->cpuRate >= 0)
 			printf("%-24s    PID: %6d    CPU: %f    RSS:%llu KB    ThreadCount:%4d    Port:%s\n", iterProcess->processName.c_str(), iterProcess->PID, iterProcess->cpuRate, iterProcess->RSS, iterProcess->threadCount, iterProcess->port.c_str());
     	CloseHandle(iterProcess->handle);
 	}
