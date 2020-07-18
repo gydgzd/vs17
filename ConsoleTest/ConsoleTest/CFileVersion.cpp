@@ -104,7 +104,7 @@ void CFileVersion::printError_Win(char * msg)
 	// Trim the end of the line and terminate it with a null
 	p = sysMsg;
 
-	while ((*p > 31) || (*p == 9))
+	while ((*p > 31) || (*p == 9))       // 9(0x09) - 水平制表符   31(0x1f) - 单元分隔符
 		++p;
 	do { *p-- = 0; } while ((p >= sysMsg) && ((*p == '.') || (*p < 33)));
 
