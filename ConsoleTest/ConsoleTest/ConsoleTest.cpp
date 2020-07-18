@@ -117,8 +117,31 @@ DWORD WINAPI MyWork(LPVOID lpParam);
 // 修改描述: sc description abcTest "probe"
 // 开机启动: sc config abcTest start= auto
 Mylog mylog;
+void setrgb(int bgc, int fgc)
+{
+    SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), ((bgc << 4) + fgc));
+}
+enum {
+    BLACK,
+    BLUE,
+    GREEN,
+    CYAN,
+    RED,
+    MAGENTA,
+    YELLOW,
+    GRAY,
+    INT_GRAY,
+    INT_BLUE,
+    INT_GREEN,
+    INT_CYAN,
+    INT_RED,
+    INT_MAGENTA,
+    INT_YELLOW,
+    INT_WHITE
+};
 int main(int argc, char** argv)
 {
+//    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
 	LogInit();
 //	_CrtSetBreakAlloc(1785);	   //在内存分配之前设置内存中断块号
 //	myExec("ipconfig /all");
