@@ -5,6 +5,7 @@
    
 #include <stdlib.h>    
 #include <crtdbg.h>        // 内存检测
+#include <WinSock2.h>
 #ifdef _DEBUG  
 #define _CRTDBG_MAP_ALLOC 
 
@@ -43,6 +44,7 @@
 
 #include "easylogging++.h"    // v9.96.7
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
+#pragma comment(lib,"ws2_32.lib")
 //#include "testValist.cpp"
 using namespace std;
 int socketServer();
@@ -139,8 +141,34 @@ enum {
     INT_YELLOW,
     INT_WHITE
 };
+int g_socket;
+void init()
+{
+#ifdef WINVER
+    WSADATA ws;
+    WSAStartup(MAKEWORD(2, 2), &ws);    // init windows socket dll
+#endif
+    g_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+}
+
+void mysleep(long sec, long us)
+{
+
+    struct timeval tv;    // wait
+    fd_set dummy;
+    FD_ZERO(&dummy);
+    FD_SET(g_socket, &dummy);
+    tv.tv_sec = sec;
+    tv.tv_usec = us;
+    select(0, 0, 0, &dummy, &tv);
+
+}
 int main(int argc, char** argv)
 {
+    init();
+    mylog.logException_fopen("1");
+    mysleep(0, 6000);
+    mylog.logException_fopen("1");
 //    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
 	LogInit();
 //	_CrtSetBreakAlloc(1785);	   //在内存分配之前设置内存中断块号
@@ -365,13 +393,12 @@ void WINAPI ServiceHandler(DWORD fdwControl)
 		ServiceStatus.dwCurrentState = SERVICE_STOPPED;
 		ServiceStatus.dwCheckPoint = 0;
 		ServiceStatus.dwWaitHint = 0;
-		SetServiceStatus(hStatus, &ServiceStatus);
-		return;
+        break;
 	default:
 		break;
 	}
 
-	if (SetServiceStatus(hStatus, &ServiceStatus))
+	if (SetServiceStatus(hStatus, &ServiceStatus)==0)
 	{
 		LPVOID buf;
 		if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_MAX_WIDTH_MASK,

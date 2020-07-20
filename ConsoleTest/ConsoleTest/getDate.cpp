@@ -59,27 +59,30 @@ return the local time, like
 */
 std::string getLocalTimeUs(const char *format)
 {
-    struct timeval tv;
-	memset(&tv, 0, sizeof(tv));
     std::string date_str = "";
     char tmp[32] = {};
-	
+    struct timeval tv;
 #ifdef __linux
-	gettimeofday(&tv,NULL);
+
+    gettimeofday(&tv, NULL);
     strftime(tmp, sizeof(tmp), format, localtime(&tv.tv_sec));
-#elif WINVER || WIN32
+#elif WINVER
+    // 从1601年1月1日0:0:0:000到1970年1月1日0:0:0:000的时间(单位100ns)
+#define EPOCHFILETIME   (116444736000000000UL)
+    FILETIME ft;
+    LARGE_INTEGER li;
+    int64_t tt = 0;
+    GetSystemTimeAsFileTime(&ft);
+    li.LowPart = ft.dwLowDateTime;
+    li.HighPart = ft.dwHighDateTime;
+    // 从1970年1月1日0:0:0:000到现在的微秒数(UTC时间)
+    tt = (li.QuadPart - EPOCHFILETIME) / 10;
+    tv.tv_sec = tt / 1000 / 1000;
+    tv.tv_usec = tt - tv.tv_sec * 1000 * 1000;
     tm timeinfo;
-	SYSTEMTIME sysTime, localTime;
-//	GetSystemTime(&sysTime);      // UTC Time, 8 hours earlier than GetLocalTime
-	GetLocalTime(&localTime);     // accurate to ms
-	timeinfo.tm_year = localTime.wYear - 1900;
-	timeinfo.tm_mon  = localTime.wMonth - 1;
-	timeinfo.tm_mday = localTime.wDay;
-	timeinfo.tm_hour = localTime.wHour;
-	timeinfo.tm_min  = localTime.wMinute;
-	timeinfo.tm_sec  = localTime.wSecond;
+    time_t sec = tv.tv_sec;
+    localtime_s(&timeinfo, &sec);
     strftime(tmp, sizeof(tmp), format, &timeinfo);
-	tv.tv_usec = localTime.wMilliseconds * 1000;
 #endif
 
     date_str = tmp;
