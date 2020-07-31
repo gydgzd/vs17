@@ -161,10 +161,28 @@ void mysleep(long sec, long us)
     tv.tv_sec = sec;
     tv.tv_usec = us;
     select(0, 0, 0, &dummy, &tv);
-
 }
+union bigorlittle
+{
+    char a;
+    short b;
+};
 int main(int argc, char** argv)
 {
+    bigorlittle endian;
+    endian.b = 0x0102;
+    if (endian.a == 2)
+        cout << "big endian";
+    else
+        cout << "little endian";
+    char a = -1;
+    unsigned char b = -1;
+    unsigned int id[4] = {};
+    id[0] = 399;
+    id[1] = 166;
+    unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小
+    for (int i = 0; i < 12; i++)
+        printf("%x - %d\n", p + i, *(unsigned int*)(p+i)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
     init();
     mylog.logException_fopen("1");
     mysleep(0, 6000);
@@ -409,7 +427,7 @@ void WINAPI ServiceHandler(DWORD fdwControl)
 			0,
 			NULL))
 		{
-			MessageBox(0, (LPTSTR)(buf), _T("SetServiceStatus Error!"), 0);
+			MessageBox(0, (LPTSTR)(buf), _T("SetServiceStatus Error!"), 0);   // MessageBox 会造成阻塞，影响服务启停
 			LocalFree(buf);
 		}
 	}
