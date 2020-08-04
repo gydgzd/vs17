@@ -41,21 +41,21 @@ std::string getLocalTime(const char *format)
 
 #ifdef __linux
 	strftime(tmp, sizeof(tmp), format, localtime(&t));
-#elif WINVER
+#elif (defined WINVER ||defined WIN32)
 	tm timeinfo;
 	localtime_s(&timeinfo, &t);
 	strftime(tmp, sizeof(tmp), format, &timeinfo);
 #endif
 
 	date_str = tmp;
-	//puts( tmp );
 	return date_str;
 }
 /*
 return the local time, like
 "%Y-%m-%d %H:%M:%S",
 "%Y-%m-%d",
-"%Y"
+"%Y" 
+then add the us in the tail
 */
 std::string getLocalTimeUs(const char *format)
 {
@@ -66,7 +66,7 @@ std::string getLocalTimeUs(const char *format)
 
     gettimeofday(&tv, NULL);
     strftime(tmp, sizeof(tmp), format, localtime(&tv.tv_sec));
-#elif WINVER
+#elif (defined WINVER ||defined WIN32)
     // 从1601年1月1日0:0:0:000到1970年1月1日0:0:0:000的时间(单位100ns)
 #define EPOCHFILETIME   (116444736000000000UL)
     FILETIME ft;

@@ -118,7 +118,7 @@ DWORD WINAPI MyWork(LPVOID lpParam);
 // 修改显示名称: sc config abcTest DisplayName="abcTest"
 // 修改描述: sc description abcTest "probe"
 // 开机启动: sc config abcTest start= auto
-Mylog mylog;
+
 void setrgb(int bgc, int fgc)
 {
     SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), ((bgc << 4) + fgc));
@@ -142,7 +142,7 @@ enum {
     INT_WHITE
 };
 int g_socket;
-void init()
+void initWinSocket()
 {
 #ifdef WINVER
     WSADATA ws;
@@ -162,51 +162,36 @@ void mysleep(long sec, long us)
     tv.tv_usec = us;
     select(0, 0, 0, &dummy, &tv);
 }
-union bigorlittle
-{
-    char a;
-    short b;
-};
+
 int main(int argc, char** argv)
 {
-    bigorlittle endian;
-    endian.b = 0x0102;
-    if (endian.a == 2)
-        cout << "big endian";
-    else
-        cout << "little endian";
-    char a = -1;
-    unsigned char b = -1;
-    unsigned int id[4] = {};
-    id[0] = 399;
-    id[1] = 166;
-    unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小
-    for (int i = 0; i < 12; i++)
-        printf("%x - %d\n", p + i, *(unsigned int*)(p+i)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
-    init();
-    mylog.logException_fopen("1");
-    mysleep(0, 6000);
-    mylog.logException_fopen("1");
-//    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
-	LogInit();
 //	_CrtSetBreakAlloc(1785);	   //在内存分配之前设置内存中断块号
 //	myExec("ipconfig /all");
 //	showError();
 //	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 //	char *pleak = testLeak();	
 //	_CrtDumpMemoryLeaks();
+    unsigned int id[4] = {};
+    id[0] = 399;
+    id[1] = 166;
+    unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小
+    printf("%d - %d\n", (unsigned int)*p, (unsigned int)*(p + 4));
+    printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
+    initWinSocket();
+    LogInit();
+//    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
 
 	TestWinPcap test;
 //	test.process();
+    Mylog mylog;
 	for(int i = 0; i < 100; i++)
-		mylog.logException_fopen("hei, fopen");
+		mylog.log("hei, fopen");
 	char logmsg[256] = "hi, mylog";
 	for (int i = 0; i < 100; i++)
 		LOG(INFO) << logmsg;
 
 	testVector();
 
-	cout << uppercase << hex << "12av" << endl;
 	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
 	
 	SERVICE_TABLE_ENTRY ServTable[2];
@@ -226,7 +211,7 @@ int main(int argc, char** argv)
 	fv.Open(_T("E:\\MediaServer_V5.16.3.0\\SLW.MediaServer.exe"));
 	CString descption = fv.getFileDescription();
 //	testWMI();
-	/**/
+	/*
 //	getProcess();
 	ProcessMonitor pm;
 	while (true)
@@ -236,7 +221,7 @@ int main(int argc, char** argv)
 		Sleep(3000);
 		system("cls");
 	}
-	
+	*/
     //socketServer();
 	/*
 	testVolatile();
@@ -245,9 +230,6 @@ int main(int argc, char** argv)
 	time_t tm1 = dateToSeconds("2019-02-20 09:52:21");
 	printf("%lld\n", tm1);
 
-	Mycounter mc1; 
-	std::thread th{ &Mycounter::counter, &mc1,10, 1 };
-	th.detach();
 	Sleep(1000);
 	testList();
 	string str1 = "help";
@@ -330,7 +312,7 @@ int main(int argc, char** argv)
     LOG(INFO) << "main finished.";
 #ifdef __linux
 	printf("Linux\n");
-#elif WINVER
+#elif (defined WINVER ||defined WIN32)
 	printf("Windows\n");
 #endif
 //	system("pause");
@@ -393,7 +375,6 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	HANDLE hThread = CreateThread(NULL, 0, MyWork, NULL, 0, NULL);
 	if (hThread == NULL)
 		return;
-	MessageBox(0, _T("hi"), _T("hi"), 0);
 }
 
 void WINAPI ServiceHandler(DWORD fdwControl)

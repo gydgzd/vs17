@@ -33,7 +33,7 @@ int writeFileStream()
 {
 	char *filename = "D:/2.txt";
 	ofstream outfile;
-	outfile.open(filename, ios_base::out);
+	outfile.open(filename, ios_base::in);
 	if (!outfile)
 	{
 		cout << "Failed to open " << filename <<": "<< strerror(errno) << endl;

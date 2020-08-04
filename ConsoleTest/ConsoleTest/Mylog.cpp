@@ -6,69 +6,30 @@
  */
 
 #include "Mylog.h"
-
-Mylog::Mylog():max_filesize(204800000)
+std::mutex g_log_Mutex;
+std::condition_variable g_log_CondVar;
+std::atomic<bool> g_log_Exit;
+std::thread logth;
+Mylog::Mylog(): m_filesize(-1),max_filesize(204800000)
 {
-	m_filesize = -1;
-	mstr_logfile = "log/program.log";
-#ifdef __linux
-		mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#endif
-#ifdef WINVER
-	_mkdir("./log");
-
-	errno_t err;
-	if ((err = fopen_s(&m_fp, mstr_logfile.c_str(), "a")) != NULL)     //判断文件打开
-	{
-		char szLog[1280] = "";
-		printf_s(szLog, "Couldn't open %s!\n%s\n", mstr_logfile.c_str(), strerror(err));
-	}
-
-
-	m_ofs.open(mstr_logfile.c_str(), std::ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
-	if (m_ofs.fail())
-	{
-		std::cerr << "Failed to open log file. " << mstr_logfile << ":" << strerror(errno) << std::endl;
-	}
-#endif
+    g_log_Exit = false;
+    mstr_logfile = LOG_FILENAME;
+    logth = std::thread{&Mylog::processEntries, this};
 }
-Mylog::Mylog(const char * filename):max_filesize(204800000)
+Mylog::Mylog(const char * filename):m_filesize(-1), max_filesize(204800000)
 {
-	m_filesize = -1;
+    g_log_Exit = false;
 	mstr_logfile = filename;
-#ifdef __linux
-		mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#endif
-#ifdef WINVER
-	_mkdir("./log");
-
-	errno_t err;
-	m_fp = NULL;
-	if ((err = fopen_s(&m_fp, mstr_logfile.c_str(), "a+")) != NULL)     //判断文件打开
-	{
-		char szLog[1280] = "";
-		printf_s(szLog, "Couldn't open %s!\n%s\n", mstr_logfile.c_str(), strerror(err));
-	}
-/*	
-	m_ofs.open(mstr_logfile.c_str(), std::ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
-	if (m_ofs.fail())
-	{
-		std::cerr << "Failed to open log file. " << mstr_logfile << ":" << strerror(errno) << std::endl;
-	}
-*/
-#endif
+	logth = std::thread{&Mylog::processEntries, this};
 }
 Mylog::~Mylog()
 {
-	if (m_fp == NULL)
-	{
-		fclose(m_fp);
-		m_fp = NULL;
-	}
-	if (m_ofs.is_open())
-	{
-		m_ofs.close();
-	}
+    //shut down the thread by setting mExit
+ //   unique_lock<mutex> lock(g_log_Mutex);
+    g_log_Exit = true;
+ //   lock.unlock();
+    g_log_CondVar.notify_all();
+    logth.join();
 }
 void Mylog::setLogFile(const char *filename)
 {
@@ -116,7 +77,7 @@ int Mylog::shrinkLogFile()
 		return -1;
 	}
 	char tmp[2048] = "";
-	fseek(fp, -(int)(sizeof(tmp)-1), SEEK_END);
+	fseek(fp, -(sizeof(tmp)-1), SEEK_END);
 	size_t rsize = fread(tmp, sizeof(char),sizeof(tmp)-1,fp);
 	char *pos = strchr(tmp, '\n');
 	pos++;
@@ -131,61 +92,50 @@ int Mylog::shrinkLogFile()
 	fclose(fp);
 	if( rsize != strlen(pos) )
 	{
-		this->logException_ofs("ERROR: write size does not match when shrink the file!");
+		this->logException("ERROR: write size does not match when shrink the file!");
 	}
 	return 0;
 }
-// mainly for log hexadecimal
-int Mylog::logException(const unsigned char * logMsg, int length)
+// put log msg into the queue
+void Mylog::log(const char * logMsg)
 {
-
-
-
-	return 0;
+    //Lock mutex and add entry to the queue.
+    unique_lock<mutex> lock(g_log_Mutex);
+    mQueue.emplace(logMsg);
+    lock.unlock();
+    //notify condition variable to wake up threads
+//    g_log_CondVar.notify_all();    // it will add two locks here
+    g_log_CondVar.notify_one();
+	return ;
 }
-int Mylog::logException_ofs(const std::string& logMsg)
+int Mylog::logException(const std::string& logMsg)
 {
 	//open log file
 #ifdef __linux
 		mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#endif
-#ifdef WINVER
+#elif (defined WINVER ||defined WIN32)
 	_mkdir("./log");
 #endif
+	std::ofstream ofs(mstr_logfile.c_str(), std::ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
+	if (ofs.fail())
+	{
+	    std::cerr << "Failed to open log file. " <<mstr_logfile<<":"<<strerror(errno)<< std::endl;
+	    return -1;
+	}
+	std::string mytime = getLocalTimeUs("%Y-%m-%d %H:%M:%S");
+	ofs << mytime <<"  ";
+	ofs << logMsg << std::endl;
+	ofs.close();
+	checkSize();
+	return 0;
+}
 
-	std::string mytime = getLocalTimeUs("%Y-%m-%d %H:%M:%S");
-	m_ofs << mytime <<"  ";
-	m_ofs << logMsg << std::endl;
-	m_ofs.flush();
-	checkSize();
-	return 0;
-}
-int Mylog::logException_fopen(const std::string& logMsg)
-{
-	std::string mytime = getLocalTimeUs("%Y-%m-%d %H:%M:%S");
-	//open log file
-#ifdef __linux
-	mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#endif
-#ifdef WINVER
-	_mkdir("./log");
-	
-	fwrite(mytime.c_str(), 1, mytime.length(), m_fp);
-	fwrite("  ", 1, 2, m_fp);
-	fwrite(logMsg.c_str(), 1, logMsg.length(), m_fp);
-	fwrite("\n\r", 1, 1, m_fp);
-#endif
-	fflush(m_fp);
-	checkSize();
-	return 0;
-}
 int Mylog::logException(sql::SQLException &e, const char* file, const char* func, const int& line)
 {
 	//open log file
 #ifdef __linux
 	mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#endif
-#ifdef WINVER
+#elif (defined WINVER ||defined WIN32)
 	_mkdir("./log");
 #endif
 	//string fullPath = "./log"+logFileName;
@@ -206,4 +156,50 @@ int Mylog::logException(sql::SQLException &e, const char* file, const char* func
 	ofs.close();
 	checkSize();
 	return 0;
+}
+
+void Mylog::processEntries()
+{
+    //start process loop
+    while(true)
+    {
+        std::unique_lock < std:: mutex > locker(g_log_Mutex);
+        //Only wait for notification if we don't have to exit
+        if(!g_log_Exit && mQueue.empty())
+        {
+
+            g_log_CondVar.wait(locker);  //wait for a notification
+        }
+        locker.unlock();      //  ******this position is important for the lock
+        //notified, so something might be in the queue.
+        //open log file
+#if defined __linux
+        mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
+#elif (defined WINVER ||defined WIN32)
+        mkdir("./log");
+#endif
+        ofstream ofs(mstr_logfile.c_str(), std::ios::app);
+        if(ofs.fail())
+        {
+            cerr<<"Failed to open log file."<<endl;
+            return;
+        }
+        
+        while(!g_log_Exit)
+        {
+            locker.lock();
+            if (!mQueue.empty())
+            {
+                ofs << getLocalTimeUs("%Y-%m-%d %H:%M:%S") <<"  ";
+                ofs << mQueue.front() << std::endl;
+                mQueue.pop();
+            }
+            locker.unlock();
+        }
+        ofs.close();
+        checkSize();
+        if(g_log_Exit)
+            break;
+    }
+    printf("Thread exit.\n");
 }
