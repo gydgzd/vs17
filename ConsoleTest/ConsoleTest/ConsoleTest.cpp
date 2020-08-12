@@ -174,26 +174,13 @@ int main(int argc, char** argv)
     unsigned int id[4] = {};
     id[0] = 399;
     id[1] = 166;
-    unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小
+    unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小，只留下低位
     printf("%d - %d\n", (unsigned int)*p, (unsigned int)*(p + 4));
     printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
     initWinSocket();
     LogInit();
 //    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
 
-	TestWinPcap test;
-//	test.process();
-    Mylog mylog;
-	for(int i = 0; i < 100; i++)
-		mylog.log("hei, fopen");
-	char logmsg[256] = "hi, mylog";
-	for (int i = 0; i < 100; i++)
-		LOG(INFO) << logmsg;
-
-	testVector();
-
-	//MessageBox(0, _T("Begin Service!\n"), _T("INFO"), 0);
-	
 	SERVICE_TABLE_ENTRY ServTable[2];
 	ServTable[0].lpServiceName = _T("abcTest");
 	ServTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
@@ -208,29 +195,20 @@ int main(int argc, char** argv)
     //    showError();
 	}
 	CFileVersion fv;
-	fv.Open(_T("E:\\MediaServer_V5.16.3.0\\SLW.MediaServer.exe"));
-	CString descption = fv.getFileDescription();
-//	testWMI();
-	/*
-//	getProcess();
-	ProcessMonitor pm;
-	while (true)
-	{
-		pm.getProcess_Win();
-		pm.mlistProcess.clear();
-		Sleep(3000);
-		system("cls");
-	}
-	*/
-    //socketServer();
-	/*
+	fv.Open(_T("D:\\开发工具\\SunloginClient_10.3.0.27372.exe"));
+	cout << fv.getFileDescription();
+
+    Mylog  mylog;
+    mylog.log("hello");
+
+	
 	testVolatile();
 	char msg[32] = "Hick lenawd";
 	printf("%4.2s\n", msg);
 	time_t tm1 = dateToSeconds("2019-02-20 09:52:21");
 	printf("%lld\n", tm1);
 
-	Sleep(1000);
+    /*	Sleep(1000);
 	testList();
 	string str1 = "help";
 	string a;
