@@ -1,7 +1,7 @@
 #pragma once
 
 #include <atlstr.h>
-
+#include <string>
 
 class CFileVersion
 {
@@ -11,9 +11,9 @@ public:
 
 	void    Close();
 	BOOL    Open(LPCTSTR lpszModuleName);
-	CString QueryValue(LPCTSTR lpszValueName, DWORD dwLangCharset = 0);
+	std::string QueryValue(LPCTSTR lpszValueName, DWORD dwLangCharset = 0);
 
-	CString getFileDescription() { return QueryValue(_T("FileDescription")); };
+    std::string getFileDescription() { return QueryValue(_T("FileDescription")); };
 
 protected:
 	LPBYTE  m_lpVersionData;

@@ -113,9 +113,6 @@
     <ClCompile Include="testSet.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="parse_liveout.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="testHashMap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

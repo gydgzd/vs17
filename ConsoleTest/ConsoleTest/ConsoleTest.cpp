@@ -10,7 +10,7 @@
 #define _CRTDBG_MAP_ALLOC 
 
 #endif
-#include "getDate.h"
+
 #ifdef WINVER
 #define    WIN32_LEAN_AND_MEAN   //去除一些不常用的, 如winsock.h
 #include <windows.h>
@@ -196,33 +196,15 @@ int main(int argc, char** argv)
 	}
 	CFileVersion fv;
 	fv.Open(_T("D:\\开发工具\\SunloginClient_10.3.0.27372.exe"));
-	cout << fv.getFileDescription();
+	cout << fv.getFileDescription() << endl;
 
-    Mylog  mylog;
-    mylog.log("hello");
 
-	
-	testVolatile();
-	char msg[32] = "Hick lenawd";
-	printf("%4.2s\n", msg);
-	time_t tm1 = dateToSeconds("2019-02-20 09:52:21");
-	printf("%lld\n", tm1);
-
-    /*	Sleep(1000);
 	testList();
-	string str1 = "help";
-	string a;
-	stringstream ss(str1);
-	getline(ss, a, 'e');
-	ss >> a;
-	cout << str1.substr(0, 1);
-	if (str1.substr(0, 1) == "h")
-		cout << "same" << endl;
+
 	testMap();
 	testHashMap();
 //	testSet();
-	//	parse_liveout();
-	*/
+
 	writeFileStream();
 	
 //	testValist();

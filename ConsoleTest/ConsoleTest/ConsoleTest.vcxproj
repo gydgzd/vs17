@@ -193,7 +193,6 @@
     </ClCompile>
     <ClCompile Include="MyTimer.cpp" />
     <ClCompile Include="MyWinSock_Server.cpp" />
-    <ClCompile Include="parse_liveout.cpp" />
     <ClCompile Include="processMonitor.cpp" />
     <ClCompile Include="readFile.cpp" />
     <ClCompile Include="recursion.cpp" />

@@ -63,7 +63,7 @@ void CFileVersion::Close()
 	m_dwLangCharset = 0;
 }
 
-CString CFileVersion::QueryValue(LPCTSTR lpszValueName, DWORD dwLangCharset)
+std::string CFileVersion::QueryValue(LPCTSTR lpszValueName, DWORD dwLangCharset)
 {
 	// Must call Open() first  
 	if (m_lpVersionData == NULL)
@@ -71,7 +71,7 @@ CString CFileVersion::QueryValue(LPCTSTR lpszValueName, DWORD dwLangCharset)
 		std::cout << "m_lpVersionData is NULL" << std::endl;
 	}
 	if (m_lpVersionData == NULL)
-		return (CString)_T("");
+		return "";
 	// If no lang-charset specified use default  
 	if (dwLangCharset == 0)
 		dwLangCharset = m_dwLangCharset;
@@ -85,7 +85,7 @@ CString CFileVersion::QueryValue(LPCTSTR lpszValueName, DWORD dwLangCharset)
 	else
 		printError_Win("VerQueryValue");
 	strBlockName.ReleaseBuffer();
-	return strValue;
+	return CT2A(strValue.GetBuffer());
 }
 
  
