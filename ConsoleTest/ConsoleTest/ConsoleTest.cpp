@@ -194,22 +194,15 @@ int main(int argc, char** argv)
 	{
     //    showError();
 	}
-	CFileVersion fv;
-	fv.Open(_T("D:\\开发工具\\SunloginClient_10.3.0.27372.exe"));
-	cout << fv.getFileDescription() << endl;
-
 
 	testList();
-
 	testMap();
 	testHashMap();
 //	testSet();
 
-	writeFileStream();
-	
-//	testValist();
+	testValist();
 
-/*	wcout.imbue(locale("")); 
+/**/	wcout.imbue(locale("")); 
 	char * lcname = setlocale(LC_ALL, "chs");
 	if (NULL == lcname)
 	{
@@ -221,40 +214,21 @@ int main(int argc, char** argv)
 	_stprintf_s(szError, L"世界,你好！");
 	wcout << szError << endl;
 	printf("printf你好\n");
-*/
+
 
 
 	// test of cin
- /*
+ /**/
 	char str[30];
 	string s1;
 	getline(cin, s1);
 	cout << s1 << endl;
-	cin.ignore(100,'\n');    // 清除\n之前100个字符
+	cin.ignore(100,'\n');    // 输入，清除\n之前100个字符
 
 	cin.getline(str,30);
 	cout << str << endl;
 	cin.ignore(100, '\n');   //调用getline后会激活键盘输入，输入'\n'，调用get不会
-	
 
-	char array[12] = { 0x01 , 0x02 , 0x03 , 0x04 , 0x05 , 0x06 , 0x07 , 0x08 };
-	short *pshort = (short *)array;
-	int *pint = (int *)array;
-	_int64 *pint64 = (_int64 *)array;
-	printf("0x%x , 0x%x , 0x%llx , 0x%llx", *pshort, *(pshort + 2), *pint64, *(pint + 2));
-	*/
-/*
-	myqueue sta1;
-	sta1.push(1);
-	sta1.push(5);
-	sta1.push(3);
-	sta1.push(7);
-	cout << sta1.pop() << endl;
-	cout << sta1.pop() << endl;
-	cout << sta1.pop() << endl;
-	cout << sta1.pop() << endl;
-	*/
-//	interativeReverse();   // cin.get不会用
 
 	// test of sort
 /*	float fa[44] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35, 23, 755, 23, 121, 232.12, 193.23, 1201.23,122,232.21,21213,1242,11,242.24,2313824,232313,4242,32,42,423,43564,4755,2325,92.81 };

@@ -14,8 +14,8 @@ void interativeReverse()
 {
 	char stack[60];
 	register int top = 0;
-	std::cin.get(stack,top);
+	std::cin.getline(stack,top);
 	while (stack[top] != '\n' && top < 59)
-		std::cin.get(stack[++top]);
+		std::cin.getline(stack + ++top, 1);
 	for (top -= 2; top >= 0; std::cout.put(stack[top--]));
 }
