@@ -74,9 +74,6 @@
     <ClCompile Include="readFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="logException.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="testValist.cpp">
       <Filter>源文件</Filter>
     </ClCompile>

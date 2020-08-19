@@ -216,33 +216,17 @@ int main(int argc, char** argv)
 	printf("printf你好\n");
 
 
-
-	// test of cin
- /**/
-	char str[30];
-	string s1;
-	getline(cin, s1);
-	cout << s1 << endl;
-	cin.ignore(100,'\n');    // 输入，清除\n之前100个字符
-
-	cin.getline(str,30);
-	cout << str << endl;
-	cin.ignore(100, '\n');   //调用getline后会激活键盘输入，输入'\n'，调用get不会
-
-
 	// test of sort
-/*	float fa[44] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35, 23, 755, 23, 121, 232.12, 193.23, 1201.23,122,232.21,21213,1242,11,242.24,2313824,232313,4242,32,42,423,43564,4755,2325,92.81 };
+/**/	
+    float fa[] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35,1242,11,242.24,2313824,232313,4755,2325,92.81 };
 	float *pa = fa;
 	MySort<float> mSort;
-	clock_t t1 = clock();
 	mSort.insertionSort(fa, sizeof(fa) / sizeof(fa[0]));
-	clock_t t2 = clock();
-	float tt = (float)(t2 - t1)/ CLOCKS_PER_SEC;
+
 	for (int i = 0; i<sizeof(fa) / sizeof(fa[0]); i++)
 		cout << fa[i] << "  ";
-	cout << tt << "s"<< endl;
-	cout << pa[12] << *(fa + 12)<< endl;
-	*/
+
+	
     LOG(INFO) << "main finished.";
 #ifdef __linux
 	printf("Linux\n");

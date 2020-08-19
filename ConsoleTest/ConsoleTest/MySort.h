@@ -49,7 +49,6 @@ int MySort<T>::insertionSort(T a[], int n)
 			a[indx_n + 1] = a[indx_n];
 		a[indx_n + 1] = smaller;
 	}
-	Sleep(1000);
 	cout <<"InsertionSort cost time: "<<m_timer.stop()<<" ms"<<endl;
 	return 0;
 }
