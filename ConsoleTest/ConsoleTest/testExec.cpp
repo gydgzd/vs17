@@ -3,7 +3,7 @@
 
 #include <windows.h>
 #include <atlconv.h>
-extern void showError();
+extern void printError_Win(const char *msg = "");
 
 void myExec(char *cmd)
 {
@@ -37,6 +37,6 @@ void myExec(char *cmd)
 	}
 	else
 	{
-		showError();
+        printError_Win("CreateProcess");
 	}
 }
