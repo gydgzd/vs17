@@ -192,6 +192,7 @@ int main(int argc, char** argv)
 		printf("setlocale() from environment failed.\n");
 	}
 */	wchar_t szError[1024] = L"世界"; // _T("你好");
+    char tmp[] = "中";
 //	swprintf_s(szError, L"世界");
 	memcpy_s(szError, 10, L"世界", sizeof(L"世界"));
     cout << "sizeof(L\"世界\"):" << sizeof(L"世界") << "  sizeof(\"世界\"):" << sizeof("世界") << endl;

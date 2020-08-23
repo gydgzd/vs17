@@ -251,7 +251,7 @@ std::string getLocalTime(const char *format)
     return date_str;
 }
 /*
-return the local time, like
+return the local time, format is like
 "%Y-%m-%d %H:%M:%S",
 "%Y-%m-%d",
 "%Y"

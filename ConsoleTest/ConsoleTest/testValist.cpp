@@ -33,6 +33,8 @@ void testValist()
 	char *b = "D:\\print_t.txt";
 	FILE *m_filel;
 	m_filel = fopen(b, "ab+");
+    char buffer[256] = "";
+    fread(buffer, 256, 1, m_filel);
 	printf_t(m_filel, "%s  wenjiande weizhi is %s\n", time.c_str(), b);
 	fflush(m_filel);
 	fclose(m_filel);
