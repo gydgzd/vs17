@@ -183,7 +183,7 @@ int main(int argc, char** argv)
 	testHashMap();
 //	testSet();
 
-	testValist();
+//	testValist();
 
 /*	wcout.imbue(locale("")); 
 	char * lcname = setlocale(LC_ALL, "chs");
@@ -192,14 +192,14 @@ int main(int argc, char** argv)
 		printf("setlocale() from environment failed.\n");
 	}
 */	wchar_t szError[1024] = L"世界"; // _T("你好");
-    char tmp[] = "中";
+    char tmp[] = "世";
 //	swprintf_s(szError, L"世界");
 	memcpy_s(szError, 10, L"世界", sizeof(L"世界"));
     cout << "sizeof(L\"世界\"):" << sizeof(L"世界") << "  sizeof(\"世界\"):" << sizeof("世界") << endl;
+    cout << "strlen(L\"世界\"):" << wcslen(L"世界") << "  sizeof(\"世界\"):" << strlen("世界") << endl;
 	_stprintf_s(szError, L"世界,你好！");
 	wcout << szError << endl;
 	printf("printf你好\n");
-
 
 	// test of sort
 /**/	
@@ -211,7 +211,6 @@ int main(int argc, char** argv)
 	for (int i = 0; i<sizeof(fa) / sizeof(fa[0]); i++)
 		cout << fa[i] << "  ";
 
-	
     LOG(INFO) << "main finished.";
 #ifdef __linux
 	printf("Linux\n");
