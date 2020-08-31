@@ -30,6 +30,10 @@
  *
  * @(#) $Header: /tcpdump/master/libpcap/pcap-stdinc.h,v 1.10.2.1 2008-10-06 15:38:39 gianluca Exp $ (LBL)
  */
+#if (defined WIN32 || defined _WIN32)
+#include <winsock2.h>
+#endif
+
 
 #define SIZEOF_CHAR 1
 #define SIZEOF_SHORT 2
@@ -42,11 +46,14 @@
  * Avoids a compiler warning in case this was already defined      
  * (someone defined _WINSOCKAPI_ when including 'windows.h', in order
  * to prevent it from including 'winsock.h')
- */
+
 #ifdef _WINSOCKAPI_
 #undef _WINSOCKAPI_
 #endif
-#include <winsock2.h>
+*/
+//#include <winsock2.h>
+#include <windows.h>
+#pragma comment(lib, "Ws2_32.lib")
 
 #include <fcntl.h>
 

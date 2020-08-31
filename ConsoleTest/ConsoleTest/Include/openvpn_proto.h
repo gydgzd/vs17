@@ -25,7 +25,7 @@
  */
 
 #define OPENVPN_ETH_ALEN 6            /* ethernet address length */
-struct openvpn_ethhdr
+struct ethhdr
 {
 	uint8_t dest[OPENVPN_ETH_ALEN];   /* destination ethernet addr */
 	uint8_t source[OPENVPN_ETH_ALEN]; /* source ethernet addr   */
@@ -55,7 +55,7 @@ struct openvpn_8021qhdr
  * header with additional IEEE 802.1Q tagging.
  */
 #define SIZE_ETH_TO_8021Q_HDR (sizeof(struct openvpn_8021qhdr) \
-                               - sizeof(struct openvpn_ethhdr))
+                               - sizeof(struct ethhdr))
 
 
 struct openvpn_arp {
@@ -76,7 +76,7 @@ struct openvpn_arp {
 	uint32_t ip_dest;
 };
 
-struct openvpn_iphdr {
+struct iphdr {
 #define OPENVPN_IPH_GET_VER(v) (((v) >> 4) & 0x0F)
 #define OPENVPN_IPH_GET_LEN(v) (((v) & 0x0F) << 2)
 	uint8_t version_len;
@@ -119,7 +119,7 @@ struct openvpn_ipv6hdr {
 /*
  * ICMPv6 header
  */
-struct openvpn_icmp6hdr {
+struct icmp6hdr {
 #define OPENVPN_ICMP6_DESTINATION_UNREACHABLE       1
 #define OPENVPN_ND_ROUTER_SOLICIT                 133
 #define OPENVPN_ND_ROUTER_ADVERT                  134
@@ -134,11 +134,36 @@ struct openvpn_icmp6hdr {
 	uint16_t icmp6_cksum;
 	uint8_t icmp6_dataun[4];
 };
+struct icmphdr
+{
+    unsigned char type;
+    unsigned char code;
+    unsigned short checksum;
+    union
+    {
+        struct
+        {
+            unsigned short id;
+            unsigned short sequence;
+        }echo;
+        unsigned int gateway;
+        struct
+        {
+            unsigned short unused;
+            unsigned short mtu;
+        }frag; //pmtu发现
+    }un;
+    unsigned int  icmp_timestamp[2];//时间戳
+                                    //ICMP数据占位符
+    unsigned char data[0];
+#define icmp_id un.echo.id
+#define icmp_seq un.echo.sequence
+};
 
 /*
  * UDP header
  */
-struct openvpn_udphdr {
+struct udphdr {
 	uint16_t source;
 	uint16_t dest;
 	uint16_t len;
@@ -148,7 +173,7 @@ struct openvpn_udphdr {
 /*
  * TCP header, per RFC 793.
  */
-struct openvpn_tcphdr {
+struct tcphdr {
 	uint16_t source;       /* source port */
 	uint16_t dest;         /* destination port */
 	uint32_t seq;          /* sequence number */
@@ -178,10 +203,10 @@ struct openvpn_tcphdr {
 #define OPENVPN_TCPOLEN_MAXSEG 4
 
 struct ip_tcp_udp_hdr {
-	struct openvpn_iphdr ip;
+	struct iphdr ip;
 	union {
-		struct openvpn_tcphdr tcp;
-		struct openvpn_udphdr udp;
+		struct tcphdr tcp;
+		struct udphdr udp;
 	} u;
 };
 

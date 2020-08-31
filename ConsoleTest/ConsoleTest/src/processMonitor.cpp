@@ -803,9 +803,9 @@ void GetSystemCallCountInformation(SYSTEM_CALL_COUNT_INFORMATION* pscci)//6
 	ULONG* limits = (ULONG*)((BYTE*)pscci + sizeof(SYSTEM_CALL_COUNT_INFORMATION));
 	ULONG* tables = (ULONG*)((BYTE*)pscci + sizeof(SYSTEM_CALL_COUNT_INFORMATION) + pscci->NumberOfTables * sizeof(PULONG));
 	int index = 0;
-	for (int i = 0; i < pscci->NumberOfTables; i++)
+	for (ULONG i = 0; i < pscci->NumberOfTables; i++)
 	{
-		for (int j = 0; j < limits[i]; j++)
+		for (ULONG j = 0; j < limits[i]; j++)
 		{
 			cout << "tablecount" << index << ":" << tables[index] << endl;
 			++index;
@@ -916,7 +916,7 @@ void GetSystemFlagsInformation(SYSTEM_FLAGS_INFORMATION* psfi)//9
 void GetSystemModuleInformation(RTL_PROCESS_MODULES* prpm)//11
 {
 	cout << "\t\t11 SystemModuleInformation" << endl;
-	for (int i = 0; i < prpm->NumberOfModules; i++)
+	for (ULONG i = 0; i < prpm->NumberOfModules; i++)
 	{
 		cout << "module" << i << " FullPathName:" << (char*)prpm->Modules[i].FullPathName << endl;
 		cout << "\tSection:" << hex << prpm->Modules[i].Section << endl;
@@ -935,7 +935,7 @@ void GetSystemModuleInformation(RTL_PROCESS_MODULES* prpm)//11
 void GetSystemLocksInformation(RTL_PROCESS_LOCKS* prpl)//12
 {
 	cout << "\t\t12 SystemLocksInformation" << endl;
-	for (int i = 0; i < prpl->NumberOfLocks; i++)
+	for (ULONG i = 0; i < prpl->NumberOfLocks; i++)
 	{
 		cout << "\tlock" << i << ":" << endl;
 		cout << "\tAddress:" << hex << prpl->Locks[i].Address << endl;
@@ -958,7 +958,7 @@ void GetSystemStackTraceInformation(RTL_PROCESS_BACKTRACES* prpb)//13
 	cout << "\tCommittedMemory:" << prpb->CommittedMemory << endl;
 	cout << "\tReservedMemory:" << prpb->ReservedMemory << endl;
 	cout << "\tNumberOfBackTraceLookups:" << prpb->NumberOfBackTraceLookups << endl;
-	for (int i = 0; i < prpb->NumberOfBackTraces; i++)
+	for (ULONG i = 0; i < prpb->NumberOfBackTraces; i++)
 	{
 		cout << "\tTraceCount:" << prpb->BackTraces[i].TraceCount << endl;
 		cout << "\tIndex:" << prpb->BackTraces[i].Index << endl;
@@ -981,7 +981,7 @@ void GetSystemStackTraceInformation(RTL_PROCESS_BACKTRACES* prpb)//13
 void GetSystemHandleInformation(SYSTEM_HANDLE_INFORMATION* pshi)//16
 {
 	cout << "\t\t16 SystemHandleInformation" << endl;
-	for (int i = 0; i < pshi->NumberOfHandles; i++)
+	for (ULONG i = 0; i < pshi->NumberOfHandles; i++)
 	{
 		cout << "\t" << i + 1 << endl;
 		cout << "\tUniqueProcessId:" << (int)pshi->Handles[i].UniqueProcessId << endl;
@@ -1106,7 +1106,7 @@ void GetSystemFileCacheInformation(SYSTEM_FILECACHE_INFORMATION* psfci)//21
 void GetSystemPoolTagInformation(SYSTEM_POOLTAG_INFORMATION* pspti)//22
 {
 	cout << "\t\t22 SystemPoolTagInformation" << endl;
-	for (int i = 0; i < pspti->Count; i++)
+	for (ULONG i = 0; i < pspti->Count; i++)
 	{
 		cout << pspti->TagInfo[i].TagUlong << endl;
 		cout << pspti->TagInfo[i].PagedAllocs << endl;
@@ -1143,7 +1143,7 @@ void GetSystemFullMemoryInformation(SYSTEM_MEMORY_INFORMATION* psmi)//25
 {
 	cout << "\t\t25 SystemFullMemoryInformation" << endl;
 	printseg(psmi->StringStart);
-	for (int i = 0; i < psmi->InfoSize; i++)
+	for (ULONG i = 0; i < psmi->InfoSize; i++)
 	{
 		cout << (char*)psmi->Memory[i].StringOffset << endl;
 		printseg((int)psmi->Memory[i].ValidCount);
@@ -1179,7 +1179,7 @@ void GetSystemSummaryMemoryInformation(SYSTEM_MEMORY_INFORMATION* psmi)//29
 {
 	cout << "\t\t29 SystemSummaryMemoryInformation" << endl;
 	printseg(psmi->StringStart);
-	for (int i = 0; i < psmi->InfoSize; i++)
+	for (ULONG i = 0; i < psmi->InfoSize; i++)
 	{
 		cout << (char*)psmi->Memory[i].StringOffset << endl;
 		printseg((int)psmi->Memory[i].ValidCount);
@@ -1574,7 +1574,7 @@ void GetSystemEmulationProcessorInformation(SYSTEM_PROCESSOR_INFORMATION* pspri)
 void GetSystemBigPoolInformation(SYSTEM_BIGPOOL_INFORMATION* psbi)//66
 {
 	cout << "\t\t63 SystemEmulationProcessorInformation" << endl;
-	for (int i = 0; i < psbi->Count; i++)
+	for (ULONG i = 0; i < psbi->Count; i++)
 	{
 		cout << hex << "\tVirutalAddress:" << psbi->AllocatedInfo[i].VirtualAddress;
 		cout << dec;

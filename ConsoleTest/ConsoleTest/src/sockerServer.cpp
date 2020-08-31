@@ -90,7 +90,7 @@ int socketServer()
 	sockaddr_in remoteAddr;
 	int nAddrlen = sizeof(remoteAddr);
 	memset(&remoteAddr, 0, nAddrlen);
-	char revData[255];
+
 	while (true)
 	{
 		shutdown(slisten, 2);

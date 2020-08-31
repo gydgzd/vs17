@@ -2,7 +2,6 @@
 #include <string>
 #include <stdio.h>
 using namespace std;
-#include "mywork.h"
 
 string getRdmString(int maxLenth)
 {

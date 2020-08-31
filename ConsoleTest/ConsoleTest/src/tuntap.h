@@ -81,7 +81,7 @@ typedef struct _TUN_RING {
     volatile ULONG Head;
     volatile ULONG Tail;
     volatile LONG Alertable;
-    UCHAR Data[];
+    UCHAR Data[0];
 } TUN_RING;
 
 struct TUN_PACKET_HEADER
@@ -90,7 +90,7 @@ struct TUN_PACKET_HEADER
 };
 typedef struct _TUN_PACKET {
     ULONG Size;
-    UCHAR Data[];
+    UCHAR Data[0];
 } TUN_PACKET;
 
 typedef struct _TUN_REGISTER_RINGS {
@@ -528,11 +528,11 @@ static inline void buf_set_read(struct buffer *buf, const uint8_t *data, int siz
 
 static inline bool is_ip_packet_valid(const struct buffer *buf)
 {
-    const struct openvpn_iphdr* ih = (const struct openvpn_iphdr *)BPTR(buf);
+    const struct iphdr* ih = (const struct iphdr *)BPTR(buf);
 
     if ((((ih->version_len) >> 4) & 0x0F) == 4)
     {
-        if (BLEN(buf) < sizeof(struct openvpn_iphdr))
+        if (BLEN(buf) < sizeof(struct iphdr))
         {
             return false;
         }

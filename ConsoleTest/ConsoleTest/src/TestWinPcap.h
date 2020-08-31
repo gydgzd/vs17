@@ -2,7 +2,7 @@
 
 #define HAVE_REMOTE
 #include "pcap.h"
-#include "Win32-Extensions.h"
+//#include "Win32-Extensions.h"
 #include "Packet32.h"
 #include "ntddndis.h"
 #include <atlconv.h>    // for T2A ,USES_CONVERSION

@@ -176,7 +176,7 @@ void Mylog::processEntries()
 #if defined __linux
         mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
 #elif (defined WINVER ||defined WIN32)
-        mkdir("./log");
+        _mkdir("./log");
 #endif
         ofstream ofs(mstr_logfile.c_str(), std::ios::app);
         if(ofs.fail())

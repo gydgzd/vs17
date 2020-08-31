@@ -85,7 +85,8 @@ std::string CFileVersion::QueryValue(LPCTSTR lpszValueName, DWORD dwLangCharset)
 	else
 		printError_Win("VerQueryValue");
 	strBlockName.ReleaseBuffer();
-	return CT2A(strValue.GetBuffer());
+    std::string ret = CT2A(strValue.GetBuffer());
+	return ret;
 }
 
  

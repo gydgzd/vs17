@@ -46,6 +46,9 @@
 #define __PACKET32
 
 #include <winsock2.h>
+#include <windows.h>
+#pragma comment(lib, "Ws2_32.lib")
+
 
 #ifdef HAVE_AIRPCAP_API
 #include <airpcap.h>

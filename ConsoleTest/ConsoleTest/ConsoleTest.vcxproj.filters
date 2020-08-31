@@ -18,135 +18,150 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="stdafx.h">
+    <ClInclude Include="src\CFileVersion.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="targetver.h">
+    <ClInclude Include="src\easylogging++.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MyWinSock_Server.h">
+    <ClInclude Include="src\Mylog.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="sql_conn_cpp.h">
+    <ClInclude Include="src\MySort.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="MyTimer.h">
+    <ClInclude Include="src\MyTimer.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="testMultiThread.h">
+    <ClInclude Include="src\myTunTap.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="Mylog.h">
+    <ClInclude Include="src\processMonitor.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="processMonitor.h">
+    <ClInclude Include="src\sql_conn_cpp.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="CFileVersion.h">
+    <ClInclude Include="src\stdafx.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="TestWinPcap.h">
+    <ClInclude Include="src\str_fun.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="str_fun.h">
+    <ClInclude Include="src\targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="easylogging++.h">
+    <ClInclude Include="src\testMultiThread.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TestWinPcap.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\tuntap.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="stdafx.cpp">
+    <ClCompile Include="src\CFileVersion.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ConsoleTest.cpp">
+    <ClCompile Include="src\ConsoleTest.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MyWinSock_Server.cpp">
+    <ClCompile Include="src\easylogging++.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="sockerServer.cpp">
+    <ClCompile Include="src\getRdmString.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="sql_conn_cpp.cpp">
+    <ClCompile Include="src\Mylog.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="readFile.cpp">
+    <ClCompile Include="src\MySort.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testValist.cpp">
+    <ClCompile Include="src\MyTimer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="recursion.cpp">
+    <ClCompile Include="src\myTunTap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testVector.cpp">
+    <ClCompile Include="src\processMonitor.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testArray.cpp">
+    <ClCompile Include="src\readFile.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="MyTimer.cpp">
+    <ClCompile Include="src\recursion.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testFstream.cpp">
+    <ClCompile Include="src\sockerServer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testSort.cpp">
+    <ClCompile Include="src\sql_conn_cpp.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testClass.cpp">
+    <ClCompile Include="src\stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testMultiThread.cpp">
+    <ClCompile Include="src\str_fun.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testMap.cpp">
+    <ClCompile Include="src\strHandle.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testStack.cpp">
+    <ClCompile Include="src\testArray.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testSet.cpp">
+    <ClCompile Include="src\testClass.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testHashMap.cpp">
+    <ClCompile Include="src\testExec.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testList.cpp">
+    <ClCompile Include="src\testFriend.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="Mylog.cpp">
+    <ClCompile Include="src\testFstream.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testVolatile.cpp">
+    <ClCompile Include="src\testHashMap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="processMonitor.cpp">
+    <ClCompile Include="src\testList.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testWMI.cpp">
+    <ClCompile Include="src\testMap.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CFileVersion.cpp">
+    <ClCompile Include="src\testMultiThread.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testFriend.cpp">
+    <ClCompile Include="src\testSelect.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="TestWinPcap.cpp">
+    <ClCompile Include="src\testSet.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testSelect.cpp">
+    <ClCompile Include="src\testSort.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="testExec.cpp">
+    <ClCompile Include="src\testStack.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="str_fun.cpp">
+    <ClCompile Include="src\testValist.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="easylogging++.cpp">
+    <ClCompile Include="src\testVector.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testVolatile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TestWinPcap.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testWMI.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

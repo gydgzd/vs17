@@ -35,6 +35,7 @@
 #define __REMOTE_EXT_H__
 
 
+
 #ifndef HAVE_REMOTE
 #error Please do not include this file directly. Just define HAVE_REMOTE and then include pcap.h
 #endif

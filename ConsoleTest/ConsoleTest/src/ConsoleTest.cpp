@@ -39,9 +39,8 @@
 #include "testStack.cpp"
 #include "ProcessMonitor.h"
 #include "CFileVersion.h"
-#include "testNDIS.h"
 #include "TestWinPcap.h"
-
+#include "myTunTap.h"
 #include "easylogging++.h"    // v9.96.7
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 #pragma comment(lib,"ws2_32.lib")
@@ -54,8 +53,8 @@ int socketServer();
 	el::Configurations conf("log.conf");
 	el::Loggers::reconfigureAllLoggers(conf);
 }
-#define new   new(_NORMAL_BLOCK, __FILE__, __LINE__)  
 
+#define new   new(_NORMAL_BLOCK, __FILE__, __LINE__)  
 char* testLeak()
 {
 	char *test = new char[4];
@@ -145,15 +144,17 @@ void mysleep(long sec, long us)
     tv.tv_usec = us;
     select(0, 0, 0, &dummy, &tv);
 }
-
+extern std::mutex g_log_Mutex;
+Mylog g_mylog;
 int main(int argc, char** argv)
 {
-//	_CrtSetBreakAlloc(1785);	   //在内存分配之前设置内存中断块号
-//	myExec("ipconfig /all");
-
-//	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-//	char *pleak = testLeak();	
-//	_CrtDumpMemoryLeaks();
+    
+/*
+    _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+	_CrtSetBreakAlloc(1041);	   //在内存分配之前设置内存中断块号
+	char *pleak = testLeak();	
+	_CrtDumpMemoryLeaks();
+    */
     unsigned int id[4] = {};
     id[0] = 399;
     id[1] = 166;
@@ -177,7 +178,15 @@ int main(int argc, char** argv)
 	{
     //    showError();
 	}
-
+    myTunTap mytun;
+    int ret = mytun.init("ROOT\\NET\\0002", "10.1.1.1", "255.255.255.0", "10.1.1.1", 1500);
+    while (ret != 0)
+    {
+        printf("ERR: 初始化虚拟网卡失败, 请检查虚拟网卡是否可用,5s后将重试。\n");
+        Sleep(5000);
+        ret = mytun.init("ROOT\\NET\\0002", "10.1.1.1", "255.255.255.0", "10.1.1.1", 1500);
+    }
+    mytun.process();
 	testList();
 	testMap();
 	testHashMap();

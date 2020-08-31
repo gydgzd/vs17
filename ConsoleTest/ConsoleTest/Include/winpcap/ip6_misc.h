@@ -25,7 +25,10 @@
  * This file contains a collage of declarations for IPv6 from FreeBSD not present in Windows
  */
 
+
 #include <winsock2.h>
+#include <windows.h>
+#pragma comment(lib, "Ws2_32.lib")
 
 #include <ws2tcpip.h>
 
