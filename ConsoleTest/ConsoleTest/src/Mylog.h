@@ -44,11 +44,12 @@ std::string getLocalTimeUs(const char *format);
 time_t dateToSeconds(const char *str);
 
 //Mutex and condition variable to protect access to the queue.
-extern std::mutex g_log_Mutex;
-extern std::condition_variable g_log_CondVar;
+
+
 extern std::atomic<bool> g_log_Exit;
 
 class Mylog {
+    
 public:
 	Mylog();
 	Mylog(const char *filename);
@@ -66,6 +67,8 @@ public:
 	int shrinkLogFile();
 
 	std::string mstr_logfile;
+    std::mutex g_log_Mutex;
+    std::condition_variable g_log_CondVar;
 private:
 	long m_filesize;
 	long max_filesize;

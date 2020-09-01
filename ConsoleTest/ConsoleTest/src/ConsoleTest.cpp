@@ -144,7 +144,7 @@ void mysleep(long sec, long us)
     tv.tv_usec = us;
     select(0, 0, 0, &dummy, &tv);
 }
-extern std::mutex g_log_Mutex;
+
 Mylog g_mylog;
 int main(int argc, char** argv)
 {

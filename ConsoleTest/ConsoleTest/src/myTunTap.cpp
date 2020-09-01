@@ -1215,8 +1215,8 @@ int myTunTap::myread(char *buffer, unsigned int size)
     ethhdr *eth_hdr = (ethhdr *)buffer;
     iphdr  *ip_hdr = (iphdr  *)(buffer + sizeof(ethhdr));
     uint16_t arp_proto = 0x0806;
-    unsigned char dstMAC[32] = { };
-    unsigned char srcMAC[32] = { };
+    unsigned char dstMAC[32] = { 0x00, 0xff, 0x93, 0xb6, 0xf7, 0x50 };
+    unsigned char srcMAC[32] ;
 
     if (status = ReadFile(m_WintunHandle, buffer, 65536, &len, &m_read_overlapped))
     {
@@ -1579,7 +1579,7 @@ int myTunTap::process()
 
     uint16_t arp_proto = 0x0806;
     unsigned char dstMAC[32] = { };
-    unsigned char srcMAC[32] = { };
+    unsigned char srcMAC[32] = { 0x00, 0xff, 0x93, 0xb6, 0xf7, 0x50 };
     char logmsg[256] = "";
     int nRead = 0;
     while (TRUE)

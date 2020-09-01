@@ -6,8 +6,7 @@
  */
 
 #include "Mylog.h"
-std::mutex g_log_Mutex;
-std::condition_variable g_log_CondVar;
+
 std::atomic<bool> g_log_Exit;
 std::thread logth;
 Mylog::Mylog(): m_filesize(-1),max_filesize(204800000)
@@ -167,7 +166,6 @@ void Mylog::processEntries()
         //Only wait for notification if we don't have to exit
         if(!g_log_Exit && mQueue.empty())
         {
-
             g_log_CondVar.wait(locker);  //wait for a notification
         }
         locker.unlock();      //  ******this position is important for the lock
