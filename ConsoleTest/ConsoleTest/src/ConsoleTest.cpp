@@ -1,10 +1,10 @@
-// ConsoleTest.cpp : ¶¨Òå¿ØÖÆÌ¨Ó¦ÓÃ³ÌĞòµÄÈë¿Úµã¡£
+// ConsoleTest.cpp : å®šä¹‰æ§åˆ¶å°åº”ç”¨ç¨‹åºçš„å…¥å£ç‚¹ã€‚
 //
 
 #include "stdafx.h"
    
 #include <stdlib.h>    
-#include <crtdbg.h>        // ÄÚ´æ¼ì²â
+#include <crtdbg.h>        // å†…å­˜æ£€æµ‹
 #include <WinSock2.h>
 #ifdef _DEBUG  
 #define _CRTDBG_MAP_ALLOC 
@@ -12,7 +12,7 @@
 #endif
 
 #ifdef WINVER
-#define    WIN32_LEAN_AND_MEAN   //È¥³ıÒ»Ğ©²»³£ÓÃµÄ, Èçwinsock.h
+#define    WIN32_LEAN_AND_MEAN   //å»é™¤ä¸€äº›ä¸å¸¸ç”¨çš„, å¦‚winsock.h
 #include <windows.h>
 
 #include <direct.h>        // _mkdir
@@ -42,6 +42,7 @@
 #include "TestWinPcap.h"
 #include "myTunTap.h"
 #include "easylogging++.h"    // v9.96.7
+#include "MyBitree.h"
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 #pragma comment(lib,"ws2_32.lib")
 //#include "testValist.cpp"
@@ -63,7 +64,7 @@ char* testLeak()
 char * testLocal()
 {
 	char * a = "hahaha";
-	//	char a[] = "hahaha";  //·µ»ØÖ¸Ïò¾Ö²¿±äÁ¿µÄµØÖ·£¬±àÒë¾¯¸æ
+	//	char a[] = "hahaha";  //è¿”å›æŒ‡å‘å±€éƒ¨å˜é‡çš„åœ°å€ï¼Œç¼–è¯‘è­¦å‘Š
 	return a;
 }
 extern int readFile();
@@ -90,16 +91,16 @@ extern int testWMI();
 extern void getProcess();
 extern void myExec(char *cmd);
 extern void printError_Win(const char *msg = "");
-
+extern std::string Utf8ToGbk(const char *src_str);
 SERVICE_STATUS ServiceStatus;
 SERVICE_STATUS_HANDLE hStatus;
 void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv);
 void WINAPI ServiceHandler(DWORD fdwControl);
 DWORD WINAPI MyWork(LPVOID lpParam);
-// ·şÎñ×¢²á: sc create abcTest binpath= D:\git_project\vs17\ConsoleTest\Release\ConsoleTest.exe
-// ĞŞ¸ÄÏÔÊ¾Ãû³Æ: sc config abcTest DisplayName="abcTest"
-// ĞŞ¸ÄÃèÊö: sc description abcTest "probe"
-// ¿ª»úÆô¶¯: sc config abcTest start= auto
+// æœåŠ¡æ³¨å†Œ: sc create abcTest binpath= D:\git_project\vs17\ConsoleTest\Release\ConsoleTest.exe
+// ä¿®æ”¹æ˜¾ç¤ºåç§°: sc config abcTest DisplayName="abcTest"
+// ä¿®æ”¹æè¿°: sc description abcTest "probe"
+// å¼€æœºå¯åŠ¨: sc config abcTest start= auto
 
 void setrgb(int bgc, int fgc)
 {
@@ -145,73 +146,57 @@ void mysleep(long sec, long us)
     select(0, 0, 0, &dummy, &tv);
 }
 
+
 Mylog g_mylog;
+
 int main(int argc, char** argv)
 {
-    
-/*
+    initWinSocket();
+    LogInit();
+    /*
     _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-	_CrtSetBreakAlloc(1041);	   //ÔÚÄÚ´æ·ÖÅäÖ®Ç°ÉèÖÃÄÚ´æÖĞ¶Ï¿éºÅ
+	_CrtSetBreakAlloc(1041);	   //åœ¨å†…å­˜åˆ†é…ä¹‹å‰è®¾ç½®å†…å­˜ä¸­æ–­å—å·
 	char *pleak = testLeak();	
 	_CrtDumpMemoryLeaks();
     */
     unsigned int id[4] = {};
     id[0] = 399;
     id[1] = 166;
-    unsigned char *p = (unsigned char *)id;               // ¸ß¾«¶È×ª»¯ÎªµÍ¾«¶È£¬ÄÚ´æÕ¼ÓÃ¶ÔÓ¦¼õĞ¡£¬Ö»ÁôÏÂµÍÎ»
+    unsigned char *p = (unsigned char *)id;               // é«˜ç²¾åº¦è½¬åŒ–ä¸ºä½ç²¾åº¦ï¼Œå†…å­˜å ç”¨å¯¹åº”å‡å°ï¼Œåªç•™ä¸‹ä½ä½
     printf("%d - %d\n", (unsigned int)*p, (unsigned int)*(p + 4));
-    printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // µÍ¾«¶È×ª»¯Îª¸ß¾«¶È£¬ÄÚ´æÕ¼ÓÃ²»»áÔö´ó,¿ÉÒÔÏÈ×ª»»Ö¸ÕëÀàĞÍ£¬È»ºóÈ¥ÒıÓÃ
-    initWinSocket();
-    LogInit();
-//    setrgb(BLACK, INT_MAGENTA);  //ÉèÖÃ±³¾°ºÍÇ°¾°É«
+    printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // ä½ç²¾åº¦è½¬åŒ–ä¸ºé«˜ç²¾åº¦ï¼Œå†…å­˜å ç”¨ä¸ä¼šå¢å¤§,å¯ä»¥å…ˆè½¬æ¢æŒ‡é’ˆç±»å‹ï¼Œç„¶åå»å¼•ç”¨
+    
 
-	SERVICE_TABLE_ENTRY ServTable[2];
-	ServTable[0].lpServiceName = _T("abcTest");
-	ServTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
-	ServTable[1].lpServiceName = NULL;
-	ServTable[1].lpServiceProc = NULL;
-	if (StartServiceCtrlDispatcher(ServTable))
-	{
-	//	mylog.logException("Service start succeed.");
-	}
-	else
-	{
-    //    showError();
-	}
+//    setrgb(BLACK, INT_MAGENTA);  //è®¾ç½®èƒŒæ™¯å’Œå‰æ™¯è‰²
+
+    /*
     myTunTap mytun;
     int ret = mytun.init("ROOT\\NET\\0002", "10.1.1.1", "255.255.255.0", "10.1.1.1", 1500);
     while (ret != 0)
     {
-        printf("ERR: ³õÊ¼»¯ĞéÄâÍø¿¨Ê§°Ü, Çë¼ì²éĞéÄâÍø¿¨ÊÇ·ñ¿ÉÓÃ,5sºó½«ÖØÊÔ¡£\n");
+        printf("ERR: åˆå§‹åŒ–è™šæ‹Ÿç½‘å¡å¤±è´¥, è¯·æ£€æŸ¥è™šæ‹Ÿç½‘å¡æ˜¯å¦å¯ç”¨,5såå°†é‡è¯•ã€‚\n");
         Sleep(5000);
         ret = mytun.init("ROOT\\NET\\0002", "10.1.1.1", "255.255.255.0", "10.1.1.1", 1500);
     }
     mytun.process();
+    */
+
 	testList();
 	testMap();
 	testHashMap();
 //	testSet();
 
+    MyBitree<int> bt;
+    int aray[4] = {1,3,4,};
+    bt.init(&bt, aray);
+
 //	testValist();
 
-/*	wcout.imbue(locale("")); 
-	char * lcname = setlocale(LC_ALL, "chs");
-	if (NULL == lcname)
-	{
-		printf("setlocale() from environment failed.\n");
-	}
-*/	wchar_t szError[1024] = L"ÊÀ½ç"; // _T("ÄãºÃ");
-    char tmp[] = "ÊÀ";
-//	swprintf_s(szError, L"ÊÀ½ç");
-	memcpy_s(szError, 10, L"ÊÀ½ç", sizeof(L"ÊÀ½ç"));
-    cout << "sizeof(L\"ÊÀ½ç\"):" << sizeof(L"ÊÀ½ç") << "  sizeof(\"ÊÀ½ç\"):" << sizeof("ÊÀ½ç") << endl;
-    cout << "strlen(L\"ÊÀ½ç\"):" << wcslen(L"ÊÀ½ç") << "  sizeof(\"ÊÀ½ç\"):" << strlen("ÊÀ½ç") << endl;
-	_stprintf_s(szError, L"ÊÀ½ç,ÄãºÃ£¡");
-	wcout << szError << endl;
-	printf("printfÄãºÃ\n");
+    std::string str = Utf8ToGbk("ä¸–ç•Œ"); // _T("ä½ å¥½");
+    cout << str << endl;
 
 	// test of sort
-/**/	
+/**/
     float fa[] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35,1242,11,242.24,2313824,232313,4755,2325,92.81 };
 	float *pa = fa;
 	MySort<float> mSort;
@@ -220,8 +205,24 @@ int main(int argc, char** argv)
 	for (int i = 0; i<sizeof(fa) / sizeof(fa[0]); i++)
 		cout << fa[i] << "  ";
 
+
+    /*
+    SERVICE_TABLE_ENTRY ServTable[2];
+    ServTable[0].lpServiceName = _T("abcTest");
+    ServTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
+    ServTable[1].lpServiceName = NULL;
+    ServTable[1].lpServiceProc = NULL;
+    if (StartServiceCtrlDispatcher(ServTable))
+    {
+        //	mylog.logException("Service start succeed.");
+    }
+    else
+    {
+        //    showError();
+    }
+    */
     LOG(INFO) << "main finished.";
-#ifdef __linux
+#if defined(__linux)
 	printf("Linux\n");
 #elif (defined WINVER ||defined WIN32)
 	printf("Windows\n");
@@ -245,7 +246,7 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	}
 
 	ServiceStatus.dwServiceType = SERVICE_WIN32;               // SERVICE_WIN32_OWN_PROCESS
-	ServiceStatus.dwCurrentState = SERVICE_START_PENDING;      // ¼´·şÎñÄ¿Ç°×´Ì¬Îª ÕıÔÚ³õÊ¼»¯
+	ServiceStatus.dwCurrentState = SERVICE_START_PENDING;      // å³æœåŠ¡ç›®å‰çŠ¶æ€ä¸º æ­£åœ¨åˆå§‹åŒ–
 	ServiceStatus.dwControlsAccepted = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN | SERVICE_ACCEPT_PAUSE_CONTINUE;
 	ServiceStatus.dwWin32ExitCode = 0;
 	ServiceStatus.dwCheckPoint = 0;
@@ -266,7 +267,7 @@ void WINAPI ServiceMain(DWORD dwArgc, LPTSTR *lpszArgv)
 	ServiceStatus.dwCheckPoint = 0;
 	ServiceStatus.dwWaitHint = 0;
 	SetServiceStatus(hStatus, &ServiceStatus);
-	// ´ÓÕâÀï¿ªÊ¼¿ÉÒÔ·ÅÈëÄãÏë·şÎñÎªÄãËù×öµÄÊÂÇé¡£
+	// ä»è¿™é‡Œå¼€å§‹å¯ä»¥æ”¾å…¥ä½ æƒ³æœåŠ¡ä¸ºä½ æ‰€åšçš„äº‹æƒ…ã€‚
 	HANDLE hThread = CreateThread(NULL, 0, MyWork, NULL, 0, NULL);
 	if (hThread == NULL)
 		return;
