@@ -253,5 +253,6 @@ int testHashMap()
 	*/
 //	myhash[msg] = "1231";
 //	printf("%d\n", mymtmap["Lisa"]);
+    printf("\n");
 	return 0;
 }

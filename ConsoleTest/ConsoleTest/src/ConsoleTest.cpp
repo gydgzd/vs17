@@ -43,6 +43,7 @@
 #include "myTunTap.h"
 #include "easylogging++.h"    // v9.96.7
 #include "MyBitree.h"
+
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 #pragma comment(lib,"ws2_32.lib")
 //#include "testValist.cpp"
@@ -146,7 +147,6 @@ void mysleep(long sec, long us)
     select(0, 0, 0, &dummy, &tv);
 }
 
-
 Mylog g_mylog;
 
 int main(int argc, char** argv)
@@ -187,10 +187,12 @@ int main(int argc, char** argv)
 //	testSet();
 
     MyBitree<int> bt;
-    int aray[4] = {1,3,4,};
-    bt.init(&bt, aray);
-
-//	testValist();
+    int aray[5] = {7, 1, 3, 4, 5, };
+    bt.init(&bt, aray, 5);
+    bt.preTraversal(&bt);
+    bt.midTraversal(&bt);
+    bt.postTraversal(&bt);
+    //	testValist();
 
     std::string str = Utf8ToGbk("世界"); // _T("你好");
     cout << str << endl;
