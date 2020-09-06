@@ -147,6 +147,31 @@ void mysleep(long sec, long us)
     select(0, 0, 0, &dummy, &tv);
 }
 
+int fibonacci(int n)
+{
+    if (n <= 0)
+        return 0;
+    cout << "The fibonacci serial of " << n << " is:  ";
+    if (n == 1 )
+    {
+        cout << 1 << "  ";
+        return 1;
+    }
+    cout << "1  ";
+    int pre1 = 0;
+    int pre2 = 1;
+    int sum = 0;
+    for (int i = 1; i < n ; i++)
+    {
+        sum = pre1 + pre2;
+        pre1 = pre2;
+        pre2 = sum;
+        cout << sum << "  ";
+    }
+    cout << endl;
+    return sum;
+}
+
 Mylog g_mylog;
 
 int main(int argc, char** argv)
@@ -185,13 +210,16 @@ int main(int argc, char** argv)
 	testMap();
 	testHashMap();
 //	testSet();
-
+    fibonacci(10);
     MyBitree<int> bt;
-    int aray[5] = {7, 1, 3, 4, 5, };
-    bt.init(&bt, aray, 5);
+    int aray[6] = {6, 7, 1, 3, 4, 5, };
+    bt.init(&bt, aray, 6);
     bt.preTraversal(&bt);
+    cout << endl;
     bt.midTraversal(&bt);
+    cout << endl;
     bt.postTraversal(&bt);
+    cout << endl;
     //	testValist();
 
     std::string str = Utf8ToGbk("世界"); // _T("你好");

@@ -56,7 +56,7 @@ inline int MyBitree<T>::preTraversal(MyBitree * bt)
 {
     if (bt == nullptr)
         return 0;
-    cout << bt->value << "  " << endl;
+    cout << bt->value << "  " ;
     preTraversal(bt->lchild);
     preTraversal(bt->rchild);
 }
@@ -67,7 +67,7 @@ inline int MyBitree<T>::midTraversal(MyBitree * bt)
     if (bt == nullptr)
         return 0;
     midTraversal(bt->lchild);
-    cout << bt->value << "  " << endl;
+    cout << bt->value << "  " ;
     midTraversal(bt->rchild);
 }
 
@@ -78,7 +78,7 @@ inline int MyBitree<T>::postTraversal(MyBitree * bt)
         return 0;
     postTraversal(bt->lchild);
     postTraversal(bt->rchild);
-    cout << bt->value << "  " << endl;
+    cout << bt->value << "  " ;
 }
 
 template<class T>
