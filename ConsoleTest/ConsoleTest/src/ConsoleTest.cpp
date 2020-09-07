@@ -220,6 +220,8 @@ int main(int argc, char** argv)
     cout << endl;
     bt.postTraversal(&bt);
     cout << endl;
+    bt.breadthTraversal(&bt);
+    cout << endl;
     //	testValist();
 
     std::string str = Utf8ToGbk("世界"); // _T("你好");
