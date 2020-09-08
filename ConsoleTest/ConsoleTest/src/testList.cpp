@@ -1,10 +1,15 @@
 #include <list>
+#include <forward_list>
 #include <string>
 #include <iostream>
 using namespace std;
 
 int testList()
 {
+    forward_list<string> for_list;
+    for_list.emplace_front("hello");
+    for_list.emplace_after(for_list.begin(), "pretty");
+    for_list.emplace_after(for_list.begin(), "nice");
 
 	list<list<string>> mylist;
 
@@ -14,12 +19,11 @@ int testList()
 	mylist.push_back(ls1);
 	list<list<string>>::iterator iterll = mylist.begin();
 	iterll->insert(iterll->end(), "gyd");
-
 	iterll->insert(iterll->end(), "hello");
 	iterll->insert(iterll->end(), "world");
 	iterll->insert(iterll->end(), "I'm");
 	iterll->insert(iterll->end(), "comming");
-
+    ls2.push_front("begin");
 	ls2.push_back("gzd");
 	ls2.push_back("ljr");
 	mylist.push_back(ls2);

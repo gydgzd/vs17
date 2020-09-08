@@ -15,7 +15,8 @@ void testVector()
 	int *p = vi.data();
 	*p = 32;
 	// reserve 影响存储空间capacity, resize影响实际元素
-	vi.reserve(8);     
+	vi.reserve(8);   
+    vi.reserve(12);
 	vi.resize(10);
 	vi.resize(10, 3);
 	vi.resize(8);
@@ -23,11 +24,11 @@ void testVector()
 	std::vector<int>::reverse_iterator it;     // auto it;
 	for (it = vi.rbegin(); it < vi.rend(); it++)
 		cout << *it << endl;
-	// 测试时间
+	// 测试时间(比较push_back在空间不够时分配和先分配后使用的时间)
 	clock_t start, end;
 	start = clock();
 	vector<int> vb;
-	for (int i = 0; i < 1024; i++)
+	for (int i = 0; i < 10240; i++)
 	{
 	//	cout << "Capacity: " << vb.capacity() << " Size: " << vb.size() << endl;
 		vb.push_back(i);
@@ -37,8 +38,8 @@ void testVector()
 
     start = clock();
     vector<int> va;
-    va.reserve(1024);
-	for (int i = 0; i < 1024; i++)
+    va.reserve(10240);
+	for (int i = 0; i < 10240; i++)
         va.push_back(i);
 
 	end = clock();

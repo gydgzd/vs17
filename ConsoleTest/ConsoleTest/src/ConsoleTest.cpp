@@ -79,13 +79,16 @@ extern void printf_t(FILE *m_file, const char *fmt ...);
 extern void simpleInterativeReverse();
 extern void interativeReverse();
 extern int parse_liveout();
-extern int testSet();
+
 extern int readFileStream();
 extern int writeFileStream();
+extern void testArray();
 extern int testHashMap();
-extern void testMap();
-extern void testVector();
 extern int testList();
+extern void testMap();
+extern int testSet();
+extern void testVector();
+
 extern time_t dateToSeconds(char *str);
 extern void testVolatile();
 extern int testWMI();
@@ -190,7 +193,6 @@ int main(int argc, char** argv)
     unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小，只留下低位
     printf("%d - %d\n", (unsigned int)*p, (unsigned int)*(p + 4));
     printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
-    
 
 //    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
 
@@ -205,7 +207,8 @@ int main(int argc, char** argv)
     }
     mytun.process();
     */
-
+    testArray();
+    testVector();
 	testList();
 	testMap();
 	testHashMap();
