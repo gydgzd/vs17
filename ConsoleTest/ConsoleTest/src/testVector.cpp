@@ -4,6 +4,28 @@
 #include <time.h>
 using namespace std;
 
+int binaryFind(vector<int>& array, int num) // return the count of element in array that less then num
+{
+    int left = 0;
+    int right = array.size();
+    int mid = 0;
+    while (left != right)
+    {
+        mid = (left + right) / 2;
+        if ((array[mid + 1] > num && array[mid - 1] <= num) || (array[mid + 1] >= num && array[mid - 1] < num))
+            break;
+        else if (array[mid] < num)
+        {
+            left = mid;
+        }
+        else if (array[mid] > num)
+        {
+            right = mid;
+        }
+    }
+    return mid + 1;
+}
+
 void testVector()
 {
 	int array[6] = {3, 5, 12, 46, 13};
@@ -14,6 +36,7 @@ void testVector()
 	vi.insert(vi.end()-1, 22);
 	int *p = vi.data();
 	*p = 32;
+    binaryFind(vi, 15);
 	// reserve 影响存储空间capacity, resize影响实际元素
 	vi.reserve(8);   
     vi.reserve(12);
