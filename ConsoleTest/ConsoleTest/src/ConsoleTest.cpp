@@ -88,7 +88,7 @@ extern int testList();
 extern void testMap();
 extern int testSet();
 extern void testVector();
-
+extern void backtracing(int cur, vector<int>& nums);
 extern time_t dateToSeconds(char *str);
 extern void testVolatile();
 extern int testWMI();
@@ -207,6 +207,8 @@ int main(int argc, char** argv)
     }
     mytun.process();
     */
+    vector<int> nums{ 3,5,12,31 };
+    backtracing(0, nums);
     testArray();
     testVector();
 	testList();

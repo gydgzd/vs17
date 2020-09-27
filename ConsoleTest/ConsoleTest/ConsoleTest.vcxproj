@@ -179,6 +179,9 @@
     <ClInclude Include="src\tuntap.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\backtracking.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\CFileVersion.cpp">
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
       <PrecompiledHeaderOutputFile Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\$(IntDir)$(TargetName).pch</PrecompiledHeaderOutputFile>
