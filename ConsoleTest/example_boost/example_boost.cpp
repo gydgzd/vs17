@@ -8,6 +8,7 @@
 #include <iterator>
 //#include <algorithm>
 
+extern void testMultiIndex();
 int main()
 {
 	using namespace boost::lambda;
@@ -15,6 +16,8 @@ int main()
 	std::cout << "Input some number please:" << std::endl;
 //	std::for_each(
 //		in(std::cin), in(), std::cout << (_1 * 3) << " ");
+    testMultiIndex();
+
 
 	testAsio myAsio;
 	myAsio.test();

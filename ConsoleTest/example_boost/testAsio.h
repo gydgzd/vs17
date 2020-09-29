@@ -4,7 +4,7 @@
 #include <boost/thread.hpp> 
 #include <iostream>
 
-
+using namespace boost::asio;
 
 class testAsio
 {
