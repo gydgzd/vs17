@@ -124,3 +124,37 @@ int strDel(char *src, char *str)
             *tmp = *(tmp + strlen(str));
     return 0;
 }
+
+string maxSubStr(string str)
+{
+    string substr;
+    int maxLen = 0;
+    std::map<char, int> countMap;
+    int posBegin = 0;
+    for (int i = 0; i < str.length(); )
+    {
+        auto iter = countMap.find(str.at(i));
+        if (iter != countMap.end())    // found replicate char
+        {
+            if (maxLen < i - posBegin)
+            {
+                substr = str.substr(posBegin, i - posBegin);
+                maxLen = i - posBegin;
+            }
+            posBegin = iter->second + 1;
+            i = posBegin ;
+            countMap.clear();
+        }
+        else
+        {
+            countMap.insert(std::pair<char, int>(str.at(i), i));
+            i++;
+        }
+    }
+    if (maxLen < str.length() - posBegin)
+    {
+        substr = str.substr(posBegin, str.length() - posBegin);
+        maxLen = str.length() - posBegin;
+    }
+    return substr;
+}

@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <string>
 #include <vector>
+#include <map>
 using namespace std;
 
 int str_compare(char *str1, char *str2);

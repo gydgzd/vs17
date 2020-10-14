@@ -8,8 +8,8 @@ using namespace std;
 // method 1: bit map
 void subset()
 {
-    vector<int> nums{ 3,5,12,31,44,11 };
-    int n = 6;
+    vector<int> nums{ 3,5,12,31,44};
+    int n = nums.size();
     for (int mask = 0; mask < (1 << n); ++mask)
     {
         for (int i = 0; i < n; ++i)

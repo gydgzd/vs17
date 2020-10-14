@@ -89,6 +89,7 @@ extern void testMap();
 extern int testSet();
 extern void testVector();
 extern void backtracing(int cur, vector<int>& nums);
+extern void subset();
 extern time_t dateToSeconds(char *str);
 extern void testVolatile();
 extern int testWMI();
@@ -176,9 +177,10 @@ int fibonacci(int n)
 }
 
 Mylog g_mylog;
-
+extern string maxSubStr(string str);
 int main(int argc, char** argv)
 {
+    cout << maxSubStr("abcabcbb") << endl;
     initWinSocket();
     LogInit();
     /*
@@ -207,8 +209,16 @@ int main(int argc, char** argv)
     }
     mytun.process();
     */
-    vector<int> nums{ 3,5,12,31 };
+    subset();
+    extern vector<vector<int>> ans;
+    vector<int> nums{ 3,5,12,31, 44 };
     backtracing(0, nums);
+    for (auto iter = ans.begin(); iter != ans.end(); iter++)
+    {
+        for (auto it = iter->begin(); it != iter->end(); it++)
+            cout << *it << "  ";
+        cout << endl;
+    }
     testArray();
     testVector();
 	testList();
