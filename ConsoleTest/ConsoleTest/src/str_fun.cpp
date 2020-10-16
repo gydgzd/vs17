@@ -124,30 +124,40 @@ int strDel(char *src, char *str)
             *tmp = *(tmp + strlen(str));
     return 0;
 }
-
+/*
+从字符串中获取不包含重复字符的最大子串
+*/
 string maxSubStr(string str)
 {
     string substr;
     int maxLen = 0;
-    std::map<char, int> countMap;
+    std::unordered_map<char, int> indexMap;
     int posBegin = 0;
+    int lastBegin = 0;
     for (int i = 0; i < str.length(); )
     {
-        auto iter = countMap.find(str.at(i));
-        if (iter != countMap.end())    // found replicate char
+        auto iter = indexMap.find(str.at(i));
+        if (iter != indexMap.end())    // found replicate char
         {
             if (maxLen < i - posBegin)
             {
                 substr = str.substr(posBegin, i - posBegin);
                 maxLen = i - posBegin;
             }
+            lastBegin = posBegin;
             posBegin = iter->second + 1;
-            i = posBegin ;
-            countMap.clear();
+            
+            // remove elements before posBegin in map 
+            for (int tmp = lastBegin; tmp < posBegin; tmp++)
+            {
+                auto it = indexMap.find(str.at(tmp));
+                if(it != indexMap.end())
+                    indexMap.erase(indexMap.find(str.at(tmp)));
+            }
         }
         else
         {
-            countMap.insert(std::pair<char, int>(str.at(i), i));
+            indexMap.insert(std::pair<char, int>(str.at(i), i));
             i++;
         }
     }

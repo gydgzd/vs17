@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <unordered_map>
 using namespace std;
 
 int str_compare(char *str1, char *str2);

@@ -66,6 +66,9 @@
     <ClInclude Include="src\MyBitree.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
+    <ClInclude Include="src\testRTTR.h">
+      <Filter>src\头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\CFileVersion.cpp">
@@ -168,6 +171,9 @@
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\backtracking.cpp">
+      <Filter>src\源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testRTTR.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
   </ItemGroup>

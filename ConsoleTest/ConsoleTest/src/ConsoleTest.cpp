@@ -43,7 +43,7 @@
 #include "myTunTap.h"
 #include "easylogging++.h"    // v9.96.7
 #include "MyBitree.h"
-
+#include "testRTTR.h"
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 #pragma comment(lib,"ws2_32.lib")
 //#include "testValist.cpp"
@@ -182,6 +182,8 @@ int main(int argc, char** argv)
 {
     cout << maxSubStr("abcabcbb") << endl;
     initWinSocket();
+    testRTTR myRTTR;
+    myRTTR.test();
     LogInit();
     /*
     _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
