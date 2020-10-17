@@ -9,7 +9,11 @@ struct MyStruct
     MyStruct() {}; 
     
     int data; 
-    void func(double num) { std::cout << num << std::endl; };
+    double func(double num)
+    { 
+        std::cout << num++ << std::endl;
+        return num;
+    };
 };
 
 class class2
@@ -17,7 +21,10 @@ class class2
     int data;
     void func(double num) { std::cout << num << std::endl; };
 };
-
+static void fun()
+{
+    cout << "hello fun" << endl;
+}
 
 RTTR_REGISTRATION
 {
@@ -25,6 +32,7 @@ RTTR_REGISTRATION
          .constructor<>()
          .property("data", &MyStruct::data)
          .method("func", &MyStruct::func);
+    registration::method("hello", &fun);
 }
 
 class testRTTR
@@ -50,13 +58,29 @@ public:
 
         // invoke method by rttr::method
         MyStruct obj1;
+        variant ret;
         method meth = type::get(obj1).get_method("func");
-        meth.invoke(obj1, 42.0);
-
+        ret = meth.invoke(obj1, 42.0);
+        if (ret.is_valid() && ret.is_type<double>())           // double is the return type of the method
+            std::cout << ret.get_value<double>() << std::endl; 
         variant var = type::get(obj1).create();
-        meth.invoke(var, 42.0);
+        ret = meth.invoke(var, 42.0);
+        if (ret.is_valid() && ret.is_type<double>())
+        {
+            std::cout << ret.get_value<double>() << std::endl;
+        }
 
-        //
+        ret = type::invoke("hello", {});
+        if (ret.is_valid() && ret.is_type<double>())
+            std::cout << ret.get_value<double>() << std::endl;
+        // option 2
+        meth = type::get_global_method("hello");
+        if (meth) // check if the function was found
+        {
+            ret = meth.invoke({},0); // invoke with empty instance
+            if (ret.is_valid() && ret.is_type<double>())
+                std::cout << ret.get_value<double>() << std::endl; 
+        }
 
     }
 private:
