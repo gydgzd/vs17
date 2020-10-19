@@ -25,7 +25,12 @@ static void fun()
 {
     cout << "hello fun" << endl;
 }
-
+enum class MetaData_Type
+{
+    SCRIPTABLE,
+    GUI
+};
+extern int g_value;
 RTTR_REGISTRATION
 {
     registration::class_<MyStruct>("MyStruct")
@@ -33,6 +38,12 @@ RTTR_REGISTRATION
          .property("data", &MyStruct::data)
          .method("func", &MyStruct::func);
     registration::method("hello", &fun);
+
+    registration::property("value", &g_value)
+        (
+            metadata(MetaData_Type::SCRIPTABLE, false),
+            metadata("Description", "This is a value.")
+            );
 }
 
 class testRTTR
@@ -63,24 +74,36 @@ public:
         ret = meth.invoke(obj1, 42.0);
         if (ret.is_valid() && ret.is_type<double>())           // double is the return type of the method
             std::cout << ret.get_value<double>() << std::endl; 
+
         variant var = type::get(obj1).create();
         ret = meth.invoke(var, 42.0);
         if (ret.is_valid() && ret.is_type<double>())
         {
             std::cout << ret.get_value<double>() << std::endl;
         }
-
-        ret = type::invoke("hello", {});
-        if (ret.is_valid() && ret.is_type<double>())
-            std::cout << ret.get_value<double>() << std::endl;
-        // option 2
         meth = type::get_global_method("hello");
         if (meth) // check if the function was found
         {
-            ret = meth.invoke({},0); // invoke with empty instance
+            ret = meth.invoke({}, 0); // invoke with empty instance
             if (ret.is_valid() && ret.is_type<double>())
-                std::cout << ret.get_value<double>() << std::endl; 
+                std::cout << ret.get_value<double>() << std::endl;
         }
+        // invoke by type 
+        ret = type::invoke("hello", {});
+        if (ret.is_valid() && ret.is_type<double>())
+            std::cout << ret.get_value<double>() << std::endl;
+
+        type mt = type::get_by_name("MyStruct");
+        mt.invoke("func", obj, {223.0});
+        // 
+        prop = type::get_global_property("value");
+        prop.set_value(g_value, 111);
+        variant value = prop.get_metadata(MetaData_Type::SCRIPTABLE);
+        
+        std::cout << value.get_value<bool>() << endl; // prints "false"
+
+        value = prop.get_metadata("Description");
+        std::cout << value.get_value<std::string>() << endl; // prints "This is a value."
 
     }
 private:
