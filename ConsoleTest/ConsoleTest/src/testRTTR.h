@@ -114,14 +114,14 @@ public:
         meth = type::get_global_method("hello");
         if (meth) // check if the function was found
         {
-            ret = meth.invoke({}, 0); // invoke with empty instance
-            if (ret.is_valid() && ret.is_type<double>())
-                std::cout << ret.get_value<double>() << std::endl;
+            variant ret = meth.invoke({}); // invoke with empty instance
+            if (ret.is_valid() && ret.is_type<void>())
+                std::cout << "method invoke hello()"<< std::endl;
         }
         // invoke by type 
-        ret = type::invoke("hello", {});
-        if (ret.is_valid() && ret.is_type<double>())
-            std::cout << ret.get_value<double>() << std::endl;
+        variant hello_ret = type::invoke("hello", {});
+        if (hello_ret.is_valid() && hello_ret.is_type<void>())
+            std::cout << "type invoke hello()" << std::endl;
 
         type mt = type::get_by_name("MyStruct");
         mt.invoke("func", obj, {223.0});
