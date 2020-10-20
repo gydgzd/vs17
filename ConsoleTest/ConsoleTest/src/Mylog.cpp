@@ -76,7 +76,7 @@ int Mylog::shrinkLogFile()
 		return -1;
 	}
 	char tmp[2048] = "";
-	fseek(fp, -(sizeof(tmp)-1), SEEK_END);
+	fseek(fp, -((int)sizeof(tmp)-1), SEEK_END);
 	size_t rsize = fread(tmp, sizeof(char),sizeof(tmp)-1,fp);
 	char *pos = strchr(tmp, '\n');
 	pos++;

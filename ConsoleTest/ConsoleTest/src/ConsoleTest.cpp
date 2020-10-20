@@ -180,6 +180,9 @@ Mylog g_mylog;
 extern string maxSubStr(string str);
 int main(int argc, char** argv)
 {
+    unsigned int aaa = -1;
+    if (aaa == (unsigned int)-1)
+        cout << "-1" << endl;
     cout << maxSubStr("abcabcbb") << endl;
     initWinSocket();
     testRTTR myRTTR;
@@ -246,9 +249,9 @@ int main(int argc, char** argv)
 
 	// test of sort
 /**/
-    float fa[] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35,1242,11,242.24,2313824,232313,4755,2325,92.81 };
-	float *pa = fa;
-	MySort<float> mSort;
+    double fa[] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35,1242,11,242.24,2313824,232313,4755,2325,92.81 };
+    double *pa = fa;
+	MySort<double> mSort;
 	mSort.insertionSort(fa, sizeof(fa) / sizeof(fa[0]));
 
 	for (int i = 0; i<sizeof(fa) / sizeof(fa[0]); i++)

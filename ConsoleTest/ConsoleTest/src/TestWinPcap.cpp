@@ -26,7 +26,7 @@ int TestWinPcap::MyPcap_getMac(char *if_name, char *mac)
 	}
 
 	LPADAPTER	lpAdapter = 0;
-	DWORD		dwErrorCode;
+//	DWORD		dwErrorCode;
 	PPACKET_OID_DATA  OidData;
 	int         status;
 	lpAdapter = PacketOpenAdapter(if_name);

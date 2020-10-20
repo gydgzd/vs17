@@ -64,7 +64,7 @@ int socketServer()
 	SOCKET slisten = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (slisten == INVALID_SOCKET)
 	{
-		printf("socket error !%s", GetLastError());
+		printf("socket error !%d\n", GetLastError());
 		return 0;
 	}
 
@@ -75,13 +75,13 @@ int socketServer()
 	sin.sin_addr.S_un.S_addr = INADDR_ANY;
 	if (bind(slisten, (LPSOCKADDR)&sin, sizeof(sin)) == SOCKET_ERROR)
 	{
-		printf("bind error !%s", GetLastError());
+		printf("bind error !%d\n", GetLastError());
 	}
 
 	//¿ªÊ¼¼àÌý
 	if (listen(slisten, 5) == SOCKET_ERROR)
 	{
-		printf("listen error !%s", GetLastError());
+		printf("listen error !%d\n", GetLastError());
 		return 0;
 	}
 

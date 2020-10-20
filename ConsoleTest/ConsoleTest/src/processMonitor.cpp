@@ -347,9 +347,9 @@ unsigned long long ProcessMonitor::getProcessMemory_Win(HANDLE hProcess)
 						return 0;
 					}
 				}
-				catch (char *e) // 分配内存失败
+				catch ( bad_alloc *e) // 分配内存失败
 				{
-					// e->Delete();
+                    cout << e->what() << endl;
 					return 0;
 				}
 			}

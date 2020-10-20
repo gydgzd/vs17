@@ -130,11 +130,11 @@ int strDel(char *src, char *str)
 string maxSubStr(string str)
 {
     string substr;
-    int maxLen = 0;
+    unsigned int maxLen = 0;
     std::unordered_map<char, int> indexMap;
     int posBegin = 0;
     int lastBegin = 0;
-    for (int i = 0; i < str.length(); )
+    for (unsigned int i = 0; i < str.length(); )
     {
         auto iter = indexMap.find(str.at(i));
         if (iter != indexMap.end())    // found replicate char

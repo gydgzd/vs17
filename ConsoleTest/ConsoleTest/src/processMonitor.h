@@ -26,7 +26,7 @@ struct ProcessInfo
 	std::string user;
 	std::string processName;  // process name
 	std::string cmdLine;      // command or path
-	float cpuRate;            // in % format
+	double cpuRate;            // in % format
 //	std::string memRate;      // in % format
 	unsigned long long RSS;   // physical memory(Resident Set Size), KB
 //	std::string VSS;          // Virtual Memory Size, KB

@@ -195,7 +195,7 @@ int testHashMap()
 	for (size_t n = mymtmap_num.size(); n > 0; n--)   //ÄæĞòÊä³ö
 	{
 		mtmap_num_iter = mymtmap_num.begin();    
-		for (int i = 0; i < n - 1; i++)
+		for (unsigned int i = 0; i < n - 1; i++)
 			mtmap_num_iter++;
 		printf("%d, %d \n", mtmap_num_iter->first, mtmap_num_iter->second);
 	}

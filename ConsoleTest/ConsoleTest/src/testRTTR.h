@@ -25,10 +25,10 @@ static void fun()
 {
     cout << "hello fun" << endl;
 }
-static const double pi = 3.14259;
-static std::string global_text;
-void set_text(const std::string& text) { global_text = text; }
-const std::string& get_text() { return global_text; }
+extern const double pi;
+extern std::string global_text;
+extern void set_text(const std::string& text);
+extern const std::string& get_text();
 enum class MetaData_Type
 {
     SCRIPTABLE,
@@ -44,10 +44,10 @@ RTTR_REGISTRATION
     registration::method("hello", &fun);
 
     registration::property("value", &g_value)
-        (
-            metadata(MetaData_Type::SCRIPTABLE, false),
-            metadata("Description", "This is a value.")
-            );
+    (
+        metadata(MetaData_Type::SCRIPTABLE, false),
+        metadata("Description", "This is a value."));
+           
     registration::property_readonly("PI", &pi);
     registration::property("global_text", &get_text, &set_text);
 }
@@ -75,15 +75,28 @@ public:
         //
         variant value = type::get_property_value("PI"); // remark the capitalization of "PI"
         if (value && value.is_type<double>())
-            std::cout << value.get_value<double>() << std::endl; // outputs: "3.14259"
-        property prop = type::get_global_property("PI");
+            std::cout << value.get_value<double>() << std::endl; // outputs: "3.14159"
+        prop = type::get_global_property("PI");
         if (prop)
         {
             value = prop.get_value(instance());
             if (value.is_valid() && value.is_type<double>())
-                std::cout << value.get_value<double>() << std::endl; // outputs: "3.14259"
+                std::cout << value.get_value<double>() << std::endl; // outputs: "3.14159"
         }
-
+        property prop1 = type::get_global_property("global_text");
+        if (prop1)
+        {
+            prop1.set_value(global_text, std::string("text"));           // std::string is necessary
+            variant str_value = prop1.get_value(instance());
+            if (str_value.is_valid() && str_value.is_type<string>())
+                std::cout << str_value.get_value<string>() << std::endl; // 
+        }
+        type::set_property_value("global_text", std::string("text11"));  // std::string is necessary
+        variant str_value = type::get_property_value("global_text") ;
+        if (str_value.is_valid() && str_value.is_type<string>())
+        {
+            std::cout << str_value.get_value<string>() << std::endl; // 
+        }
         // invoke method by rttr::method
         MyStruct obj1;
         variant ret;
@@ -115,13 +128,13 @@ public:
         // 
         prop = type::get_global_property("value");
         prop.set_value(g_value, 111);
-        variant value = prop.get_metadata(MetaData_Type::SCRIPTABLE);
+        value = prop.get_metadata(MetaData_Type::SCRIPTABLE);
         
         std::cout << value.get_value<bool>() << endl; // prints "false"
 
         value = prop.get_metadata("Description");
         std::cout << value.get_value<std::string>() << endl; // prints "This is a value."
-
+        
     }
 private:
 };
