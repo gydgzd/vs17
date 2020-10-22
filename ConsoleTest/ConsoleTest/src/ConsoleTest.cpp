@@ -178,11 +178,11 @@ int fibonacci(int n)
 
 Mylog g_mylog;
 extern string maxSubStr(string str);
+extern int testRapidJson();
 int main(int argc, char** argv)
 {
-    unsigned int aaa = -1;
-    if (aaa == (unsigned int)-1)
-        cout << "-1" << endl;
+
+    testRapidJson();
     cout << maxSubStr("abcabcbb") << endl;
     initWinSocket();
     testRTTR myRTTR;

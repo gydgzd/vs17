@@ -176,6 +176,9 @@
     <ClCompile Include="src\testRTTR.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\testRapidJson.cpp">
+      <Filter>src\源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="src\MyBitree.tpp">

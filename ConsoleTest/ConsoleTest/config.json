@@ -1,0 +1,8 @@
+{
+    "Device":"eno2",
+    "VirtualMac":"00:FF:21:33:22:41",
+    "VirtualNum":"00123122310031299993",
+    "TUN_NAME":"proxy1",
+    "TUN_IP":"10.0.0.2",
+    "TUN_NETMASK":"255.255.255.0"
+}
