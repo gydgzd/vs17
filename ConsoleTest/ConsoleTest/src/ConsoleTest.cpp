@@ -214,6 +214,28 @@ int main(int argc, char** argv)
     }
     mytun.process();
     */
+
+    char *tmp = new char[32];
+    const char *ss = "nice";
+    unique_ptr<char> str1(tmp);
+    if (str1 == nullptr)
+        std::cout << "str1 is empty" << std::endl;
+    memset(str1.get(), 0, 32);
+    memcpy(str1.get(), ss, strlen(ss) + 1);
+    cout << "tmp:" << tmp << endl;
+    cout << "str1:" << str1 << endl;
+    str1.reset();
+    unique_ptr<char> str2(tmp);
+    if (str2 == nullptr)
+        std::cout << "str2 is empty" << std::endl;
+    memset(str2.get(), 0, 32);
+    char * pstr = str2.get();
+    cout << "str2:" << str2 << endl;
+    cout << "pstr" << pstr << endl;
+
+    shared_ptr<char> sptr(tmp);
+    shared_ptr<char> sptr1 = sptr;
+
     subset();
     extern vector<vector<int>> ans;
     vector<int> nums{ 3,5,12,31, 44 };

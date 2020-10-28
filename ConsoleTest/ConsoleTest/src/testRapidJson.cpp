@@ -52,7 +52,11 @@ int testRapidJson() {
     }
     fseek(fp, 0, SEEK_END);
     fileSize = ftell(fp);
-
+    if (fileSize < 4)  // readStream will get an error
+    {
+        cout << "fileSize < 4" << endl;
+        return -1;
+    }
     char *json = new char[fileSize + 64];
     shared_ptr<char> buffer(json, std::default_delete<char[]>());
     fseek(fp, 0, SEEK_SET);
