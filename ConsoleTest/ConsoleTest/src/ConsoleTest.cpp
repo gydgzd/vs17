@@ -75,7 +75,7 @@ extern int str_compare(char *str1, char *str2);
 extern int log(const char * fmt, ...);
 extern void testValist();
 extern void printf_t(FILE *m_file, const char *fmt ...);
-
+extern void testClass();
 extern void simpleInterativeReverse();
 extern void interativeReverse();
 extern int parse_liveout();
@@ -214,7 +214,7 @@ int main(int argc, char** argv)
     }
     mytun.process();
     */
-
+    testClass();
     char *tmp = new char[32];
     const char *ss = "nice";
     unique_ptr<char> str1(tmp);
