@@ -40,7 +40,8 @@ void MyTimer::start()
 	m_timeBegin = 1000 * t.time + t.millitm;
 	cout << "Begin:" << m_timeBegin << endl;
 }
-long long MyTimer::stop()
+// ms
+long long MyTimer::stop() 
 {
 	struct timeb t;
 	ftime(&t);

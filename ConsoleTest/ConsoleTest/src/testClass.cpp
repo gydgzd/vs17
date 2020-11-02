@@ -93,6 +93,12 @@ void testClass()
 
     pderived = (Derived *)pbase;
     pderived->print();
+
+    delete pbase;
+    pbase = new Base();
+    Derived *  pd = new Derived();
+    pd = dynamic_cast<Derived *>(pbase);
+    pbase = pd;
     // 
     typedef void (Base::*fun)();
     fun myprint;

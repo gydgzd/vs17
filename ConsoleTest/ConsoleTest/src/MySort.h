@@ -53,4 +53,25 @@ int MySort<T>::insertionSort(T a[], int n)
 	return 0;
 }
 
+template<class T>
+inline int MySort<T>::selectSort(T a[], int n)
+{
+    m_timer.start();
+
+    for (int i = 0; i < n; i++)
+    {
+        int smallest = i;
+        for (int j = i; j < n; j++)
+        {
+            if (a[smallest] > a[j])
+                smallest = j;
+        }
+        T tmp = a[smallest];
+        a[smallest] = a[i];
+        a[i] = tmp;
+    }
+    cout << "selectSort cost time " << m_timer.stop() << "" << endl;
+    return 0;
+}
+
 #endif /* SRC_MYSORT_H_ */
