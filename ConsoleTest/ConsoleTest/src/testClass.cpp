@@ -5,8 +5,8 @@ using namespace std;
 class Base
 {
 public:
-    Base() {};
-    ~Base() {};
+    Base() { cout << "Base constructor\n"; };
+    virtual ~Base() { cout << "Base destructor\n"; };
 
     virtual void print() { cout << "This is Base\n"; };
 private:
@@ -16,8 +16,8 @@ private:
 class Derived : public Base
 {
 public:
-    Derived() {};
-    ~Derived() {};
+    Derived() { cout << "Derived constructor\n"; };
+    ~Derived() { cout << "Derived destructor\n"; };
 
     void print() { cout << "This is Derived\n"; };
 private:
