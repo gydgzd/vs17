@@ -21,6 +21,11 @@ struct Book
         name = _name;
         author = _author;
     }
+    friend std::ostream& operator<<(std::ostream& os, const Book& e)
+    {
+        os << e.ID << " " << e.name << " " << e.author << std::endl;
+        return os;
+    }
 };
 
 typedef multi_index_container< Book, indexed_by<
@@ -42,6 +47,7 @@ typedef multi_index_container< Book, indexed_by<
     ordered_non_unique<  tag<book_Name>,   BOOST_MULTI_INDEX_MEMBER(Book, string, name) >,
     ordered_non_unique < tag<book_Author>, BOOST_MULTI_INDEX_MEMBER(Book, string, author) >
 > >BookTagContainer;
+
 // tmplate function 
 template<typename Tag, typename MultiIndexContainer>
 void print_out_by(const MultiIndexContainer& s)
@@ -50,10 +56,8 @@ void print_out_by(const MultiIndexContainer& s)
     const typename boost::multi_index::index<MultiIndexContainer, Tag>::type& i = get<Tag>(s);
     typedef typename MultiIndexContainer::value_type value_type;
     // dump the elements of the index to cout
-//    std::copy(i.begin(), i.end(), std::ostream_iterator<value_type>(std::cout));  // 二进制“<<”: 没有找到接受“const _Ty”类型的右操作数的运算符(或没有可接受的转换) 
-    auto iter = i.find("Hello C");
-    if(iter!=i.end())
-        cout << iter->ID << "  " << iter->name << "  " << iter->author << endl;
+    std::copy(i.begin(), i.end(), std::ostream_iterator<value_type>(std::cout));  // 二进制“<<”: 没有找到接受“const _Ty”类型的右操作数的运算符(或没有可接受的转换) 
+
 }
 void testMultiIndex()
 {
@@ -69,11 +73,16 @@ void testMultiIndex()
         cout << iter->ID << "  " << iter->name << "  " << iter->author << endl;
     }
     cout << endl;
+
     Name_Index& name_idx = mybooks.get<1>();
     for (auto iter = name_idx.begin(); iter != name_idx.end(); iter++)
     {
         cout << iter->ID << "  " << iter->name << "  " << iter->author << endl;
     }
+    Author_Index& author_idx = mybooks.get<2>();
+    cout << "order by author:" << endl;
+    copy(author_idx.begin(), author_idx.end(), ostream_iterator<Book>(cout));
+    cout << endl;
     // search
     auto iter = id_idx.find(2);
     if (iter != id_idx.end())
@@ -88,4 +97,6 @@ void testMultiIndex()
     tagBook.insert(tagBook.end(),   Book(3, "Hello C", "tiffy"));
 
     print_out_by<book_Name>(tagBook);
+    // find 
+
 }
