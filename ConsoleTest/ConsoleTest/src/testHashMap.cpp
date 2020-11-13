@@ -227,6 +227,14 @@ int testHashMap()
 		printf("found :%s  %d\n", it->first.c_str(), it->second);
 		++it;
 	}
+    // use tie
+    std::unordered_multimap<string, int>::iterator  iterFirst, iterSec;
+    std::tie(iterFirst, iterSec) = mymtmap.equal_range("Nick");
+    while (iterFirst != iterSec)
+    {
+        printf("found :%s  %d\n", iterFirst->first.c_str(), iterFirst->second);
+    }
+
 	//// self define type
 	v2vMSG msg("8e01", "1111");
 	v2vMSG msg1("8e02", "2222");
