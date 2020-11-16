@@ -6,7 +6,7 @@
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
 #include <boost/multi_index/ordered_index.hpp>
-
+#include <boost/multi_index/composite_key.hpp>
 using namespace std;
 using namespace boost;
 using namespace boost::multi_index;
@@ -28,13 +28,13 @@ struct Book
         return os;
     }
 };
-
+// method 1
 typedef multi_index_container< Book, indexed_by<
     ordered_unique<      member<Book, int, &Book::ID> >,
     ordered_non_unique<  member<Book, string, &Book::name> >,
     ordered_non_unique < member<Book, string, &Book::author> >
     > >BookContainer;
-// method 1
+
 typedef BookContainer::nth_index<0>::type Id_Index;
 typedef BookContainer::nth_index<1>::type Name_Index;
 typedef BookContainer::nth_index<2>::type Author_Index;
@@ -42,11 +42,17 @@ typedef BookContainer::nth_index<2>::type Author_Index;
 struct book_ID{};
 struct book_Name {};
 struct book_Author {};
+struct book_id_name {};
 
+typedef ordered_unique<     tag<book_ID>, BOOST_MULTI_INDEX_MEMBER(Book, int, ID) > idx_id;
+typedef ordered_non_unique< tag<book_Name>, BOOST_MULTI_INDEX_MEMBER(Book, string, name) > idx_name;
+typedef ordered_non_unique< tag<book_Author>, BOOST_MULTI_INDEX_MEMBER(Book, string, author) > idx_author;
+typedef ordered_non_unique< tag<book_id_name>, composite_key<Book, member<Book, int, &Book::ID>, member<Book, string, &Book::name> >> idx_id_name;
 typedef multi_index_container< Book, indexed_by<
-    ordered_unique<      tag<book_ID>,     BOOST_MULTI_INDEX_MEMBER(Book, int, ID) >,
-    ordered_non_unique<  tag<book_Name>,   BOOST_MULTI_INDEX_MEMBER(Book, string, name) >,
-    ordered_non_unique < tag<book_Author>, BOOST_MULTI_INDEX_MEMBER(Book, string, author) >
+    idx_id,
+    idx_name,
+    idx_author,
+    idx_id_name
 > >BookTagContainer;
 
 // tmplate function 
@@ -117,8 +123,8 @@ void testMultiIndex()
         iter_low++;
     }
     //
-    
-    auto iterp = tag_book.equal_range("C++ Premium");
+    BookTagContainer::index<book_id_name>::type& tag_id_name = tagBook.get<book_id_name>();
+    auto iterp = tag_id_name.equal_range(boost::tuple<int, string>(3, "C++ Premium"));
    /* while (iterp.first!= iterp.second)
     {
         std::cout << iterp.first->ID << "  " << iterp.first->name << "  " << iterp.first->author << endl;

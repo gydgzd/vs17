@@ -22,7 +22,7 @@
     <ProjectGuid>{1A51404D-4FCE-4939-AB3E-6F8167E631BF}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>test_rabbitmq</RootNamespace>
-    <WindowsTargetPlatformVersion>8.1</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
