@@ -36,7 +36,7 @@
 #include "sql_conn_cpp.h"
 
 //using namespace std;
-#define LOG_FILENAME "log/program.log"
+extern const char* LOG_FILENAME;
 
 //string getSqlTime();
 std::string getLocalTime(const char *format);
@@ -61,7 +61,7 @@ public:
 	void setLogFile(const char *filename);
 	void setMaxFileSize(long maxsize);
 	int logException(const std::string& logMsg);
-	void log(const char * logMsg);
+	void log(const char * fmt, ...);
 	int logException(sql::SQLException &e, const char* file, const char* func, const int& line);
 	int checkSize();
 	int shrinkLogFile();
@@ -73,6 +73,7 @@ private:
 	long m_filesize;
 	long max_filesize;
 
+    std::shared_ptr<char> msp_linebuffer;
     void processEntries();        //background thread
     std::queue<string> mQueue;
 };

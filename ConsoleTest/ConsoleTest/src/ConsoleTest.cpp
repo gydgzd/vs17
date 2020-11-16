@@ -46,7 +46,7 @@
 #include "testRTTR.h"
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 #pragma comment(lib,"ws2_32.lib")
-//#include "testValist.cpp"
+
 using namespace std;
 int socketServer();
 // INITIALIZE_EASYLOGGINGPP add to easylogging++.h
@@ -181,13 +181,14 @@ extern string maxSubStr(string str);
 extern int testRapidJson();
 int main(int argc, char** argv)
 {
-
+/**/
     testRapidJson();
     cout << maxSubStr("abcabcbb") << endl;
     initWinSocket();
     testRTTR myRTTR;
     myRTTR.test();
     LogInit();
+    
     /*
     _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 	_CrtSetBreakAlloc(1041);	   //在内存分配之前设置内存中断块号
@@ -200,7 +201,7 @@ int main(int argc, char** argv)
     unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小，只留下低位
     printf("%d - %d\n", (unsigned int)*p, (unsigned int)*(p + 4));
     printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
-
+    g_mylog.log("test");
 //    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
 
     /*
@@ -218,6 +219,8 @@ int main(int argc, char** argv)
     char *tmp = new char[32];
     const char *ss = "nice";
     unique_ptr<char> str1(tmp);
+    shared_ptr<char> sp1(new char[32], [](char *p) { if (p != nullptr) delete[] p; });
+    sp1.reset();
     if (str1 == nullptr)
         std::cout << "str1 is empty" << std::endl;
     memset(str1.get(), 0, 32);
@@ -225,17 +228,22 @@ int main(int argc, char** argv)
     cout << "tmp:" << tmp << endl;
     cout << "str1:" << str1 << endl;
     str1.reset();
+    tmp = nullptr;
     unique_ptr<char> str2(tmp);
     if (str2 == nullptr)
         std::cout << "str2 is empty" << std::endl;
-    memset(str2.get(), 0, 32);
-    char * pstr = str2.get();
-    cout << "str2:" << str2 << endl;
-    cout << "pstr" << pstr << endl;
+    else
+    {
+        memset(str2.get(), 0, 32);
+        char * pstr = str2.get();
+        cout << "str2:" << str2 << endl;
+        cout << "pstr" << pstr << endl;
+    }
 
     shared_ptr<char> sptr(tmp);
     shared_ptr<char> sptr1 = sptr;
-
+ /*   */
+/*
     subset();
     extern vector<vector<int>> ans;
     vector<int> nums{ 3,5,12,31, 44 };
@@ -251,7 +259,7 @@ int main(int argc, char** argv)
 	testList();
 	testMap();
 	testHashMap();
-//	testSet();
+	testSet();
     fibonacci(10);
     MyBitree<int> bt;
     int aray[6] = {6, 7, 1, 3, 4, 5, };
@@ -264,12 +272,13 @@ int main(int argc, char** argv)
     cout << endl;
     bt.breadthTraversal(&bt);
     cout << endl;
-    //	testValist();
+    testValist();
 
     std::string str = Utf8ToGbk("世界"); // _T("你好");
     cout << str << endl;
-
-	// test of sort
+    */
+    
+    // test of sort
 /**/
     double fa[] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35,1242,11,242.24,2313824,232313,4755,2325,92.81 };
     double *pa = fa;
@@ -301,7 +310,7 @@ int main(int argc, char** argv)
 #elif (defined WINVER ||defined WIN32)
 	printf("Windows\n");
 #endif
-//	system("pause");
+	system("pause");
 	return 0;
 }
 

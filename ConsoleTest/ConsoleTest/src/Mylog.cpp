@@ -6,19 +6,23 @@
  */
 
 #include "Mylog.h"
-
+const char* LOG_FILENAME = "log/program.log";
 std::atomic<bool> g_log_Exit;
 std::thread logth;
-Mylog::Mylog(): m_filesize(-1),max_filesize(204800000)
+Mylog::Mylog(): m_filesize(-1),max_filesize(204800000), mstr_logfile(LOG_FILENAME)
 {
     g_log_Exit = false;
-    mstr_logfile = LOG_FILENAME;
-    logth = std::thread{&Mylog::processEntries, this};
+    // get a linebuffer
+    msp_linebuffer = std::shared_ptr<char>(new char[65536], [](char *p) { if(p != nullptr) delete[] p; });
+    memset(msp_linebuffer.get(), 0, 65536);
+    logth = std::thread{ &Mylog::processEntries, this }; // std::move(std::thread{ &Mylog::processEntries, this });
 }
-Mylog::Mylog(const char * filename):m_filesize(-1), max_filesize(204800000)
+Mylog::Mylog(const char * filename):m_filesize(-1), max_filesize(204800000), mstr_logfile(filename)
 {
     g_log_Exit = false;
-	mstr_logfile = filename;
+    // get a linebuffer
+    msp_linebuffer = std::shared_ptr<char>(new char[65536], [](char *p) { if (p != nullptr) delete[] p; });
+    memset(msp_linebuffer.get(), 0, 65536);
 	logth = std::thread{&Mylog::processEntries, this};
 }
 Mylog::~Mylog()
@@ -28,7 +32,11 @@ Mylog::~Mylog()
     g_log_Exit = true;
  //   lock.unlock();
     g_log_CondVar.notify_all();
-    logth.join();
+    if (logth.joinable())
+    {
+        logth.join();
+    }
+    msp_linebuffer.reset();
 }
 void Mylog::setLogFile(const char *filename)
 {
@@ -96,11 +104,19 @@ int Mylog::shrinkLogFile()
 	return 0;
 }
 // put log msg into the queue
-void Mylog::log(const char * logMsg)
+void Mylog::log(const char * fmt, ...)
 {
+    // convert variable param into buffer
+    char * buffer = msp_linebuffer.get();
+    memset(buffer, 0, 65536);
+    va_list ap = nullptr;
+    va_start(ap, fmt);
+    vsnprintf(buffer, 65535, fmt, ap);
+    va_end(ap);
+
     //Lock mutex and add entry to the queue.
     unique_lock<mutex> lock(g_log_Mutex);
-    mQueue.emplace(logMsg);
+    mQueue.emplace(buffer);
     lock.unlock();
     //notify condition variable to wake up threads
 //    g_log_CondVar.notify_all();    // it will add two locks here

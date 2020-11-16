@@ -17,7 +17,7 @@ void thread()
             mutex.unlock();
         }
     }
-    catch (boost::thread_interrupted&)
+    catch (boost::thread_interrupted& e)
     {
         std::cout << "Get an exception." << std::endl;
     }

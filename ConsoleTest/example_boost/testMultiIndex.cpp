@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include <iostream>
 #include <string>
+#include <tuple>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/member.hpp>
@@ -61,13 +62,15 @@ void print_out_by(const MultiIndexContainer& s)
 }
 void testMultiIndex()
 {
+    // method 1
+    cout << "method 1" << endl;
     BookContainer mybooks;
     mybooks.insert(mybooks.begin(), Book(0, "C++ Premium", "jim"));
     mybooks.insert(mybooks.begin(), Book(1, "Java Premium", "catier"));
     mybooks.insert(mybooks.begin(), Book(2, "PHP Premium", "tiffy"));
     mybooks.insert(mybooks.end(),   Book(3, "Hello C", "tiffy"));
 
-    Id_Index& id_idx = mybooks.get<0>();
+    Id_Index& id_idx = mybooks.get<0>();         // std::get<>()
     for (auto iter = id_idx.begin(); iter != id_idx.end(); iter++)
     {
         cout << iter->ID << "  " << iter->name << "  " << iter->author << endl;
@@ -90,13 +93,38 @@ void testMultiIndex()
         cout << "Found elememnt: " << iter->ID << "  " << iter->name << "  " << iter->author << endl;
     }
     // method 2 - index using tag
+    cout << "method 2" << endl;
     BookTagContainer  tagBook;
     tagBook.insert(tagBook.begin(), Book(0, "C++ Premium", "jim"));
     tagBook.insert(tagBook.begin(), Book(1, "Java Premium", "catier"));
     tagBook.insert(tagBook.begin(), Book(2, "PHP Premium", "tiffy"));
-    tagBook.insert(tagBook.end(),   Book(3, "Hello C", "tiffy"));
+    tagBook.insert(tagBook.begin(), Book(3, "C++ Premium", "tiffy"));
+    tagBook.insert(tagBook.end(),   Book(4, "Hello C", "tiffy"));
 
+    print_out_by<book_ID>(tagBook);
     print_out_by<book_Name>(tagBook);
+    
+    BookTagContainer::index<book_Name>::type& tag_book = tagBook.get<book_Name>();
+    BookTagContainer::index<book_Name>::type::iterator iter_id = tag_book.find("C++ Premium");
+    if(iter_id != tag_book.end())
+        cout << "Found elememnt: " << iter_id->ID << "  " << iter_id->name << "  " << iter_id->author << endl;
+    //
+    BookTagContainer::index<book_Name>::type::iterator iter_up = tag_book.upper_bound("C++ Premium");
+    BookTagContainer::index<book_Name>::type::iterator iter_low = tag_book.lower_bound("C++ Premium");
+    while (iter_low != iter_up)
+    {
+        std::cout << iter_low->ID << "  " << iter_low->name << "  " << iter_low->author << endl;
+        iter_low++;
+    }
+    //
+    /**/
+    auto iterp = tag_book.equal_range("C++ Premium");
+    while (iterp.first!= iterp.second)
+    {
+        std::cout << iterp.first->ID << "  " << iterp.first->name << "  " << iterp.first->author << endl;
+        iterp.first++;
+    }
+    
     // find 
 
 }

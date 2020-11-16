@@ -1,7 +1,7 @@
 #include "stdafx.h"
 #include "testAsio.h"
 
-
+std::mutex g_mutex;
 testAsio::testAsio()
 {
 }
@@ -27,6 +27,7 @@ boost::asio::io_service myservice;
 
 void run()
 {
+    std::lock_guard < std::mutex > lock();
     myservice.run();
 }
 typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;

@@ -233,6 +233,7 @@ int testHashMap()
     while (iterFirst != iterSec)
     {
         printf("found :%s  %d\n", iterFirst->first.c_str(), iterFirst->second);
+        iterFirst++;
     }
 
 	//// self define type
