@@ -117,14 +117,15 @@ void testMultiIndex()
         iter_low++;
     }
     //
-    /**/
+    
     auto iterp = tag_book.equal_range("C++ Premium");
-    while (iterp.first!= iterp.second)
+   /* while (iterp.first!= iterp.second)
     {
         std::cout << iterp.first->ID << "  " << iterp.first->name << "  " << iterp.first->author << endl;
         iterp.first++;
-    }
-    
+    }*/
+    copy(iterp.first, iterp.second, ostream_iterator<Book>(cout));
+    cout << endl;
     // find 
 
 }
