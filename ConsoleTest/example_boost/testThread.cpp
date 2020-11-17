@@ -13,13 +13,13 @@ void thread()
         {
             wait(1);
             mutex.lock();
-            std::cout << "tid:" << boost::this_thread::get_id() << " " << i << std::endl;
+            std::cout << "tid:" << boost::this_thread::get_id() << " " << i <<std::endl;
             mutex.unlock();
         }
     }
     catch (boost::thread_interrupted& e)
     {
-        std::cout << "Get an exception." << std::endl;
+        std::cout << "tid:" << boost::this_thread::get_id() << " Get an exception." << std::endl;
     }
 
 }

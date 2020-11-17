@@ -177,6 +177,7 @@
     <ClInclude Include="src\testMultiThread.h" />
     <ClInclude Include="src\testRTTR.h" />
     <ClInclude Include="src\TestWinPcap.h" />
+    <ClInclude Include="src\ThreadPool.h" />
     <ClInclude Include="src\tuntap.h" />
   </ItemGroup>
   <ItemGroup>
