@@ -260,7 +260,7 @@ int main(int argc, char** argv)
 	testMap();
 	testHashMap();
 	testSet();
-    fibonacci(10);
+    fibonacci(10);*/
     MyBitree<int> bt;
     int aray[6] = {6, 7, 1, 3, 4, 5, };
     bt.init(&bt, aray, 6);
@@ -276,7 +276,7 @@ int main(int argc, char** argv)
 
     std::string str = Utf8ToGbk("世界"); // _T("你好");
     cout << str << endl;
-    */
+    
     
     // test of sort
 /**/

@@ -61,9 +61,31 @@ inline int MyBitree<T>::preTraversal(MyBitree * bt)
 {
     if (bt == nullptr)
         return -1;
+   // method1 recursive
+ /**/   
     cout << bt->value << "  " ;
     preTraversal(bt->lchild);
     preTraversal(bt->rchild);
+
+    // method2 non-recursive
+ /*   std::stack<MyBitree *> tmp;
+    MyBitree *pos = bt;
+    while (pos != nullptr || !tmp.empty())
+    {
+        cout << pos->value;
+        if (pos->lchild == nullptr && pos->rchild == nullptr && tmp.empty())
+            break;
+        if(pos->rchild != nullptr)
+            tmp.emplace(pos->rchild);
+        if (pos->lchild != nullptr)   // go to left 
+            pos = pos->lchild;
+        else if(!tmp.empty())                         // until there is no left, go back to right
+        {
+            pos = tmp.top();
+            tmp.pop();
+        }
+    }
+    */
     return 0;
 }
 
