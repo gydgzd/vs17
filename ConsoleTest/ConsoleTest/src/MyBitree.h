@@ -9,13 +9,15 @@ public:
     virtual ~MyBitree();
 
     int init(MyBitree * bt, T array[], int n);
+    int insertOne(MyBitree *bt, T value);      // insert by order
+    int insertFull(MyBitree *bt, T value);     // insert one next to one ,like a full tree
+
     int preTraversal(MyBitree * bt);
     int midTraversal(MyBitree * bt);
     int postTraversal(MyBitree * bt);
     int breadthTraversal(MyBitree * bt);
 private:
-    
-    int insertOne(MyBitree *bt, T value);
+
     int deleteOne();
     int modifyOne();
     void printAll(MyBitree *);
@@ -41,7 +43,7 @@ MyBitree<T>::~MyBitree()
 }
 
 /*
-init a binary tree with an array, n is the number of element in array
+init a binary tree with an array, n is the index of element in array
 */
 template<class T>
 int MyBitree<T>::init(MyBitree * bt, T array[], int n)
@@ -49,12 +51,75 @@ int MyBitree<T>::init(MyBitree * bt, T array[], int n)
     if (bt == nullptr || array == nullptr || n == 0)
         return 0;
     bt->value = array[0];
+    queue<MyBitree *> tmp;
+    tmp.emplace(bt);
     for (int idx = 1; idx < n; idx++)
     {
-        insertOne(bt, array[idx]);
+        // method 1 
+        //insertOne(bt, array[idx]);
+
+        // method 2
+        insertFull(bt, array[idx]);
+
     }
     return 0;
 }
+
+template<class T>
+int MyBitree<T>::insertOne(MyBitree *bt, T value)
+{
+    if (bt == nullptr)
+        return 0;
+    if (value < bt->value)
+    {
+        if (bt->lchild == nullptr)
+        {
+            bt->lchild = new MyBitree();
+            bt->lchild->value = value;
+        }
+        else
+        {
+            insertOne(bt->lchild, value);
+        }
+    }
+    else
+    {
+        if (bt->rchild == nullptr)
+        {
+            bt->rchild = new MyBitree();
+            bt->rchild->value = value;
+        }
+        else
+        {
+            insertOne(bt->rchild, value);
+        }
+    }
+    return 0;
+}
+
+template<class T>
+int MyBitree<T>::insertFull(MyBitree *bt, T value)
+{
+    if (bt == nullptr)
+        return 0;
+ 
+    if (bt->lchild == nullptr)
+    {
+        bt->lchild = new MyBitree();
+        bt->lchild->value = value;
+    }
+    else if (bt->rchild == nullptr)
+    {
+        bt->rchild = new MyBitree();
+        bt->rchild->value = value;
+    }
+    else
+    {
+        insertFull(bt->lchild, value);
+    }
+    return 0;
+}
+
 
 template<class T>
 inline int MyBitree<T>::preTraversal(MyBitree * bt)
@@ -130,35 +195,4 @@ inline int MyBitree<T>::breadthTraversal(MyBitree * bt)
     return 0;
 }
 
-template<class T>
-int MyBitree<T>::insertOne(MyBitree *bt, T value)
-{
-    if (bt == nullptr)
-        return 0;
-    if (value < bt->value)
-    {
-        if (bt->lchild == nullptr)
-        {
-            bt->lchild = new MyBitree();
-            bt->lchild->value = value;
-        }
-        else
-        {
-            insertOne(bt->lchild, value);
-        }
-    }
-    else
-    {
-        if (bt->rchild == nullptr)
-        {
-            bt->rchild = new MyBitree();
-            bt->rchild->value = value;
-        }
-        else
-        {
-            insertOne(bt->rchild, value);
-        }
-    }
-    return 0;
-}
 
