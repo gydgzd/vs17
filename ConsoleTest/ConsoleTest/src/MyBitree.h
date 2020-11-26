@@ -6,6 +6,7 @@ class MyBitree
 {
 public:
     MyBitree();
+    MyBitree(T& value);           // explicit
     virtual ~MyBitree();
 
     int init(MyBitree * bt, T array[], int n);
@@ -23,17 +24,25 @@ private:
     void printAll(MyBitree *);
 
 private: 
-    T value;
-    MyBitree *lchild;
-    MyBitree *rchild;
+    T m_value;
+    MyBitree *m_lchild;
+    MyBitree *m_rchild;
 
 };
 
 template<class T>
 MyBitree<T>::MyBitree()
 {
-    lchild = nullptr;
-    rchild = nullptr;
+    m_lchild = nullptr;
+    m_rchild = nullptr;
+}
+
+template<class T>
+MyBitree<T>::MyBitree(T& _value)
+{
+    m_value = _value;
+    m_lchild = nullptr;
+    m_rchild = nullptr;
 }
 
 template<class T>
@@ -50,7 +59,7 @@ int MyBitree<T>::init(MyBitree * bt, T array[], int n)
 {
     if (bt == nullptr || array == nullptr || n == 0)
         return 0;
-    bt->value = array[0];
+    bt->m_value = array[0];
     queue<MyBitree *> tmp;
     tmp.emplace(bt);
     for (int idx = 1; idx < n; idx++)
@@ -70,28 +79,28 @@ int MyBitree<T>::insertOne(MyBitree *bt, T value)
 {
     if (bt == nullptr)
         return 0;
-    if (value < bt->value)
+    if (value < bt->m_value)
     {
-        if (bt->lchild == nullptr)
+        if (bt->m_lchild == nullptr)
         {
-            bt->lchild = new MyBitree();
-            bt->lchild->value = value;
+            bt->m_lchild = new MyBitree();
+            bt->m_lchild->m_value = value;
         }
         else
         {
-            insertOne(bt->lchild, value);
+            insertOne(bt->m_lchild, value);
         }
     }
     else
     {
-        if (bt->rchild == nullptr)
+        if (bt->m_rchild == nullptr)
         {
-            bt->rchild = new MyBitree();
-            bt->rchild->value = value;
+            bt->m_rchild = new MyBitree();
+            bt->m_rchild->m_value = value;
         }
         else
         {
-            insertOne(bt->rchild, value);
+            insertOne(bt->m_rchild, value);
         }
     }
     return 0;
@@ -102,21 +111,34 @@ int MyBitree<T>::insertFull(MyBitree *bt, T value)
 {
     if (bt == nullptr)
         return 0;
- 
-    if (bt->lchild == nullptr)
+    std::queue<MyBitree *> tmpQ;
+    tmpQ.push(bt);
+    int count = 1;                 // counts of nodes in one layer
+    MyBitree * pos = nullptr;
+    MyBitree * node = new MyBitree(value);
+    while (!tmpQ.empty())
     {
-        bt->lchild = new MyBitree();
-        bt->lchild->value = value;
+        pos = tmpQ.front();
+        if (pos->m_lchild == nullptr)
+        {
+            pos->m_lchild = node;
+            tmpQ.push(pos->m_lchild);
+            break;
+        }else
+            tmpQ.push(pos->m_lchild);
+        if (pos->m_rchild == nullptr)
+        {
+            pos->m_rchild = node;
+            tmpQ.push(pos->m_rchild);
+            break;
+        }
+        else
+        {
+            tmpQ.push(pos->m_rchild);
+        }
+        tmpQ.pop();
     }
-    else if (bt->rchild == nullptr)
-    {
-        bt->rchild = new MyBitree();
-        bt->rchild->value = value;
-    }
-    else
-    {
-        insertFull(bt->lchild, value);
-    }
+
     return 0;
 }
 
@@ -127,30 +149,31 @@ inline int MyBitree<T>::preTraversal(MyBitree * bt)
     if (bt == nullptr)
         return -1;
    // method1 recursive
- /**/   
-    cout << bt->value << "  " ;
-    preTraversal(bt->lchild);
-    preTraversal(bt->rchild);
-
+ /*  
+    cout << bt->m_value << "  " ;
+    preTraversal(bt->m_lchild);
+    preTraversal(bt->m_rchild);
+*/ 
     // method2 non-recursive
- /*   std::stack<MyBitree *> tmp;
+ /**/
+    std::stack<MyBitree *> tmp;
     MyBitree *pos = bt;
     while (pos != nullptr || !tmp.empty())
     {
-        cout << pos->value;
-        if (pos->lchild == nullptr && pos->rchild == nullptr && tmp.empty())
+        cout << pos->m_value;
+        if (pos->m_lchild == nullptr && pos->m_rchild == nullptr && tmp.empty())
             break;
-        if(pos->rchild != nullptr)
-            tmp.emplace(pos->rchild);
-        if (pos->lchild != nullptr)   // go to left 
-            pos = pos->lchild;
-        else if(!tmp.empty())                         // until there is no left, go back to right
+        if(pos->m_rchild != nullptr)
+            tmp.emplace(pos->m_rchild);
+        if (pos->m_lchild != nullptr)   // go to left 
+            pos = pos->m_lchild;
+        else if(!tmp.empty())           // until there is no left, go back to right
         {
             pos = tmp.top();
             tmp.pop();
         }
     }
-    */
+    
     return 0;
 }
 
@@ -159,9 +182,9 @@ inline int MyBitree<T>::midTraversal(MyBitree * bt)
 {
     if (bt == nullptr)
         return -1;
-    midTraversal(bt->lchild);
-    cout << bt->value << "  " ;
-    midTraversal(bt->rchild);
+    midTraversal(bt->m_lchild);
+    cout << bt->m_value << "  " ;
+    midTraversal(bt->m_rchild);
     return 0;
 }
 
@@ -170,9 +193,9 @@ inline int MyBitree<T>::postTraversal(MyBitree * bt)
 {
     if (bt == nullptr)
         return -1;
-    postTraversal(bt->lchild);
-    postTraversal(bt->rchild);
-    cout << bt->value << "  " ;
+    postTraversal(bt->m_lchild);
+    postTraversal(bt->m_rchild);
+    cout << bt->m_value << "  " ;
     return 0;
 }
 
@@ -185,11 +208,11 @@ inline int MyBitree<T>::breadthTraversal(MyBitree * bt)
     tmp.push(bt);
     while (!tmp.empty())
     {
-        cout << tmp.front()->value << "  ";
-        if (tmp.front()->lchild != nullptr)
-            tmp.push(tmp.front()->lchild);
-        if (tmp.front()->rchild != nullptr)
-            tmp.push(tmp.front()->rchild);
+        cout << tmp.front()->m_value << "  ";
+        if (tmp.front()->m_lchild != nullptr)
+            tmp.push(tmp.front()->m_lchild);
+        if (tmp.front()->m_rchild != nullptr)
+            tmp.push(tmp.front()->m_rchild);
         tmp.pop();
     }
     return 0;
