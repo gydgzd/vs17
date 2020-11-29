@@ -272,6 +272,7 @@ int main(int argc, char** argv)
     cout << endl;
     bt.breadthTraversal(&bt);
     cout << endl;
+    bt.deleteTree();
     testValist();
 
     std::string str = Utf8ToGbk("世界"); // _T("你好");

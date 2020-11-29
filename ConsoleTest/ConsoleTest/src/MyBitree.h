@@ -1,7 +1,8 @@
 #pragma once
 #include <queue>
-
-template<class T>
+#include <list>
+using namespace std;
+template<typename T>
 class MyBitree
 {
 public:
@@ -9,19 +10,22 @@ public:
     MyBitree(T& value);           // explicit
     virtual ~MyBitree();
 
-    int init(MyBitree * bt, T array[], int n);
-    int insertOne(MyBitree *bt, T value);      // insert by order
-    int insertFull(MyBitree *bt, T value);     // insert one next to one ,like a full tree
+    virtual int init(MyBitree * bt, T array[], int n);
+    virtual int insertOne(MyBitree *bt, T value);      // insert by order
+    virtual int insertFull(MyBitree *bt, T value);     // insert one next to one ,like a full tree
 
     int preTraversal(MyBitree * bt);
     int midTraversal(MyBitree * bt);
     int postTraversal(MyBitree * bt);
     int breadthTraversal(MyBitree * bt);
+    
+    int deleteTree(MyBitree *bt);                     // delete root node bt 
+    int deleteTree();                                 // don't delete root node
 private:
 
-    int deleteOne();
+    
     int modifyOne();
-    void printAll(MyBitree *);
+    void printAll(MyBitree *bt);
 
 private: 
     T m_value;
@@ -35,6 +39,7 @@ MyBitree<T>::MyBitree()
 {
     m_lchild = nullptr;
     m_rchild = nullptr;
+    cout << "Construct MyBitree" << endl;
 }
 
 template<class T>
@@ -43,16 +48,20 @@ MyBitree<T>::MyBitree(T& _value)
     m_value = _value;
     m_lchild = nullptr;
     m_rchild = nullptr;
+    cout << "Construct MyBitree" << endl;
 }
 
 template<class T>
 MyBitree<T>::~MyBitree()
 {
-
+    std::queue<T> tmp;
+    deleteTree(this->m_lchild);
+    deleteTree(this->m_rchild);
+    cout << "~MyBitree()" << endl;
 }
 
 /*
-init a binary tree with an array, n is the index of element in array
+*init a binary tree with an array, n is the index of element in array
 */
 template<class T>
 int MyBitree<T>::init(MyBitree * bt, T array[], int n)
@@ -60,7 +69,7 @@ int MyBitree<T>::init(MyBitree * bt, T array[], int n)
     if (bt == nullptr || array == nullptr || n == 0)
         return 0;
     bt->m_value = array[0];
-    queue<MyBitree *> tmp;
+    std::queue<MyBitree *> tmp;
     tmp.emplace(bt);
     for (int idx = 1; idx < n; idx++)
     {
@@ -105,7 +114,7 @@ int MyBitree<T>::insertOne(MyBitree *bt, T value)
     }
     return 0;
 }
-
+// insert a node in breadthTraversal order
 template<class T>
 int MyBitree<T>::insertFull(MyBitree *bt, T value)
 {
@@ -113,7 +122,6 @@ int MyBitree<T>::insertFull(MyBitree *bt, T value)
         return 0;
     std::queue<MyBitree *> tmpQ;
     tmpQ.push(bt);
-    int count = 1;                 // counts of nodes in one layer
     MyBitree * pos = nullptr;
     MyBitree * node = new MyBitree(value);
     while (!tmpQ.empty())
@@ -218,4 +226,90 @@ inline int MyBitree<T>::breadthTraversal(MyBitree * bt)
     return 0;
 }
 
+//delete a tree whose root is constructed by new
+template<typename T>
+inline int MyBitree<T>::deleteTree(MyBitree * bt)
+{   
+    if (bt == nullptr || (bt->m_lchild == nullptr && bt->m_rchild == nullptr))
+        return 0;
+    std::list<MyBitree *> tmpList;
+    tmpList.push_back(bt);
+    auto iterList = tmpList.begin();
+    while (true)
+    {
+        if ((*iterList)->m_lchild)
+        {
+            tmpList.insert(tmpList.end(), (*iterList)->m_lchild);
+        }
+        if ((*iterList)->m_rchild)
+        {
+            tmpList.insert(tmpList.end(), (*iterList)->m_rchild);
+        }
+        iterList++;
+        if (iterList == tmpList.end())
+            break;
+    }
+    auto riterList = tmpList.rbegin();
+    while (riterList != tmpList.rend())
+    {
+        if ((*riterList)->m_lchild)
+            (*riterList)->m_lchild = nullptr;
+        if ((*riterList)->m_rchild)
+            (*riterList)->m_rchild = nullptr;
+        delete *riterList++;
+    }
+    return 0;
+}
 
+//delete a tree whose root is constructed without new
+template<typename T>
+inline int MyBitree<T>::deleteTree()
+{
+    if (this == nullptr || (this->m_lchild == nullptr && this->m_rchild == nullptr))
+        return 0;
+    std::list<MyBitree *> tmpList;
+    tmpList.push_back(this);
+    auto iterList = tmpList.begin();
+    while (true)
+    {
+        if ((*iterList)->m_lchild)
+        {
+            tmpList.insert(tmpList.end(), (*iterList)->m_lchild);
+        }
+        if ((*iterList)->m_rchild)
+        {
+            tmpList.insert(tmpList.end(), (*iterList)->m_rchild);
+        }
+        iterList++;
+        if (iterList == tmpList.end())
+            break;
+    }
+    tmpList.erase(tmpList.begin());       // de not delete root
+    auto riterList = tmpList.rbegin();
+    while (riterList != tmpList.rend())
+    {
+        if ((*riterList)->m_lchild)
+            (*riterList)->m_lchild = nullptr;
+        if ((*riterList)->m_rchild)
+            (*riterList)->m_rchild = nullptr;
+        delete *riterList++;
+    }
+    this->m_lchild = nullptr;
+    this->m_rchild = nullptr;
+    return 0;
+}
+
+template<typename T>
+class MyAVLTree : public MyBitree<typename T>
+{
+public:
+    MyAVLTree()  { cout << "Construct MyAVLTree" << endl; };
+    ~MyAVLTree() { cout << "~MyAVLTree" << endl; };
+
+    virtual int init(MyBitree * bt, T array[], int n);
+    virtual int insertOne(MyBitree *bt, T value);      // insert by order
+    virtual int insertFull(MyBitree *bt, T value);     // insert one next to one ,like a full tree
+protected:
+
+private:
+};
