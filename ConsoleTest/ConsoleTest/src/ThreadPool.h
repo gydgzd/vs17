@@ -21,7 +21,8 @@
 //    distribution.
 //
 // Modified for log4cplus, copyright (c) 2014-2015 Václav Zeman.
-/*  Usage:
+/*  
+Usage:
 // create thread pool with 4 worker threads
 ThreadPool pool(4);
 
