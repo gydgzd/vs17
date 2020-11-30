@@ -16,6 +16,9 @@
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
+    <Filter Include="src\container">
+      <UniqueIdentifier>{1f4fbb56-4801-4ac2-92ac-7809ef045c76}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -70,6 +73,9 @@
       <Filter>src\头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\ThreadPool.h">
+      <Filter>src\头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cJSON.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
   </ItemGroup>
@@ -180,6 +186,9 @@
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\testRapidJson.cpp">
+      <Filter>src\源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cJSON_test.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
   </ItemGroup>
