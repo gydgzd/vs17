@@ -71,7 +71,7 @@ char * testLocal()
 extern int readFile();
 extern int str_replace(char str[], int size, int strlenth);
 extern int str_compare(char *str1, char *str2);
-
+extern char* createJSON(void);
 extern int log(const char * fmt, ...);
 extern void testValist();
 extern void printf_t(FILE *m_file, const char *fmt ...);
@@ -188,7 +188,7 @@ int main(int argc, char** argv)
     testRTTR myRTTR;
     myRTTR.test();
     LogInit();
-
+ //   cout << createJSON() << endl;
     /*
     _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
     _CrtSetBreakAlloc(1041);	   //在内存分配之前设置内存中断块号
