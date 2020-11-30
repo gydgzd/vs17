@@ -44,6 +44,8 @@
 #include "easylogging++.h"    // v9.96.7
 #include "MyBitree.h"
 #include "testRTTR.h"
+#include "HttpServerLibevent.h"
+
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 #pragma comment(lib,"ws2_32.lib")
 
@@ -71,7 +73,7 @@ char * testLocal()
 extern int readFile();
 extern int str_replace(char str[], int size, int strlenth);
 extern int str_compare(char *str1, char *str2);
-
+extern char* createJSON(void);
 extern int log(const char * fmt, ...);
 extern void testValist();
 extern void printf_t(FILE *m_file, const char *fmt ...);
@@ -188,7 +190,7 @@ int main(int argc, char** argv)
     testRTTR myRTTR;
     myRTTR.test();
     LogInit();
-
+ //   cout << createJSON() << endl;
     /*
     _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
     _CrtSetBreakAlloc(1041);	   //在内存分配之前设置内存中断块号
@@ -215,6 +217,9 @@ int main(int argc, char** argv)
         }
         mytun.process();
         */
+    HttpServerLibevent hv;
+    hv.testLibevent();
+
     testClass();
     char *tmp = new char[32];
     const char *ss = "nice";

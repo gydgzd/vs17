@@ -34,14 +34,9 @@
 #include <condition_variable>
 // my head files
 #include "sql_conn_cpp.h"
-
+#include "getDate.h"
 //using namespace std;
 extern const char* LOG_FILENAME;
-
-//string getSqlTime();
-std::string getLocalTime(const char *format);
-std::string getLocalTimeUs(const char *format);
-time_t dateToSeconds(const char *str);
 
 //Mutex and condition variable to protect access to the queue.
 
