@@ -168,6 +168,7 @@ void run(void)
     base = event_base_new();
     if (!base)
         return; /*XXXerr*/
+    std::cout << event_base_get_method(base);      // win32
 
     sin.sin_family = AF_INET;
     sin.sin_addr.s_addr = 0;
@@ -175,7 +176,7 @@ void run(void)
 
     listener = socket(AF_INET, SOCK_STREAM, 0);
     evutil_make_socket_nonblocking(listener);
-
+    evutil_make_listen_socket_reuseable(listener); //设置端口重用
 #ifndef WIN32
     {
         int one = 1;
@@ -196,24 +197,22 @@ void run(void)
     listener_event = event_new(base, listener, EV_READ|EV_PERSIST, do_accept, (void*)base);
     /*XXX check it */
     event_add(listener_event, NULL);
-
     event_base_dispatch(base);     // 阻塞
+    event_base_free(base);
 }
 
 int HttpServerLibevent::testLibevent()
 {
     setvbuf(stdout, NULL, _IONBF, 0);
 
-    run();
+//    run();
     // test signal
     struct event *signal_int;
     struct event_base* base;
 #ifdef _WIN32
     WORD wVersionRequested;
     WSADATA wsaData;
-
     wVersionRequested = MAKEWORD(2, 2);
-
     (void)WSAStartup(wVersionRequested, &wsaData);
 #endif
 
@@ -228,7 +227,9 @@ int HttpServerLibevent::testLibevent()
     event_base_dispatch(base);
     event_free(signal_int);
     event_base_free(base);
+    //
 
-    return (0);
+
+
     return 0;
 }

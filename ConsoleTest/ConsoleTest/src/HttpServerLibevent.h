@@ -10,7 +10,7 @@
 
 #include <sys/types.h>
 #include <event2/event-config.h>
-
+#include <iostream>
 #include <sys/stat.h>
 #ifndef _WIN32
 #include <sys/queue.h>
