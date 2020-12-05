@@ -8,7 +8,7 @@
 #include <iterator>
 //#include <algorithm>
 #include <chrono>
-
+#include <boost/shared_ptr.hpp>
 extern void testMultiIndex();
 extern int testThread();
 
@@ -46,6 +46,9 @@ int main()
     Precision_Sleep(10);
     testThread();
     testMultiIndex();
+
+    boost::shared_lock<boost::shared_mutex> lock();
+
 
 
 	testAsio myAsio;
