@@ -27,7 +27,7 @@ boost::asio::io_service myservice;
 
 void run()
 {
-    std::lock_guard < std::mutex > lock();
+    std::lock_guard <std::mutex> lock(g_mutex);
     myservice.run();
 }
 typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;

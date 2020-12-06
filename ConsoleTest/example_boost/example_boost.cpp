@@ -47,8 +47,6 @@ int main()
     testThread();
     testMultiIndex();
 
-    boost::shared_lock<boost::shared_mutex> lock();
-
 
 
 	testAsio myAsio;

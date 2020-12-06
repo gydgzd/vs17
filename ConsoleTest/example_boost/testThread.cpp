@@ -6,18 +6,19 @@ void wait(int seconds)
     boost::this_thread::sleep(boost::posix_time::seconds(seconds));
 }
 boost::mutex mutex;
+boost::shared_mutex shr_mutex;
+int g_i = 0;
 void thread()
 {
     try {
-        for (int i = 0; i < 5; ++i)
+        for (g_i = 0; g_i < 5; ++g_i)
         {
             wait(1);
-            mutex.lock();
-            std::cout << "tid:" << boost::this_thread::get_id() << " " << i <<std::endl;
-            mutex.unlock();
+            boost::unique_lock<boost::shared_mutex> lock(shr_mutex);
+            std::cout << "tid:" << boost::this_thread::get_id() << " " << g_i <<std::endl;
         }
     }
-    catch (boost::thread_interrupted& e)
+    catch (boost::thread_interrupted*)
     {
         std::cout << "tid:" << boost::this_thread::get_id() << " Get an exception." << std::endl;
     }
