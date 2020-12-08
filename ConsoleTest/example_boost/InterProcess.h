@@ -7,10 +7,10 @@ class InterProcess
 {
 public:
     InterProcess();
-    InterProcess();
+    virtual ~InterProcess();
 
     int memPool(int argc);
-
+    int namedShrMemory(int argc);
 private:
 
 };

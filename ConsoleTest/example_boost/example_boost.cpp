@@ -2,13 +2,16 @@
 //
 
 #include "stdafx.h"
-#include "testAsio.h"
 #include <boost/lambda/lambda.hpp>
 #include <iostream>
 #include <iterator>
 //#include <algorithm>
 #include <chrono>
 #include <boost/shared_ptr.hpp>
+
+//test
+#include "testAsio.h"
+#include "InterProcess.h"
 extern void testMultiIndex();
 extern int testThread();
 
@@ -48,9 +51,12 @@ int main()
     testMultiIndex();
 
 
-
 	testAsio myAsio;
-	myAsio.test();
+//	myAsio.test();
+
+    InterProcess iproc;
+    iproc.memPool(0);
+
 	system("pause");
 	return 0;
 }
