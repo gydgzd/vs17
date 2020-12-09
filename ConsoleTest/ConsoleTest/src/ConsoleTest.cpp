@@ -218,7 +218,7 @@ int main(int argc, char** argv)
         mytun.process();
         */
     HttpServerLibevent hv;
-    hv.testLibevent();
+//    hv.testLibevent();
 
     testClass();
     char *tmp = new char[32];
@@ -244,7 +244,8 @@ int main(int argc, char** argv)
         cout << "str2:" << str2 << endl;
         cout << "pstr" << pstr << endl;
     }
-
+    map<int, int> mmmap;
+    cout << mmmap[0] << endl;
     shared_ptr<char> sptr(tmp);
     shared_ptr<char> sptr1 = sptr;
     /*   */

@@ -14,7 +14,7 @@ void thread()
         for (g_i = 0; g_i < 5; ++g_i)
         {
             wait(1);
-            boost::unique_lock<boost::shared_mutex> lock(shr_mutex);
+            boost::shared_lock<boost::shared_mutex> lock(shr_mutex);
             std::cout << "tid:" << boost::this_thread::get_id() << " " << g_i <<std::endl;
         }
     }
