@@ -201,14 +201,15 @@ void Mylog::processEntries()
         
         while(!g_log_Exit)
         {
-            locker.lock();
+            lock_guard<std::mutex> lock(g_log_Mutex);
             if (!mQueue.empty())
             {
-                ofs << getLocalTimeUs("%Y-%m-%d %H:%M:%S") <<"  ";
+                ofs << getLocalTimeUs("%Y-%m-%d %H:%M:%S") << "  ";
                 ofs << mQueue.front() << std::endl;
                 mQueue.pop();
             }
-            locker.unlock();
+            else
+                break;
         }
         ofs.close();
         checkSize();

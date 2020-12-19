@@ -203,7 +203,10 @@ int main(int argc, char** argv)
     unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小，只留下低位
     printf("%d - %d\n", (unsigned int)*p, (unsigned int)*(p + 4));
     printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
-    g_mylog.log("test");
+    for (int i = 0; i < 10000; i++)
+    {
+        g_mylog.log("test", i);
+    }
     //    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
 
         /*
