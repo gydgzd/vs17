@@ -19,6 +19,12 @@
     <Filter Include="src\container">
       <UniqueIdentifier>{1f4fbb56-4801-4ac2-92ac-7809ef045c76}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\thirdLib">
+      <UniqueIdentifier>{95293dfb-14dc-4ddd-957e-d7df40a91ccb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\stringHandle">
+      <UniqueIdentifier>{8f9040b0-2a3e-434c-9a12-cb090fc6b24e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -86,16 +92,7 @@
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\CFileVersion.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\ConsoleTest.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\easylogging++.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\getRdmString.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\Mylog.cpp">
@@ -113,25 +110,13 @@
     <ClCompile Include="src\processMonitor.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\readFile.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\recursion.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\sockerServer.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\sql_conn_cpp.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\stdafx.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\str_fun.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\testArray.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\testClass.cpp">
@@ -143,43 +128,19 @@
     <ClCompile Include="src\testFriend.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\testFstream.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\testHashMap.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\testList.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\testMap.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\testMultiThread.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\testSelect.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\testSet.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\testSort.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\testStack.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\testValist.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\testVector.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\testVolatile.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\TestWinPcap.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\testWMI.cpp">
@@ -188,23 +149,68 @@
     <ClCompile Include="src\backtracking.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\testRTTR.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\testRapidJson.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cJSON_test.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cJSON.c">
       <Filter>src\源文件</Filter>
     </ClCompile>
     <ClCompile Include="src\getDate.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
+    <ClCompile Include="src\testHashMap.cpp">
+      <Filter>src\container</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testList.cpp">
+      <Filter>src\container</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testArray.cpp">
+      <Filter>src\container</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cJSON.c">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\cJSON_test.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\easylogging++.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
     <ClCompile Include="src\HttpServerLibevent.cpp">
-      <Filter>src\源文件</Filter>
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\sql_conn_cpp.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testMap.cpp">
+      <Filter>src\container</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testSet.cpp">
+      <Filter>src\container</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testVector.cpp">
+      <Filter>src\container</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testStack.cpp">
+      <Filter>src\container</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testRTTR.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TestWinPcap.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\getRdmString.cpp">
+      <Filter>src\stringHandle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\str_fun.cpp">
+      <Filter>src\stringHandle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\testFstream.cpp">
+      <Filter>src\stringHandle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\readFile.cpp">
+      <Filter>src\stringHandle</Filter>
+    </ClCompile>
+    <ClCompile Include="src\CFileVersion.cpp">
+      <Filter>src\stringHandle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
