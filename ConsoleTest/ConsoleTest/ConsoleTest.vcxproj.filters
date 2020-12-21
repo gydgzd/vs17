@@ -33,9 +33,6 @@
     <ClInclude Include="src\CFileVersion.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\easylogging++.h">
-      <Filter>src\头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\Mylog.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
@@ -81,14 +78,17 @@
     <ClInclude Include="src\ThreadPool.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\cJSON.h">
-      <Filter>src\头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\getDate.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\HttpServerLibevent.h">
       <Filter>src\头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="src\cJSON.h">
+      <Filter>src\thirdLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\easylogging++.h">
+      <Filter>src\thirdLib</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
