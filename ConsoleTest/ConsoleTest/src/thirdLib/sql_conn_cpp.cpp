@@ -1,4 +1,4 @@
-#include "stdafx.h"
+#include "../stdafx.h"
 #include "sql_conn_cpp.h"
 #include <fstream>
 /*

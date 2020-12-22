@@ -33,7 +33,7 @@
 #include <atomic>
 #include <condition_variable>
 // my head files
-#include "sql_conn_cpp.h"
+#include "thirdLib/sql_conn_cpp.h"
 #include "getDate.h"
 //using namespace std;
 extern const char* LOG_FILENAME;

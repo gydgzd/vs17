@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include <array>
 #include <iostream>
 #include <time.h>

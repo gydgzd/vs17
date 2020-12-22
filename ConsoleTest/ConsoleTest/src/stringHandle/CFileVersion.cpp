@@ -1,4 +1,3 @@
-#include "stdafx.h"
 #include "CFileVersion.h"
 #include "winver.h"
 #include <assert.h>

@@ -30,9 +30,6 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\CFileVersion.h">
-      <Filter>src\头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\Mylog.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
@@ -48,13 +45,7 @@
     <ClInclude Include="src\processMonitor.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\sql_conn_cpp.h">
-      <Filter>src\头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\stdafx.h">
-      <Filter>src\头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\str_fun.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\targetver.h">
@@ -63,16 +54,10 @@
     <ClInclude Include="src\testMultiThread.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\TestWinPcap.h">
-      <Filter>src\头文件</Filter>
-    </ClInclude>
     <ClInclude Include="src\tuntap.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\MyBitree.h">
-      <Filter>src\头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="src\testRTTR.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
     <ClInclude Include="src\ThreadPool.h">
@@ -81,13 +66,31 @@
     <ClInclude Include="src\getDate.h">
       <Filter>src\头文件</Filter>
     </ClInclude>
-    <ClInclude Include="src\HttpServerLibevent.h">
-      <Filter>src\头文件</Filter>
+    <ClInclude Include="src\stringHandle\CFileVersion.h">
+      <Filter>src\stringHandle</Filter>
     </ClInclude>
-    <ClInclude Include="src\cJSON.h">
+    <ClInclude Include="src\stringHandle\str_fun.h">
+      <Filter>src\stringHandle</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thirdLib\cJSON.h">
       <Filter>src\thirdLib</Filter>
     </ClInclude>
-    <ClInclude Include="src\easylogging++.h">
+    <ClInclude Include="src\thirdLib\easylogging++.h">
+      <Filter>src\thirdLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thirdLib\HttpServerLibevent.h">
+      <Filter>src\thirdLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thirdLib\sql_conn_cpp.h">
+      <Filter>src\thirdLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thirdLib\sqlite3.h">
+      <Filter>src\thirdLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thirdLib\testRTTR.h">
+      <Filter>src\thirdLib</Filter>
+    </ClInclude>
+    <ClInclude Include="src\thirdLib\TestWinPcap.h">
       <Filter>src\thirdLib</Filter>
     </ClInclude>
   </ItemGroup>
@@ -155,62 +158,68 @@
     <ClCompile Include="src\getDate.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\testHashMap.cpp">
+    <ClCompile Include="src\container\testArray.cpp">
       <Filter>src\container</Filter>
     </ClCompile>
-    <ClCompile Include="src\testList.cpp">
+    <ClCompile Include="src\container\testHashMap.cpp">
       <Filter>src\container</Filter>
     </ClCompile>
-    <ClCompile Include="src\testArray.cpp">
+    <ClCompile Include="src\container\testList.cpp">
       <Filter>src\container</Filter>
     </ClCompile>
-    <ClCompile Include="src\cJSON.c">
-      <Filter>src\thirdLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\cJSON_test.cpp">
-      <Filter>src\thirdLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\easylogging++.cpp">
-      <Filter>src\thirdLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\HttpServerLibevent.cpp">
-      <Filter>src\thirdLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\sql_conn_cpp.cpp">
-      <Filter>src\thirdLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\testMap.cpp">
+    <ClCompile Include="src\container\testMap.cpp">
       <Filter>src\container</Filter>
     </ClCompile>
-    <ClCompile Include="src\testSet.cpp">
+    <ClCompile Include="src\container\testSet.cpp">
       <Filter>src\container</Filter>
     </ClCompile>
-    <ClCompile Include="src\testVector.cpp">
+    <ClCompile Include="src\container\testStack.cpp">
       <Filter>src\container</Filter>
     </ClCompile>
-    <ClCompile Include="src\testStack.cpp">
+    <ClCompile Include="src\container\testVector.cpp">
       <Filter>src\container</Filter>
     </ClCompile>
-    <ClCompile Include="src\testRTTR.cpp">
-      <Filter>src\thirdLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\TestWinPcap.cpp">
-      <Filter>src\thirdLib</Filter>
-    </ClCompile>
-    <ClCompile Include="src\getRdmString.cpp">
+    <ClCompile Include="src\stringHandle\CFileVersion.cpp">
       <Filter>src\stringHandle</Filter>
     </ClCompile>
-    <ClCompile Include="src\str_fun.cpp">
+    <ClCompile Include="src\stringHandle\getRdmString.cpp">
       <Filter>src\stringHandle</Filter>
     </ClCompile>
-    <ClCompile Include="src\testFstream.cpp">
+    <ClCompile Include="src\stringHandle\str_fun.cpp">
       <Filter>src\stringHandle</Filter>
     </ClCompile>
-    <ClCompile Include="src\readFile.cpp">
+    <ClCompile Include="src\stringHandle\testFstream.cpp">
       <Filter>src\stringHandle</Filter>
     </ClCompile>
-    <ClCompile Include="src\CFileVersion.cpp">
-      <Filter>src\stringHandle</Filter>
+    <ClCompile Include="src\thirdLib\cJSON_test.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\easylogging++.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\HttpServerLibevent.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\sql_conn_cpp.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\testRapidJson.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\testRTTR.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\testSQLite.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\TestWinPcap.cpp">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\cJSON.c">
+      <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\thirdLib\sqlite3.c">
+      <Filter>src\thirdLib</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

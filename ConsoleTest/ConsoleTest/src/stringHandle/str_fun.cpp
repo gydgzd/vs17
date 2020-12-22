@@ -1,5 +1,4 @@
-﻿#include "stdafx.h"
-#include "str_fun.h"
+﻿#include "str_fun.h"
 #if defined(__linux)
 #include <string.h>
 #include <unistd.h>
