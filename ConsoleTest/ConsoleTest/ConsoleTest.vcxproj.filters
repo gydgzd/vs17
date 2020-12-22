@@ -152,9 +152,6 @@
     <ClCompile Include="src\backtracking.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\testRapidJson.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\getDate.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
@@ -220,6 +217,9 @@
     </ClCompile>
     <ClCompile Include="src\thirdLib\sqlite3.c">
       <Filter>src\thirdLib</Filter>
+    </ClCompile>
+    <ClCompile Include="src\stringHandle\readFile.cpp">
+      <Filter>src\stringHandle</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

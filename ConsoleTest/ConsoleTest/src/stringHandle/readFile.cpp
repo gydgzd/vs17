@@ -1,4 +1,4 @@
-
+#include <tchar.h>
 #include <string.h>
 #include <string>
 using namespace std;
