@@ -137,9 +137,6 @@
     <ClCompile Include="src\testSelect.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>
-    <ClCompile Include="src\testSort.cpp">
-      <Filter>src\源文件</Filter>
-    </ClCompile>
     <ClCompile Include="src\testValist.cpp">
       <Filter>src\源文件</Filter>
     </ClCompile>

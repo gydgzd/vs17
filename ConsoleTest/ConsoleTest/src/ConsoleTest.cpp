@@ -199,6 +199,7 @@ int main(int argc, char** argv)
     char *pleak = testLeak();
     _CrtDumpMemoryLeaks();
     */
+    testValist();
     unsigned int id[4] = {};
     id[0] = 399;
     id[1] = 166;
@@ -207,7 +208,7 @@ int main(int argc, char** argv)
     printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
     for (int i = 0; i < 10000; i++)
     {
-        g_mylog.log("test", i);
+        g_mylog.log("test %5d", i);
     }
     //    setrgb(BLACK, INT_MAGENTA);  //设置背景和前景色
 
@@ -284,7 +285,7 @@ int main(int argc, char** argv)
     bt.breadthTraversal(&bt);
     cout << endl;
     bt.deleteTree();
-    testValist();
+    
 
     std::string str = Utf8ToGbk("世界"); // _T("你好");
     cout << str << endl;
