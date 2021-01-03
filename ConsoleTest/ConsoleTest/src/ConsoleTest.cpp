@@ -93,6 +93,8 @@ extern void testMap();
 extern int testSet();
 extern void testVector();
 extern void backtracing(int cur, vector<int>& nums);
+extern long long decimalToBinary(long long dec);
+extern long long binaryToDecimal(long long bin);
 extern void subset();
 extern time_t dateToSeconds(char *str);
 extern void testVolatile();
@@ -183,6 +185,14 @@ int fibonacci(int n)
 Mylog g_mylog;
 extern string maxSubStr(string str);
 extern int testRapidJson();
+void deleteP(void *p)
+{
+    if (p != nullptr)
+    {
+        delete[] p;
+        p = nullptr;
+    }
+}
 int main(int argc, char** argv)
 {
     /**/
@@ -228,17 +238,19 @@ int main(int argc, char** argv)
 
     testClass();
     char *tmp = new char[32];
-    const char *ss = "nice";
-    unique_ptr<char> str1(tmp);
-    shared_ptr<char> sp1(new char[32], [](char *p) { if (p != nullptr) delete[] p; });
-    sp1.reset();
-    if (str1 == nullptr)
-        std::cout << "str1 is empty" << std::endl;
-    memset(str1.get(), 0, 32);
-    memcpy(str1.get(), ss, strlen(ss) + 1);
-    cout << "tmp:" << tmp << endl;
-    cout << "str1:" << str1 << endl;
-    str1.reset();
+    {
+        const char *ss = "nice";
+        unique_ptr<char> str1(tmp);
+        shared_ptr<char> sp1(tmp, [](char *p) { if (p != nullptr) delete[] p; printf("shared_ptr deleted"); });
+    //    sp1.reset();
+        if (str1 == nullptr)
+            std::cout << "str1 is empty" << std::endl;
+        memset(str1.get(), 0, 32);
+        memcpy(str1.get(), ss, strlen(ss) + 1);
+        cout << "tmp:" << tmp << endl;
+        cout << "str1:" << str1.get() << endl;
+        cout << "sp1:" << sp1.get() << endl;
+    }
     tmp = nullptr;
     unique_ptr<char> str2(tmp);
     if (str2 == nullptr)
@@ -255,9 +267,10 @@ int main(int argc, char** argv)
     shared_ptr<char> sptr(tmp);
     shared_ptr<char> sptr1 = sptr;
     /*   */
-   /*
+    cout << decimalToBinary(17) << endl;;
+    cout << binaryToDecimal(1010);
        subset();
-       extern vector<vector<int>> ans;
+   /*    extern vector<vector<int>> ans;
        vector<int> nums{ 3,5,12,31, 44 };
        backtracing(0, nums);
        for (auto iter = ans.begin(); iter != ans.end(); iter++)

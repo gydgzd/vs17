@@ -219,9 +219,4 @@
       <Filter>src\stringHandle</Filter>
     </ClCompile>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="src\MyBitree.tpp">
-      <Filter>src\源文件</Filter>
-    </None>
-  </ItemGroup>
 </Project>
