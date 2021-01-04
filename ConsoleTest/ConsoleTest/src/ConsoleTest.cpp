@@ -185,12 +185,13 @@ int fibonacci(int n)
 Mylog g_mylog;
 extern string maxSubStr(string str);
 extern int testRapidJson();
-void deleteP(void *p)
+void deleteP(char *p)
 {
     if (p != nullptr)
     {
         delete[] p;
         p = nullptr;
+        printf("unique pointer is deleted.\n");
     }
 }
 int main(int argc, char** argv)
@@ -240,8 +241,16 @@ int main(int argc, char** argv)
     char *tmp = new char[32];
     {
         const char *ss = "nice";
-        unique_ptr<char> str1(tmp);
-        shared_ptr<char> sp1(tmp, [](char *p) { if (p != nullptr) delete[] p; printf("shared_ptr deleted"); });
+        //method 1
+        typedef void(*del) (char *); 
+        //method 2
+        typedef decltype (deleteP) *p;
+        //method 3
+        using delp = void(*) (char *);
+    //    unique_ptr<char> str1(tmp);
+        unique_ptr<char,del> str1(tmp,deleteP); 
+
+        shared_ptr<char> sp1(new char[32], [](char *p) { if (p != nullptr) delete[] p; printf("shared_ptr deleted\n"); });
     //    sp1.reset();
         if (str1 == nullptr)
             std::cout << "str1 is empty" << std::endl;
