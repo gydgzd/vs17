@@ -244,24 +244,25 @@ int main(int argc, char** argv)
         //method 1
         typedef void(*del) (char *); 
         //method 2
-        typedef decltype (deleteP) *p;
+        typedef decltype (deleteP) * dp;   // decltype - get the type of deleteP
         //method 3
         using delp = void(*) (char *);
     //    unique_ptr<char> str1(tmp);
-        unique_ptr<char,del> str1(tmp,deleteP); 
+    //    unique_ptr<char, p> str1(tmp, deleteP);
+        unique_ptr<char, dp> str1(tmp, [](char *p) { if (p != nullptr) delete[] p; printf("unique_ptr deleted\n"); });
 
         shared_ptr<char> sp1(new char[32], [](char *p) { if (p != nullptr) delete[] p; printf("shared_ptr deleted\n"); });
-    //    sp1.reset();
+        sp1.reset();
         if (str1 == nullptr)
             std::cout << "str1 is empty" << std::endl;
         memset(str1.get(), 0, 32);
         memcpy(str1.get(), ss, strlen(ss) + 1);
         cout << "tmp:" << tmp << endl;
         cout << "str1:" << str1.get() << endl;
-        cout << "sp1:" << sp1.get() << endl;
+    //    cout << "sp1:" << sp1.get() << endl;
     }
-    tmp = nullptr;
-    unique_ptr<char> str2(tmp);
+    tmp = nullptr; 
+    unique_ptr<char, decltype(deleteP)*> str2(tmp, deleteP);
     if (str2 == nullptr)
         std::cout << "str2 is empty" << std::endl;
     else
@@ -307,11 +308,9 @@ int main(int argc, char** argv)
     bt.breadthTraversal(&bt);
     cout << endl;
     bt.deleteTree();
-    
 
     std::string str = Utf8ToGbk("世界"); // _T("你好");
     cout << str << endl;
-
 
     // test of sort
 /**/
