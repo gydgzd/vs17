@@ -13,7 +13,7 @@
 #endif
 #include <iostream>
 using namespace std;
-template<class T>
+template<typename T>
 class MySort {
 public:
 	MySort();
@@ -30,12 +30,12 @@ private:
     void swap(T& a, T& b);
 };
 
-template<class T>
+template<typename T>
 MySort<T>::MySort() {
 
 
 }
-template<class T>
+template<typename T>
 MySort<T>::~MySort() {
 
 }
@@ -48,7 +48,7 @@ void MySort<T>::swap(T& a, T& b)
     b = tmp;
 }
 
-template<class T>
+template<typename T>
 int MySort<T>::insertionSort(T a[], int n)
 {
 	m_timer.start();
@@ -68,7 +68,7 @@ int MySort<T>::insertionSort(T a[], int n)
 	return 0;
 }
 
-template<class T>
+template<typename T>
 int MySort<T>::selectSort(T a[], int n)
 {
     m_timer.start();
@@ -105,7 +105,7 @@ int MySort<T>::bubbleSort(T a[], int n)
     return 0;
 }
 
-template<class T>
+template<typename T>
 int MySort<T>::shellSort(T a[], int n)
 {
     m_timer.start();
@@ -122,6 +122,7 @@ int MySort<T>::shellSort(T a[], int n)
     {
         h = increments[indx_m];
         //sort sub array
+    /*    
         for (hCnt = h; hCnt < 2 * h; hCnt++)
         {
             for (indx_n = hCnt; indx_n < n; )
@@ -136,12 +137,28 @@ int MySort<T>::shellSort(T a[], int n)
                 indx_n += h;
             }
         }
+        */
+        // sort subarray in one circle
+        for (indx_n = h; indx_n < n; indx_n += h)
+        {
+            T tmp = a[indx_n];
+            k = indx_n;
+            while (k - h >= 0 && tmp < a[k - h]) {
+                a[k] = a[k - h];
+                k -= h;
+            }
+            a[k] = tmp;
+        }
     }
     cout << "shellSort cost time: " << m_timer.stop() << " ms" << endl;
     return 0;
 }
+template<typename T>
+int MySort<T>::quickSort(T a[], int n)
+{
 
 
+}
 
 
 #endif /* SRC_MYSORT_H_ */
