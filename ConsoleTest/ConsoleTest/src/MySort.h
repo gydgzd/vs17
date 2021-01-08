@@ -24,7 +24,7 @@ public:
     int bubbleSort(T a[], int n);
 
     int shellSort(T a[], int n);
-    int quickSort(T a[], int n);
+    int quickSort(T a[], int low, int high);
 private:
 	MyTimer m_timer;
     void swap(T& a, T& b);
@@ -52,19 +52,24 @@ template<typename T>
 int MySort<T>::insertionSort(T a[], int n)
 {
 	m_timer.start();
-
+    int steps = 0;
 	int index_m,index_n;
 	T smaller;
-	for( index_m = 1; index_m< n; index_m++)
-	{
-        if (a[index_m] >= a[index_m - 1])      //improved
+    for (index_m = 1; index_m < n; index_m++)
+    {
+        if (a[index_m] > a[index_m - 1])     // improved
             continue;
-		smaller = a[index_m];
-		for(index_n = index_m - 1; index_n >= 0 && a[index_n] > smaller; index_n--)
-			a[index_n + 1] = a[index_n];
-		a[index_n + 1] = smaller;
-	}
-	cout <<"InsertionSort cost time: "<<m_timer.stop()<<" ms"<<endl;
+        smaller = a[index_m];
+        for (index_n = index_m - 1; index_n >= 0 && a[index_n] > smaller; index_n--)
+        {
+            a[index_n + 1] = a[index_n];
+            steps++;
+        }
+        a[index_n + 1] = smaller;
+        steps++;
+    }
+
+	cout <<"InsertionSort cost time: "<<m_timer.stop()<< " ms, " << steps << " steps" << endl;
 	return 0;
 }
 
@@ -72,18 +77,19 @@ template<typename T>
 int MySort<T>::selectSort(T a[], int n)
 {
     m_timer.start();
-
+    int steps = 0;
     for (int i = 0; i < n; i++)
     {
         int smallest = i;
         for (int j = i; j < n; j++)
         {
-            if (a[smallest] > a[j])
+            if (a[j] < a[smallest])
                 smallest = j;
         }
         swap(a[smallest], a[i]);
+        steps += 3;
     }
-    cout << "selectSort cost time " << m_timer.stop() << "" << endl;
+    cout << "selectSort cost time " << m_timer.stop() << " ms, " << steps << " steps" << endl;
     return 0;
 }
 
@@ -91,17 +97,19 @@ template<typename T>
 int MySort<T>::bubbleSort(T a[], int n)
 {
     m_timer.start();
-
-    for (int i = 0; i < n - 1; i++)
+    int steps = 0;
+    for (int i = 0; i < n; i++)
     {
-        for (int j = i; j < n - 1; j++)
+        for (int j = n - 1; j > i; j--)
         {
-            if (a[j] > a[j + 1])
-                swap(a[j], a[j + 1]);
+            if (a[j - 1] > a[j])
+            {
+                swap(a[j - 1], a[j]);
+                steps += 3;
+            }
         }
-
     }
-    cout << "bubbleSort cost time " << m_timer.stop() << "" << endl;
+    cout << "bubbleSort cost time " << m_timer.stop() << " ms, " << steps << " steps" << endl;
     return 0;
 }
 
@@ -109,55 +117,70 @@ template<typename T>
 int MySort<T>::shellSort(T a[], int n)
 {
     m_timer.start();
-    register int indx_m, indx_n, hCnt, h;
+    int steps = 0;
+    register int index_m, index_n, h;
     int increments[20], k;
     // Create an appropriate number of increments h
-    for (h = 1, indx_m = 0; h < n; indx_m++)
+    for (h = 1,index_m = 0; h < n; index_m++)
     {
-        increments[indx_m] = h;
+        increments[index_m] = h;
         h = 3 * h + 1;
     }
     // loop on different h
-    for (indx_m--; indx_m >= 0; indx_m--)
+    for (index_m--; index_m >= 0; index_m--)
     {
-        h = increments[indx_m];
-        //sort sub array
-    /*    
-        for (hCnt = h; hCnt < 2 * h; hCnt++)
+        h = increments[index_m];
+        for (k = h; k < n; k++)   // insertionSort
         {
-            for (indx_n = hCnt; indx_n < n; )
+            if (a[k - h] < a[k])
+                continue;
+            T tmp = a[k];
+            for (index_n = k - h; index_n >= 0 && a[index_n] > tmp; index_n -= h)
             {
-                T tmp = a[indx_n];
-                k = indx_n;
-                while (k - h >= 0 && tmp < a[k - h]) {
-                    a[k] = a[k - h];
-                    k -= h;
-                }
-                a[k] = tmp;
-                indx_n += h;
+                a[index_n + h] = a[index_n];
+                steps++;
             }
-        }
-        */
-        // sort subarray in one circle
-        for (indx_n = h; indx_n < n; indx_n += h)
-        {
-            T tmp = a[indx_n];
-            k = indx_n;
-            while (k - h >= 0 && tmp < a[k - h]) {
-                a[k] = a[k - h];
-                k -= h;
-            }
-            a[k] = tmp;
+            a[index_n + h] = tmp;
+            steps++;
         }
     }
-    cout << "shellSort cost time: " << m_timer.stop() << " ms" << endl;
+    cout << "shellSort cost time: " << m_timer.stop() << " ms, " << steps << " steps" << endl;
     return 0;
 }
+
+//
 template<typename T>
-int MySort<T>::quickSort(T a[], int n)
+int sortOne(T a[], int low, int high)
 {
-
-
+    T pivot = a[low];
+    int idx_small = low;
+    int idx_big = high;
+    while (idx_small < idx_big)
+    {
+        // move big idx
+        while (idx_small < idx_big && a[idx_big] >= pivot)
+            idx_big--;
+        if (idx_small < idx_big)
+            a[idx_small] = a[idx_big];
+        // move small idx
+        while (idx_small < idx_big && a[idx_small] <= pivot)
+            idx_small++;
+        if (idx_small < idx_big)
+            a[idx_big] = a[idx_small];
+    }
+    a[idx_big] = pivot;
+    return idx_big;
+}
+template<typename T>
+int MySort<T>::quickSort(T a[], int low, int high)
+{
+    if (low < high)
+    {
+        int key = sortOne(a, low, high);
+        quickSort(a, low, key - 1);
+        quickSort(a, key + 1, high);
+    }
+    return 0;
 }
 
 
