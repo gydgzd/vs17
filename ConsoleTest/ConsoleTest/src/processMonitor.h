@@ -13,6 +13,7 @@
 #include <atlconv.h>      // for T2A ,USES_CONVERSION
 #include <psapi.h>
 #pragma comment(lib, "psapi.lib")
+#include <VersionHelpers.h>
 #endif
 struct ProcessInfo
 {
@@ -60,7 +61,6 @@ struct PortInfo
 };
 
 extern SYSTEM_INFO g_SysInfo;
-extern OSVERSIONINFO g_OSVersion;//定义OSVERSIONINFO数据结构对象
 
 class ProcessMonitor
 {

@@ -1,6 +1,3 @@
-﻿// ConsoleTest.cpp : 定义控制台应用程序的入口点。
-//
-
 #include "stdafx.h"
 
 #include <stdlib.h>    
@@ -195,21 +192,21 @@ void deleteP(char *p)
 }
 int main(int argc, char** argv)
 {
-    /**/
+    /*
     testRapidJson();
     cout << maxSubStr("abcabcbb") << endl;
     initWinSocket();
     testRTTR myRTTR;
-    myRTTR.test();
+    myRTTR.test();*/
     LogInit();
- //   cout << createJSON() << endl;
-    /*
-    _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-    _CrtSetBreakAlloc(1041);	   //在内存分配之前设置内存中断块号
-    char *pleak = testLeak();
-    _CrtDumpMemoryLeaks();
-    */
-    testValist();
+    //   cout << createJSON() << endl;
+       /*
+       _CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+       _CrtSetBreakAlloc(1041);	   //在内存分配之前设置内存中断块号
+       char *pleak = testLeak();
+       _CrtDumpMemoryLeaks();
+       */
+       // testValist();
     unsigned int id[4] = {};
     id[0] = 399;
     id[1] = 166;
@@ -234,20 +231,20 @@ int main(int argc, char** argv)
         mytun.process();
         */
     HttpServerLibevent hv;
-//    hv.testLibevent();
+    //    hv.testLibevent();
 
-    testClass();
+    //    testClass();
     char *tmp = new char[32];
     {
         const char *ss = "nice";
         //method 1
-        typedef void(*del) (char *); 
+        typedef void(*del) (char *);
         //method 2
         typedef decltype (deleteP) * dp;   // decltype - get the type of deleteP
         //method 3
         using delp = void(*) (char *);
-    //    unique_ptr<char> str1(tmp);
-    //    unique_ptr<char, p> str1(tmp, deleteP);
+        //    unique_ptr<char> str1(tmp);
+        //    unique_ptr<char, p> str1(tmp, deleteP);
         unique_ptr<char, dp> str1(tmp, [](char *p) { if (p != nullptr) delete[] p; printf("unique_ptr deleted\n"); });
 
         shared_ptr<char> sp1(new char[32], [](char *p) { if (p != nullptr) delete[] p; printf("shared_ptr deleted\n"); });
@@ -258,9 +255,9 @@ int main(int argc, char** argv)
         memcpy(str1.get(), ss, strlen(ss) + 1);
         cout << "tmp:" << tmp << endl;
         cout << "str1:" << str1.get() << endl;
-    //    cout << "sp1:" << sp1.get() << endl;
+        //    cout << "sp1:" << sp1.get() << endl;
     }
-    tmp = nullptr; 
+    tmp = nullptr;
     unique_ptr<char, decltype(deleteP)*> str2(tmp, deleteP);
     if (str2 == nullptr)
         std::cout << "str2 is empty" << std::endl;
@@ -278,23 +275,23 @@ int main(int argc, char** argv)
     /*   */
     cout << decimalToBinary(17) << endl;;
     cout << binaryToDecimal(1010);
-       subset();
-   /*    extern vector<vector<int>> ans;
-       vector<int> nums{ 3,5,12,31, 44 };
-       backtracing(0, nums);
-       for (auto iter = ans.begin(); iter != ans.end(); iter++)
-       {
-           for (auto it = iter->begin(); it != iter->end(); it++)
-               cout << *it << "  ";
-           cout << endl;
-       }
-       testArray();
-       testVector();
-       testList();
-       testMap();
-       testHashMap();
-       testSet();
-       fibonacci(10);*/
+    //       subset();
+       /*    extern vector<vector<int>> ans;
+           vector<int> nums{ 3,5,12,31, 44 };
+           backtracing(0, nums);
+           for (auto iter = ans.begin(); iter != ans.end(); iter++)
+           {
+               for (auto it = iter->begin(); it != iter->end(); it++)
+                   cout << *it << "  ";
+               cout << endl;
+           }
+           testArray();
+           testVector();
+           testList();
+           testMap();
+           testHashMap();
+           testSet();
+           fibonacci(10);*/
     MyBitree<int> bt;
     int aray[6] = { 1, 2, 3, 4, 5, 6, };
     bt.init(&bt, aray, 6);
@@ -308,7 +305,7 @@ int main(int argc, char** argv)
     cout << endl;
     bt.deleteTree();
 
-    std::string str = Utf8ToGbk("世界"); // _T("你好");
+    std::string str = Utf8ToGbk("世界"); // _T("你好"); work fine when file is UTF8, error in UTF8+
     cout << str << endl;
 
     // test of sort
@@ -316,30 +313,30 @@ int main(int argc, char** argv)
     double fa[] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35,1242,11,242.24,2313824,232313,4755,2325,92.81 };
     double *pa = fa;
     MySort<double> mSort;
-       
+
     mSort.bubbleSort(fa, sizeof(fa) / sizeof(fa[0]));
     for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
         cout << fa[i] << "  ";
     cout << endl;
-  
-/*    
-    mSort.insertionSort(fa, sizeof(fa) / sizeof(fa[0]));
-    for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
-        cout << fa[i] << "  ";
-    cout << endl;  
 
-    mSort.shellSort(fa, sizeof(fa) / sizeof(fa[0]));
-    for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
-        cout << fa[i] << "  ";
-    cout << endl;
+    /*
+        mSort.insertionSort(fa, sizeof(fa) / sizeof(fa[0]));
+        for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
+            cout << fa[i] << "  ";
+        cout << endl;
 
-    mSort.selectSort(fa, sizeof(fa) / sizeof(fa[0]));
-    for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
-        cout << fa[i] << "  ";
-    cout << endl;
+        mSort.shellSort(fa, sizeof(fa) / sizeof(fa[0]));
+        for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
+            cout << fa[i] << "  ";
+        cout << endl;
+
+        mSort.selectSort(fa, sizeof(fa) / sizeof(fa[0]));
+        for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
+            cout << fa[i] << "  ";
+        cout << endl;
 
 
-*/
+    */
     mSort.quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
     for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
         cout << fa[i] << "  ";

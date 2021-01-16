@@ -10,18 +10,12 @@
 using namespace std;
 
 SYSTEM_INFO g_SysInfo;
-OSVERSIONINFO g_OSVersion;//定义OSVERSIONINFO数据结构对象
 
 extern void getProcess();
 
 ProcessMonitor::ProcessMonitor()
 {
-	GetSystemInfo(&g_SysInfo);                            // to get dwPageSize
-
-	memset(&g_OSVersion, 0, sizeof(OSVERSIONINFO));
-	g_OSVersion.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
-	GetVersionEx(&g_OSVersion);                           // to get os version
-	
+	GetSystemInfo(&g_SysInfo);                            // to get dwPageSize	
 }
 
 
@@ -92,7 +86,6 @@ int ProcessMonitor::getProcessList_Win()
 		CloseHandle(hProcessSnap);             // Must clean up the snapshot object!
 		return(FALSE);
 	}
-//	printf("OS Version: %ld %ld %ld \n", g_OSVersion.dwMajorVersion, g_OSVersion.dwMinorVersion, g_OSVersion.dwBuildNumber);
 	// Now walk the snapshot of processes, and
 	ProcessInfo tmpProcess;
 	do
@@ -323,7 +316,7 @@ int ProcessMonitor::getProcessCPU_Win()
 unsigned long long ProcessMonitor::getProcessMemory_Win(HANDLE hProcess)
 {
 	PROCESS_MEMORY_COUNTERS_EX pmc;
-	if (g_OSVersion.dwMajorVersion < 6 || (g_OSVersion.dwMajorVersion == 6 && g_OSVersion.dwMinorVersion <= 1))  // os is  win7 and early
+	if (IsWindows8OrGreater())  //
 	{
 		//	printf("Version is after win7 or windows server 2008R2.");
 		PSAPI_WORKING_SET_INFORMATION workSetInfo;
@@ -515,9 +508,9 @@ extern "C"
 {
 	KSERVICE_TABLE_DESCRIPTOR* KeServiceDescriptorTableShadow;
 	NTSTATUS __stdcall NtQuerySystemInformation(IN SYSTEM_INFORMATION_CLASS SystemInformationClass, OUT PVOID SystemInformation, IN ULONG SystemInformationLength, OUT PULONG ReturnLength OPTIONAL);
-	HLOCAL __stdcall LocalAlloc(IN UINT uFlags, SIZE_T uBytes);
-	LPVOID __stdcall LocalLock(IN HLOCAL hMem);
-	HLOCAL __stdcall LocalFree(IN HLOCAL hMem);
+//	HLOCAL __stdcall LocalAlloc(IN UINT uFlags, SIZE_T uBytes);
+//	LPVOID __stdcall LocalLock(IN HLOCAL hMem);
+//	HLOCAL __stdcall LocalFree(IN HLOCAL hMem);
 }
 
 template<typename systeminfo>
