@@ -19,20 +19,24 @@ public:
 	MySort();
 	~MySort();
 
+    virtual int quickSort(T a[], int low, int high) { return 0; };
+
 	int insertionSort(T a[], int n);
 	int selectSort(T a[], int n);
     int bubbleSort(T a[], int n);
 
     int shellSort(T a[], int n);
-    int quickSort(T a[], int low, int high);
-private:
+//    int quickSort(T a[], int low, int high);
+protected:
 	MyTimer m_timer;
+    int m_steps;
+    long long m_timeCost;
     void swap(T& a, T& b);
 };
 
 template<typename T>
-MySort<T>::MySort() {
-
+MySort<T>::MySort():m_steps(0), m_timeCost(0){
+    m_timer.start();
 
 }
 template<typename T>
@@ -150,7 +154,21 @@ int MySort<T>::shellSort(T a[], int n)
 
 //
 template<typename T>
-int sortOne(T a[], int low, int high)
+class QuickSort : public MySort<T>
+{
+public:
+    QuickSort() {};
+    virtual ~QuickSort() {};
+    
+    int quickSort(T a[], int low, int high);
+    int sortOne(T a[], int low, int high);
+
+
+private:
+
+};
+template<typename T>
+int QuickSort<T>::sortOne(T a[], int low, int high)
 {
     T pivot = a[low];
     int idx_small = low;
@@ -161,18 +179,25 @@ int sortOne(T a[], int low, int high)
         while (idx_small < idx_big && a[idx_big] >= pivot)
             idx_big--;
         if (idx_small < idx_big)
+        {
             a[idx_small] = a[idx_big];
+            m_steps++;
+        }
         // move small idx
         while (idx_small < idx_big && a[idx_small] <= pivot)
             idx_small++;
         if (idx_small < idx_big)
+        {
             a[idx_big] = a[idx_small];
+            m_steps++;
+        }
     }
     a[idx_big] = pivot;
+    m_steps++;
     return idx_big;
 }
 template<typename T>
-int MySort<T>::quickSort(T a[], int low, int high)
+int QuickSort<T>::quickSort(T a[], int low, int high)
 {
     if (low < high)
     {
@@ -180,6 +205,7 @@ int MySort<T>::quickSort(T a[], int low, int high)
         quickSort(a, low, key - 1);
         quickSort(a, key + 1, high);
     }
+    cout << "quickSort cost time: " << m_timer.stop() << " ms, " << m_steps << " steps" << endl;
     return 0;
 }
 

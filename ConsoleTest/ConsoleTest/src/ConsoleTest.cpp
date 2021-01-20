@@ -233,7 +233,7 @@ int main(int argc, char** argv)
     HttpServerLibevent hv;
     //    hv.testLibevent();
 
-    //    testClass();
+    testClass();
     char *tmp = new char[32];
     {
         const char *ss = "nice";
@@ -276,22 +276,22 @@ int main(int argc, char** argv)
     cout << decimalToBinary(17) << endl;;
     cout << binaryToDecimal(1010);
     //       subset();
-       /*    extern vector<vector<int>> ans;
-           vector<int> nums{ 3,5,12,31, 44 };
-           backtracing(0, nums);
-           for (auto iter = ans.begin(); iter != ans.end(); iter++)
-           {
-               for (auto it = iter->begin(); it != iter->end(); it++)
-                   cout << *it << "  ";
-               cout << endl;
-           }
-           testArray();
-           testVector();
-           testList();
-           testMap();
-           testHashMap();
-           testSet();
-           fibonacci(10);*/
+/*    extern vector<vector<int>> ans;
+    vector<int> nums{ 3,5,12,31, 44 };
+    backtracing(0, nums);
+    for (auto iter = ans.begin(); iter != ans.end(); iter++)
+    {
+        for (auto it = iter->begin(); it != iter->end(); it++)
+            cout << *it << "  ";
+        cout << endl;
+    }
+    testArray();
+    testVector();
+    testList();
+    testMap();
+    testHashMap();
+    testSet();
+    fibonacci(10);*/
     MyBitree<int> bt;
     int aray[6] = { 1, 2, 3, 4, 5, 6, };
     bt.init(&bt, aray, 6);
@@ -335,9 +335,10 @@ int main(int argc, char** argv)
             cout << fa[i] << "  ";
         cout << endl;
 
-
     */
-    mSort.quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
+    MySort<double> *psort = new QuickSort<double>();
+    psort->quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
+ //   mSort.quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
     for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
         cout << fa[i] << "  ";
     cout << endl;
