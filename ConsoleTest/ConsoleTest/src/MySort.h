@@ -159,16 +159,17 @@ class QuickSort : public MySort<T>
 public:
     QuickSort() {};
     virtual ~QuickSort() {};
-    
-    int quickSort(T a[], int low, int high);
-    int sortOne(T a[], int low, int high);
 
+    int quickSort(T a[], int low, int high);
+ 
+    int nonRecursion_quickSort(T a[], int low, int high);
 
 private:
-
+    int sortKey(T a[], int low, int high);   
 };
+
 template<typename T>
-int QuickSort<T>::sortOne(T a[], int low, int high)
+int QuickSort<T>::sortKey(T a[], int low, int high)
 {
     T pivot = a[low];
     int idx_small = low;
@@ -196,18 +197,58 @@ int QuickSort<T>::sortOne(T a[], int low, int high)
     m_steps++;
     return idx_big;
 }
+
 template<typename T>
 int QuickSort<T>::quickSort(T a[], int low, int high)
 {
     if (low < high)
     {
-        int key = sortOne(a, low, high);
+        int key = sortKey(a, low, high);
         quickSort(a, low, key - 1);
         quickSort(a, key + 1, high);
     }
     cout << "quickSort cost time: " << m_timer.stop() << " ms, " << m_steps << " steps" << endl;
     return 0;
 }
+
+template<typename T>
+inline int QuickSort<T>::nonRecursion_quickSort(T a[], int low, int high)
+{
+    int key = 0;
+    std::stack<int> values;
+    if (low < high)
+    {
+        values.push(low);
+        values.push(high);
+    }
+    else
+        return 0;
+
+    while (!values.empty())
+    {
+        int right = values.top();
+        values.pop();
+        int left = values.top();
+        values.pop();
+        key = sortKey(a, left, right);
+        if (left < key - 1)
+        {
+            values.push(left);
+            values.push(key - 1);
+        }
+        if (key + 1 < right)
+        {
+            values.push(key + 1);
+            values.push(right);
+        }
+
+    }
+    cout << "nonRecursion_quickSort cost time: " << m_timer.stop() << " ms, " << m_steps << " steps" << endl;
+    return 0;
+}
+
+ 
+
 
 
 #endif /* SRC_MYSORT_H_ */

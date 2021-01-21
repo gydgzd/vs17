@@ -310,16 +310,17 @@ int main(int argc, char** argv)
 
     // test of sort
 /**/
-    double fa[] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35,1242,11,242.24,2313824,232313,4755,2325,92.81 };
+    //double fa[] = { 1.2, 0.5, 3.6, 0.1, 3.4, 1.9, 33, 22, 35,1242,11,242.24,2313824,232313,4755,2325,92.81 };
+    double fa[] = {  2412, 1231, 141, 43, 21, 11.31, 9.23, 8, 5, 2.33, 1, 0.33};
     double *pa = fa;
     MySort<double> mSort;
-
+/*
     mSort.bubbleSort(fa, sizeof(fa) / sizeof(fa[0]));
     for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
         cout << fa[i] << "  ";
     cout << endl;
 
-    /*
+    
         mSort.insertionSort(fa, sizeof(fa) / sizeof(fa[0]));
         for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
             cout << fa[i] << "  ";
@@ -335,9 +336,12 @@ int main(int argc, char** argv)
             cout << fa[i] << "  ";
         cout << endl;
 
-    */
-    MySort<double> *psort = new QuickSort<double>();
-    psort->quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
+    
+        MySort<double> *psort = new QuickSort<double>();
+        psort->quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
+*/
+    QuickSort<double> *pqs = new QuickSort<double>();
+    pqs->nonRecursion_quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
  //   mSort.quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
     for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
         cout << fa[i] << "  ";
