@@ -16,12 +16,63 @@ private:
 class Derived : public Base
 {
 public:
-    Derived() { cout << "Derived constructor\n"; };
-    ~Derived() { cout << "Derived destructor\n"; };
+    Derived() 
+    { 
+        m_buff = nullptr;
+        cout << "Derived constructor\n"; 
+    };
+    Derived(char* buff)
+    {
+        m_buff = buff;
+        cout << "Derived constructor\n";
+    };
+    Derived(Derived& obj) 
+    { 
+        m_buff = nullptr;
+        if (obj.m_buff != nullptr)
+        {
+            int len = strlen(obj.m_buff);
+            m_buff = new char[len + 1];
+            memset(m_buff, 0, len + 1);
+            memcpy(m_buff, obj.m_buff, len);
+        }
+        cout << "Copy constructor\n"; 
+    };
+    Derived(Derived&& obj)
+    {
+        m_buff = obj.m_buff;
+        obj.m_buff = nullptr;
+        cout << "move constructor\n";
+    };
+    Derived& operator=(Derived& obj)
+    {
+        m_buff = nullptr;
+        if (obj.m_buff != nullptr)
+        {
+            int len = strlen(obj.m_buff);
+            m_buff = new char[len + 1];
+            memset(m_buff, 0, len + 1);
+            memcpy(m_buff, obj.m_buff, len);
+        }
+        cout << "= constructor\n";
+        return *this;
+    }
 
-    void print() { cout << "This is Derived\n"; };
+    ~Derived() 
+    { 
+        if (m_buff != nullptr)
+        {
+            delete m_buff;
+            m_buff = nullptr;
+        }
+        cout << "Derived destructor\n"; 
+    };
+
+    void print() { cout << this << ": This is Derived\n"; };
+    void derivefun() { cout << this << endl; };
+
 private:
-
+    char *m_buff;
 };
 
 
@@ -74,14 +125,32 @@ void testClass()
 	cout << (EmptyStruct::cf = 99) << endl;
 	cout << "空类大小： " << sizeof(EmptyClass) << "实例化后大小： " << sizeof(emp1) << endl;
 	cout << "空结构大小： " << sizeof(EmptyStruct) << "实例化后大小： " << sizeof(empSt) << endl;
+    Derived *db = new Derived();
+    db->derivefun();
+    db->print();
+    Derived dc(*db);
+    dc.derivefun();
+    dc.print();
+    // std::move produces an xvalue expression that identifies its argument. 
+    // It is exactly equivalent to a static_cast to an rvalue reference type
+    // see https://en.cppreference.com/w/cpp/utility/move
+    Derived dd = std::move(Derived(new char[32]));  
+    dd.derivefun();
+    dd.print();
+//    cout << "The address of dd.print()=" << dd.print() << endl;
+    Derived de = Derived(new char[32]);
+//    cout << "The address of de.print()=" << de.print() << endl;
+    dd = Derived(new char[32]);
+    delete db;
     // test dynamic_cast
     Base *pbase = new Derived();
     pbase->print();
     // 对于“向下转型”有两种情况。
     // 一种是基类指针所指对象是派生类类型的，这种转换是安全的；
-    // 另一种是基类指针所指对象为基类类型，在这种情况下dynamic_cast在运行时做检查，转换失败，返回结果为nullptr；
+    // 另一种是基类指针所指对象为基类类型，在这种情况下dynamic_cast在运行时做检查，转换失败，返回结果为nullptr;
+    // static_cast下行转换时不做动态类型检查；不能转换掉const、volitale、或者__unaligned属性
 
-    //Derived * pderived = dynamic_cast<Derived *>(new Base()); // error:  new Base();  // static_cast works;
+    Derived * pderived1 = dynamic_cast<Derived *>(new Base()); // error:  new Base();  // static_cast works;
     Derived * pderived = dynamic_cast<Derived *>(pbase);
     if (pderived != nullptr)                                   // dynamic_cast may failed (运行时dynamic_cast的操作数必须包含多态类类型)
     {
