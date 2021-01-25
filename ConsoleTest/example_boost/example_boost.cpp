@@ -46,16 +46,16 @@ int main()
 //	std::for_each(
 //		in(std::cin), in(), std::cout << (_1 * 3) << " ");
     Precision_Sleep(1);
-    Precision_Sleep(10);
+    Precision_Sleep(2);
     testThread();
     testMultiIndex();
 
 
 	testAsio myAsio;
-//	myAsio.test();
+	myAsio.test();
 
     InterProcess iproc;
-    iproc.memPool(0);
+//    iproc.memPool(0);
 
 	system("pause");
 	return 0;
