@@ -9,11 +9,11 @@ using namespace boost::asio;
 class testAsio
 {
 public:
-	testAsio();
-	virtual ~testAsio();
+    testAsio();
+    virtual ~testAsio();
 
 
-	int test();
+    int test();
 };
 
 #define MEM_FN(x)       boost::bind(&self_type::x, shared_from_this())
@@ -21,12 +21,11 @@ public:
 #define MEM_FN2(x,y,z)  boost::bind(&self_type::x, shared_from_this(),y,z)
 #define MEM_FN3(x,w,y,z)  boost::bind(&self_type::x, shared_from_this(),w,y,z)
 extern boost::asio::io_service service;
-
+typedef boost::system::system_error asio_error;
 class AsyncClient : public boost::enable_shared_from_this<AsyncClient>, boost::noncopyable
 {
 
 public:
-    typedef boost::system::system_error asio_error;
     typedef boost::shared_ptr<AsyncClient> ptr;
     static ptr start(ip::tcp::endpoint ep, const std::string &message);
     void stop();
@@ -34,10 +33,10 @@ public:
     void on_connect(ip::tcp::endpoint ep, const asio_error & err);
 
     void on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes);
-    void on_write(  const asio_error & err, size_t bytes);
+    void on_write(const asio_error & err, size_t bytes);
     void do_read(ip::tcp::socket &sock);
     void do_write(const std::string & msg);
-    size_t read_complete(  const boost::system::error_code & err, size_t bytes) {
+    size_t read_complete(const boost::system::error_code & err, size_t bytes) {
         // 和TCP客户端中的类似
         std::cout << "read_complete" << std::endl;
         return 0;
@@ -45,7 +44,7 @@ public:
 private:
     AsyncClient(const std::string & message) : sock_(service), started_(true), message_(message) {}
     typedef AsyncClient self_type;
-    
+
     void start(ip::tcp::endpoint ep);
     ip::tcp::socket sock_;
     enum { max_msg = 1024 };
@@ -53,4 +52,42 @@ private:
     char write_buffer_[max_msg];
     bool started_;
     std::string message_;
+};
+class AsyncServer;
+typedef boost::shared_ptr<AsyncServer> client_ptr;
+typedef std::vector<client_ptr> array;
+
+class AsyncServer : public boost::enable_shared_from_this<AsyncServer>, boost::noncopyable
+{
+public:
+
+    //    typedef boost::shared_ptr<AsyncServer> ServerPtr;
+    static client_ptr new_() { client_ptr new_(new AsyncServer); return new_; }
+
+    void start();
+    void stop();
+    bool started() const { return started_; }
+    void on_accept(client_ptr client, const asio_error & err);
+    void on_read(const asio_error & err, size_t bytes);
+
+    void do_read(client_ptr client);
+    ip::tcp::socket & sock() { return sock_; }
+    std::string username() const { return username_; }
+    void set_clients_changed() { clients_changed_ = true; }
+    size_t read_complete(const boost::system::error_code & err, size_t bytes);
+
+private:
+    AsyncServer() : sock_(service), timer_(service) {};
+    typedef AsyncServer self_type;
+    ip::tcp::socket sock_;
+    enum { max_msg = 1024 };
+    char read_buffer_[max_msg];
+    char write_buffer_[max_msg];
+    bool started_;
+    std::string username_;
+    deadline_timer timer_;
+    boost::posix_time::ptime last_ping;
+    bool clients_changed_;
+    static ip::tcp::acceptor m_acceptor;
+
 };
