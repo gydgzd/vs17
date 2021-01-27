@@ -53,9 +53,12 @@ void AsyncClient::on_connect(ip::tcp::endpoint ep, const asio_error & err)
 
 void AsyncClient::on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes)
 {
-    if (!err.code()) {
-        std::string copy(read_buffer_, bytes - 1);
-        std::cout << "server echoed our " << sock.remote_endpoint().address().to_string() << message_ << ": " << (copy == message_ ? "OK" : "FAIL") << std::endl;
+    if (!err.code() ) {
+        if (bytes > 0)
+        {
+            std::string copy(read_buffer_, bytes - 1);
+            std::cout << "server echoed our " << sock.remote_endpoint().address().to_string() << message_ << ": " << (copy == message_ ? "OK" : "FAIL") << std::endl;
+        }
     }
     else
     {
