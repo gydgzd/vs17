@@ -4,6 +4,7 @@
 #include <boost/thread.hpp> 
 #include <iostream>
 #include <string>
+#include "MsgDefine.h"
 using namespace boost::asio;
 
 class testAsio
@@ -33,16 +34,13 @@ public:
     void on_connect(ip::tcp::endpoint ep, const asio_error & err);
 
     void on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes);
+    size_t read_complete(const boost::system::error_code & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
     void do_read(ip::tcp::socket &sock);
     void do_write(const std::string & msg);
-    size_t read_complete(const boost::system::error_code & err, size_t bytes) {
-        // 和TCP客户端中的类似
-        std::cout << "read_complete" << std::endl;
-        return 0;
-    }
+
 private:
-    AsyncClient(const std::string & message) : sock_(service), started_(true), message_(message) {}
+    AsyncClient() : sock_(service), started_(true), message_("") {}
     typedef AsyncClient self_type;
 
     void start(ip::tcp::endpoint ep);
@@ -68,14 +66,14 @@ public:
     void stop();
     bool started() const { return started_; }
     void on_accept(client_ptr client, const asio_error & err);
-    void on_read(const asio_error & err, size_t bytes);
+    void on_read(client_ptr client, const asio_error & err, size_t bytes);
 
     void do_read(client_ptr client);
     ip::tcp::socket & sock() { return sock_; }
     std::string username() const { return username_; }
     void set_clients_changed() { clients_changed_ = true; }
     size_t read_complete(const boost::system::error_code & err, size_t bytes);
-
+    void on_write(const asio_error & err, size_t bytes);
 private:
     AsyncServer() : sock_(service), timer_(service) {};
     typedef AsyncServer self_type;
@@ -89,5 +87,5 @@ private:
     boost::posix_time::ptime last_ping;
     bool clients_changed_;
     static ip::tcp::acceptor m_acceptor;
-
+    void msgProcess(client_ptr client, char *buff);
 };

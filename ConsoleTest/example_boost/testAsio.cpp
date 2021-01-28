@@ -23,9 +23,9 @@ void AsyncClient::start(ip::tcp::endpoint ep)
     sock_.async_connect(ep, MEM_FN2(on_connect, ep, _1));
 }
 
-AsyncClient::ptr AsyncClient::start(ip::tcp::endpoint ep, const std::string & message)
+AsyncClient::ptr AsyncClient::start(ip::tcp::endpoint ep, const std::string &message)
 {
-    ptr new_(new AsyncClient(message));
+    ptr new_(new AsyncClient());
     new_->start(ep);
     return new_;
 }
@@ -53,12 +53,13 @@ void AsyncClient::on_connect(ip::tcp::endpoint ep, const asio_error & err)
 
 void AsyncClient::on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes)
 {
-    if (!err.code() ) {
+    if (!err.code()) {
         if (bytes > 0)
         {
-            std::string copy(read_buffer_, bytes - 1);
-            std::cout << "server echoed our " << sock.remote_endpoint().address().to_string() << message_ << ": " << (copy == message_ ? "OK" : "FAIL") << std::endl;
+            std::string copy(read_buffer_, bytes);
+            std::cout << "received:  " << sock.remote_endpoint().address().to_string() << "  " << copy << std::endl;
         }
+        do_read(sock_);
     }
     else
     {
@@ -66,6 +67,14 @@ void AsyncClient::on_read(ip::tcp::socket &sock, const asio_error & err, size_t 
         stop();
     }
 
+}
+
+size_t AsyncClient::read_complete(const boost::system::error_code & err, size_t bytes) {
+    if (err)
+        return 0;
+    bool found = std::find(read_buffer_, read_buffer_ + bytes, '\n') < read_buffer_ + bytes;
+    // 我们一个一个读取直到读到回车，不缓存
+    return found ? 0 : 1;
 }
 
 void AsyncClient::on_write(const asio_error & err, size_t bytes)
@@ -81,7 +90,8 @@ void AsyncClient::on_write(const asio_error & err, size_t bytes)
 }
 
 void AsyncClient::do_read(ip::tcp::socket &sock) {
-    async_read(sock_, buffer(read_buffer_), MEM_FN2(read_complete, _1, _2), MEM_FN3(on_read, boost::ref(sock_), _1, _2));   // sock_   will be error
+    //    async_read(sock_, buffer(read_buffer_), MEM_FN2(read_complete, _1, _2), MEM_FN3(on_read, boost::ref(sock_), _1, _2));   // sock_ will be error,use boost::ref(sock_)
+    sock.async_read_some(buffer(read_buffer_), MEM_FN3(on_read, boost::ref(sock_), _1, _2));
 }
 
 void AsyncClient::do_write(const std::string & msg) {
@@ -129,7 +139,7 @@ void AsyncServer::on_accept(client_ptr client, const asio_error & err)
     client->start();
 }
 
-void AsyncServer::on_read(const asio_error & err, size_t bytes) {
+void AsyncServer::on_read(client_ptr client, const asio_error & err, size_t bytes) {
     if (err.code())
     {
         stop();
@@ -137,18 +147,221 @@ void AsyncServer::on_read(const asio_error & err, size_t bytes) {
     }
     if (!started())
         return;
+    if (bytes > 0)
+    {
+        std::string copy(read_buffer_, bytes);
+        std::cout << "received:  " << bytes << " - " << client->sock_.remote_endpoint().address().to_string() << "  " << copy << std::endl;
+        msgProcess(client, read_buffer_);
+    }
+    do_read(client);
     std::string msg(read_buffer_, bytes);
     std::cout << read_buffer_ << std::endl;
 }
 
 void AsyncServer::do_read(client_ptr client) {
-    async_read(client->sock(), buffer(read_buffer_), MEM_FN2(read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
-    //   post_check_ping();
+    //    async_read(client->sock(), buffer(read_buffer_), MEM_FN2(read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
+    client->sock().async_read_some(buffer(read_buffer_), MEM_FN3(on_read, client, _1, _2));
 }
 
 size_t AsyncServer::read_complete(const boost::system::error_code & err, size_t bytes) {
-    std::cout << "read_complete" << std::endl;
-    return 0;
+    if (err)
+        return 0;
+    bool found = std::find(read_buffer_, read_buffer_ + bytes, '\n') < read_buffer_ + bytes;
+    // 我们一个一个读取直到读到回车，不缓存
+    return found ? 0 : 1;
+}
+void AsyncServer::on_write(const asio_error & err, size_t bytes)
+{
+    if (!err.code()) {
+        std::string copy(write_buffer_, bytes);
+        std::cout << "write: " << bytes << " - " << copy << std::endl;
+    }
+    else
+    {
+        std::cout << "on_write error: " << err.code() << " - " << err.what() << std::endl;
+        stop();
+    }
+}
+void AsyncServer::msgProcess(client_ptr client, char * buff)
+{
+    Overload *overload = (Overload *)buff;
+    overload->tag = ntohs(overload->tag);
+    overload->len = ntohs(overload->len);
+    std::cout << "msg tag: " << overload->tag << " len:" << overload->len << std::endl;
+    if (overload->tag == 0x6020)
+    {
+        DeviceMngHead *deviceHead = (DeviceMngHead *)(buff + sizeof(Overload));
+        deviceHead->taskNo = ntohl(deviceHead->taskNo);
+        deviceHead->deviceNo = ntohl(deviceHead->deviceNo);
+        deviceHead->cmdType = ntohs(deviceHead->cmdType);
+        deviceHead->cmd = ntohl(deviceHead->cmd);
+        deviceHead->ret = ntohs(0);
+        std::cout << "cmd:" << deviceHead->cmd << std::endl;
+        memset(write_buffer_, 0, 1024);
+        Overload *write = (Overload *)write_buffer_;
+        int len = 0;
+        std::string data;
+        switch (deviceHead->cmd)
+        {
+        case 101:
+        {    write->tag = htons(overload->tag);
+        deviceHead = (DeviceMngHead *)(overload + sizeof(Overload));
+        deviceHead->taskNo = htonl(deviceHead->taskNo);
+        deviceHead->deviceNo = htonl(deviceHead->deviceNo);
+        deviceHead->cmdType = htons(deviceHead->cmdType);
+        deviceHead->cmd = htonl(deviceHead->cmd);
+        deviceHead->ret = htons(0);
+
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+            \"phone\" : \"13599999999\",\
+            \"role\" : \"安全保密管理员\",\
+            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
+            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
+            \
+            },\
+           \"ret\": 0,\
+           \"msg\" : \"登录成功\"}";
+        int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+        overload->len = htons(len);
+        deviceHead->len = strlen(msg);
+        deviceHead->len = htons(deviceHead->len);
+        memcpy(json, msg, strlen(msg));
+        data = std::string(write_buffer_, sizeof(Overload) + len);
+        client->sock_.async_write_some(boost::asio::buffer(write_buffer_, data.length()), MEM_FN2(on_write, _1, _2));
+        }
+        break;
+        case 121:
+        {   overload->tag = htons(overload->tag);
+        deviceHead = (DeviceMngHead *)(overload + sizeof(Overload));
+        deviceHead->taskNo = htonl(deviceHead->taskNo);
+        deviceHead->deviceNo = htonl(deviceHead->deviceNo);
+        deviceHead->cmdType = htons(deviceHead->cmdType);
+        deviceHead->cmd = htonl(deviceHead->cmd);
+        deviceHead->ret = htons(0);
+
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        char msg[] = "{\
+                \"ret\":0,\
+                \"msg\" : \"用户退出成功\",\
+                }  ";
+        int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+        overload->len = htons(len);
+        deviceHead->len = strlen(msg);
+        deviceHead->len = htons(deviceHead->len);
+        memcpy(json, msg, strlen(msg));
+        data = std::string(write_buffer_, sizeof(Overload) + len);
+        client->sock_.async_write_some(boost::asio::buffer(write_buffer_, data.length()), MEM_FN2(on_write, _1, _2));
+        }
+        break;
+        case 131:
+        {    overload->tag = htons(overload->tag);
+        deviceHead = (DeviceMngHead *)(overload + sizeof(Overload));
+        deviceHead->taskNo = htonl(deviceHead->taskNo);
+        deviceHead->deviceNo = htonl(deviceHead->deviceNo);
+        deviceHead->cmdType = htons(deviceHead->cmdType);
+        deviceHead->cmd = htonl(deviceHead->cmd);
+        deviceHead->ret = htons(0);
+
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+            \"phone\" : \"13599999999\",\
+            \"role\" : \"安全保密管理员\",\
+            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
+            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
+            \
+            },\
+           \"ret\": 0,\
+           \"msg\" : \"创建成功\"}";
+        int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+        overload->len = htons(len);
+        deviceHead->len = strlen(msg);
+        deviceHead->len = htons(deviceHead->len);
+        memcpy(json, msg, strlen(msg));
+        data = std::string(write_buffer_, sizeof(Overload) + len);
+        client->sock_.async_write_some(boost::asio::buffer(write_buffer_, data.length()), MEM_FN2(on_write, _1, _2));
+        }
+        break;
+        case 141:
+        {    overload->tag = htons(overload->tag);
+        deviceHead = (DeviceMngHead *)(overload + sizeof(Overload));
+        deviceHead->taskNo = htonl(deviceHead->taskNo);
+        deviceHead->deviceNo = htonl(deviceHead->deviceNo);
+        deviceHead->cmdType = htons(deviceHead->cmdType);
+        deviceHead->cmd = htonl(deviceHead->cmd);
+        deviceHead->ret = htons(0);
+
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        char msg[] = "{\
+                \"ret\": 0,\
+                \"msg\" : \"修改成功\"\
+                }";
+        int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+        overload->len = htons(len);
+        deviceHead->len = strlen(msg);
+        deviceHead->len = htons(deviceHead->len);
+        memcpy(json, msg, strlen(msg));
+        data = std::string(write_buffer_, sizeof(Overload) + len);
+        client->sock_.async_write_some(boost::asio::buffer(write_buffer_, data.length()), MEM_FN2(on_write, _1, _2));
+        }
+        break;
+        case 151:
+        {   overload->tag = htons(overload->tag);
+        deviceHead = (DeviceMngHead *)(overload + sizeof(Overload));
+        deviceHead->taskNo = htonl(deviceHead->taskNo);
+        deviceHead->deviceNo = htonl(deviceHead->deviceNo);
+        deviceHead->cmdType = htons(deviceHead->cmdType);
+        deviceHead->cmd = htonl(deviceHead->cmd);
+        deviceHead->ret = htons(0);
+
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        char msg[] = "{\
+                \"ret\": 0,\
+                \"msg\" : \"删除成功\"\
+                }";
+        int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+        overload->len = htons(len);
+        deviceHead->len = strlen(msg);
+        deviceHead->len = htons(deviceHead->len);
+        memcpy(json, msg, strlen(msg));
+        data = std::string(write_buffer_, sizeof(Overload) + len);
+        client->sock_.async_write_some(boost::asio::buffer(write_buffer_, data.length()), MEM_FN2(on_write, _1, _2));
+        }
+        break;
+        case 106:
+        {   overload->tag = htons(overload->tag);
+        deviceHead = (DeviceMngHead *)(overload + sizeof(Overload));
+        deviceHead->taskNo = htonl(deviceHead->taskNo);
+        deviceHead->deviceNo = htonl(deviceHead->deviceNo);
+        deviceHead->cmdType = htons(deviceHead->cmdType);
+        deviceHead->cmd = htonl(deviceHead->cmd);
+        deviceHead->ret = htons(0);
+
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+            \"phone\" : \"13599999999\",\
+            \"role\" : \"安全保密管理员\",\
+            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
+            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
+            \
+            },\
+           \"ret\": 0,\
+           \"msg\" : \"查询成功\"}";
+        int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+        overload->len = htons(len);
+        deviceHead->len = strlen(msg);
+        deviceHead->len = htons(deviceHead->len);
+        memcpy(json, msg, strlen(msg));
+        data = std::string(write_buffer_, sizeof(Overload) + len);
+        client->sock_.async_write_some(boost::asio::buffer(write_buffer_, data.length()), MEM_FN2(on_write, _1, _2));
+        }
+        break;
+        }
+
+    }
 }
 
 
@@ -216,7 +429,160 @@ int testAsio::test()
     */
 
     ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 8001);
-    auto shrd_client = AsyncClient::start(ep, "hi");
+    auto shrd_client = AsyncClient::start(ep, "");
+    char buffer[1024] = {};
+
+    Overload *overload = (Overload *)buffer;
+    overload->tag = htons(0x6020);
+    ////101
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(101);
+    deviceHead->ret = htons(0);
+
+    char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg[] = "{   \
+                \"user\":\"zhangsan1\",\
+                \"passwd\" : , \"e10adc3949ba59abbe56e057f20f883e\"\
+                }        ";
+    int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    std::string data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////121
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(121);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg1[] = "{\
+        \"loginName\":\"zhangsan1\",\
+        \"access_token\" : \"e10adc3949ba59abbe56e057f20f883e\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg1) + 4;
+    overload->len = htons(len);
+    deviceHead->len = strlen(msg1);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg1, strlen(msg1));
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////131
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(131);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg2[] = "{\
+        \"user\":\"zhangsan1\",\
+        \"passwd\" : \"e10adc3949ba59abbe56e057f20f883e\",\
+        \"name\" : \"王方军\",\
+        \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+        \"phone\" : \"13599999999\",\
+        \"role\" : \"安全保密管理员\",\
+        \"dept\" : \"xx部xx办公室\",\
+        \"secureLevel\" : \"0\",\
+        \"address\" : \"xxx路xx号\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg2) + 4;
+    overload->len = htons(len);
+    deviceHead->len = strlen(msg2);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg2, strlen(msg2));
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////141
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(141);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg3[] = "{\
+        \"user\":\"zhangsan1\",\
+        \"passwd\" : \"e10adc3949ba59abbe56e057f20f883e\",\
+        \"name\" : \"王方军\",\
+        \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+        \"phone\" : \"13599999999\",\
+        \"role\" : \"安全保密管理员\",\
+        \"dept\" : \"xx部xx办公室\",\
+        \"secureLevel\" : \"0\",\
+        \"address\" : \"xxx路xx号\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg3) + 4;
+    overload->len = htons(len);
+    deviceHead->len = strlen(msg3);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg3, strlen(msg3));
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////151
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(151);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg4[] = "{\
+        \"user\":\"zhangsan1\",\
+        \"role\" : \"安全保密管理员\",\
+        \"secureLevel\" : \"0\",\
+        \"deleteUserId\" : \" awdaw83f15bd42411e8basdwadwad0134505a\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg4) + 4;
+    overload->len = htons(len);
+    deviceHead->len = strlen(msg4);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg4, strlen(msg4));
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////161
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(161);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg5[] = "{\
+        \"user\":\"zhangsan1\",\
+        \"passwd\" : \"e10adc3949ba59abbe56e057f20f883e\",\
+        \"name\" : \"王方军\",\
+        \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+        \"phone\" : \"13599999999\",\
+        \"role\" : \"安全保密管理员\",\
+        \"dept\" : \"xx部xx办公室\",\
+        \"secureLevel\" : \"0\",\
+        \"address\" : \"xxx路xx号\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg5) + 4;
+    overload->len = htons(len);
+    deviceHead->len = strlen(msg5);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg5, strlen(msg5));
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+
     service.run();
 
     // server
