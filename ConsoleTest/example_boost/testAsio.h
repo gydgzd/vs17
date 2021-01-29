@@ -31,19 +31,20 @@ public:
     static ptr start(ip::tcp::endpoint ep, const std::string &message);
     void stop();
     bool started() { return started_; }
-    void on_connect(ip::tcp::endpoint ep, const asio_error & err);
 
-    void on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes);
     size_t read_complete(const boost::system::error_code & err, size_t bytes);
-    void on_write(const asio_error & err, size_t bytes);
+
     void do_read(ip::tcp::socket &sock);
     void do_write(const std::string & msg);
 
 private:
-    AsyncClient() : sock_(service), started_(true), message_("") {}
     typedef AsyncClient self_type;
-
+    AsyncClient() : sock_(service), started_(true), message_("") {}
     void start(ip::tcp::endpoint ep);
+    void on_connect(ip::tcp::endpoint ep, const asio_error & err);
+    void on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes);
+    void on_write(const asio_error & err, size_t bytes);
+
     ip::tcp::socket sock_;
     enum { max_msg = 1024 };
     char read_buffer_[max_msg];
@@ -51,33 +52,37 @@ private:
     bool started_;
     std::string message_;
 };
-class AsyncServer;
-typedef boost::shared_ptr<AsyncServer> client_ptr;
-typedef std::vector<client_ptr> array;
+
+
 
 class AsyncServer : public boost::enable_shared_from_this<AsyncServer>, boost::noncopyable
 {
 public:
-
-    //    typedef boost::shared_ptr<AsyncServer> ServerPtr;
-    static client_ptr new_() { client_ptr new_(new AsyncServer); return new_; }
-
-    void start();
+    typedef boost::shared_ptr<AsyncServer> client_ptr;
+    typedef std::vector<client_ptr> array;
+    array clients;
+    typedef AsyncServer self_type;
+    typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;
+public:
+    static client_ptr start();
     void stop();
     bool started() const { return started_; }
-    void on_accept(client_ptr client, const asio_error & err);
-    void on_read(client_ptr client, const asio_error & err, size_t bytes);
+
 
     void do_read(client_ptr client);
     ip::tcp::socket & sock() { return sock_; }
-    std::string username() const { return username_; }
-    void set_clients_changed() { clients_changed_ = true; }
-    size_t read_complete(const boost::system::error_code & err, size_t bytes);
-    void on_write(const asio_error & err, size_t bytes);
+
+    size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
+
 private:
     AsyncServer() : sock_(service), timer_(service) {};
-    typedef AsyncServer self_type;
+    void start(int listen_port);
+    void on_accept(client_ptr client, const asio_error & err);
+    void on_read(client_ptr client, const asio_error & err, size_t bytes);
+    void on_write(const asio_error & err, size_t bytes);
+
     ip::tcp::socket sock_;
+
     enum { max_msg = 1024 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
