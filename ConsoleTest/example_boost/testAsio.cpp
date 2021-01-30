@@ -3,10 +3,9 @@
 
 std::mutex g_mutex;
 
-
 boost::asio::io_service myservice;
-boost::asio::io_service service;
-ip::tcp::acceptor AsyncServer::m_acceptor = ip::tcp::acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), 8001));
+//boost::asio::io_service service;    // deprecated ,replaced by io_context
+boost::asio::io_context iocontext;
 testAsio::testAsio()
 {
 }
@@ -102,9 +101,10 @@ void AsyncClient::do_write(const std::string & msg) {
 }
 
 /******** AsyncServer **********/
-
+ip::tcp::acceptor AsyncServer::m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), 8001));// 放在成员变量中，会导致多个listen, 无法再次收到连接
+AsyncServer::array AsyncServer::clients;
 AsyncServer::client_ptr AsyncServer::start() {
-    client_ptr client(new AsyncServer);
+    client_ptr client(new AsyncServer());
     client->start(8001);
 
     return client;
@@ -112,7 +112,7 @@ AsyncServer::client_ptr AsyncServer::start() {
 
 void AsyncServer::start(int listen_port)
 {
-    m_acceptor = ip::tcp::acceptor(service, ip::tcp::endpoint(ip::tcp::v4(), listen_port));
+    //    m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), listen_port));
     m_acceptor.async_accept(sock_, boost::bind(&AsyncServer::on_accept, shared_from_this(), shared_from_this(), _1));
 }
 
@@ -120,6 +120,7 @@ void AsyncServer::stop() {
     if (!started_)
         return;
     started_ = false;
+    sock_.shutdown(ip::tcp::socket::shutdown_both);
     sock_.close();
     client_ptr self = shared_from_this();
     array::iterator it = std::find(clients.begin(), clients.end(), self);
@@ -134,7 +135,7 @@ void AsyncServer::on_accept(client_ptr client, const asio_error & err)
         return;
     }
     ip::tcp::endpoint ep = client->sock_.remote_endpoint();
-    std::cout << ep.address().to_string() << " : " << ep.port() << " connected." << std::endl;
+    std::cout << ep.address().to_string() << " : " << ep.port() << " connected." << "local port:" << client->sock_.local_endpoint().port() << std::endl;
     started_ = true;
     clients.push_back(shared_from_this());
     //last_ping = boost::posix_time::microsec_clock::local_time();
@@ -575,7 +576,7 @@ int testAsio::test()
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
 
-    service.run();
+    iocontext.run();
 
     // server
 

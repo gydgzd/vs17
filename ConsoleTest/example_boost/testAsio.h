@@ -21,7 +21,8 @@ public:
 #define MEM_FN1(x,y)    boost::bind(&self_type::x, shared_from_this(),y)
 #define MEM_FN2(x,y,z)  boost::bind(&self_type::x, shared_from_this(),y,z)
 #define MEM_FN3(x,w,y,z)  boost::bind(&self_type::x, shared_from_this(),w,y,z)
-extern boost::asio::io_service service;
+//extern boost::asio::io_service service;
+extern boost::asio::io_context iocontext;
 typedef boost::system::system_error asio_error;
 class AsyncClient : public boost::enable_shared_from_this<AsyncClient>, boost::noncopyable
 {
@@ -39,7 +40,7 @@ public:
 
 private:
     typedef AsyncClient self_type;
-    AsyncClient() : sock_(service), started_(true), message_("") {}
+    AsyncClient() : sock_(iocontext), started_(true), message_("") {}
     void start(ip::tcp::endpoint ep);
     void on_connect(ip::tcp::endpoint ep, const asio_error & err);
     void on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes);
@@ -60,7 +61,7 @@ class AsyncServer : public boost::enable_shared_from_this<AsyncServer>, boost::n
 public:
     typedef boost::shared_ptr<AsyncServer> client_ptr;
     typedef std::vector<client_ptr> array;
-    array clients;
+    static array clients;
     typedef AsyncServer self_type;
     typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;
 public:
@@ -75,7 +76,7 @@ public:
     size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
 
 private:
-    AsyncServer() : sock_(service), timer_(service) {};
+    AsyncServer() : sock_(iocontext), timer_(iocontext) {};
     void start(int listen_port);
     void on_accept(client_ptr client, const asio_error & err);
     void on_read(client_ptr client, const asio_error & err, size_t bytes);
@@ -87,10 +88,9 @@ private:
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
     bool started_;
-    std::string username_;
+
     deadline_timer timer_;
-    boost::posix_time::ptime last_ping;
-    bool clients_changed_;
+
     static ip::tcp::acceptor m_acceptor;
     void msgProcess(client_ptr client, char *buff);
 };
