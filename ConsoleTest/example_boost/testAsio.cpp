@@ -50,19 +50,19 @@ void AsyncClient::on_connect(ip::tcp::endpoint ep, const asio_error & err)
     }
 }
 
-void AsyncClient::on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes)
+void AsyncClient::on_read(const asio_error & err, size_t bytes)
 {
     if (!err.code()) {
         if (bytes > 0)
         {
             std::string copy(read_buffer_, bytes);
-            std::cout << "received:  " << sock.remote_endpoint().address().to_string() << "  " << copy << std::endl;
+            std::cout << "received:  " << sock_.remote_endpoint().address().to_string() << "  " << copy << std::endl;
         }
-        do_read(sock_);
+        do_read();
     }
     else
     {
-        std::cout << "on_read error: " << sock.remote_endpoint().address().to_string() << err.code() << " - " << err.what() << std::endl;
+        std::cout << "on_read error: " << sock_.remote_endpoint().address().to_string() << err.code() << " - " << err.what() << std::endl;
         stop();
     }
 
@@ -79,7 +79,7 @@ size_t AsyncClient::read_complete(const boost::system::error_code & err, size_t 
 void AsyncClient::on_write(const asio_error & err, size_t bytes)
 {
     if (!err.code()) {
-        do_read(sock_);
+        do_read();
     }
     else
     {
@@ -88,9 +88,11 @@ void AsyncClient::on_write(const asio_error & err, size_t bytes)
     }
 }
 
-void AsyncClient::do_read(ip::tcp::socket &sock) {
+void AsyncClient::do_read() {
+    if (!started())
+        return;
     //    async_read(sock_, buffer(read_buffer_), MEM_FN2(read_complete, _1, _2), MEM_FN3(on_read, boost::ref(sock_), _1, _2));   // sock_ will be error,use boost::ref(sock_)
-    sock.async_read_some(buffer(read_buffer_), MEM_FN3(on_read, boost::ref(sock_), _1, _2));
+    sock_.async_read_some(buffer(read_buffer_), MEM_FN2(on_read, _1, _2));   // MEM_FN3(on_read, boost::ref(sock_), _1, _2)
 }
 
 void AsyncClient::do_write(const std::string & msg) {
@@ -387,28 +389,16 @@ void client_session(socket_ptr sock) {
 
 int testAsio::test()
 {
-    boost::asio::deadline_timer timer1(myservice, boost::posix_time::seconds(2));
+    boost::asio::deadline_timer timer1(myservice, boost::posix_time::seconds(6));
     timer1.async_wait(handler1);
-    boost::asio::deadline_timer timer2(myservice, boost::posix_time::seconds(2));
+    boost::asio::deadline_timer timer2(myservice, boost::posix_time::seconds(6));
     timer2.async_wait(handler2);
+ 
     boost::thread thread1(run);
     boost::thread thread2(run);
     thread1.join();
     thread2.join();
-    /*
-    // client
-    io_service service;
-    ip::tcp::endpoint ep(ip::address::from_string("172.18.10.129"), 2000);
-    ip::tcp::socket sock(service);
-    try {
-    sock.connect(ep);     // async_connect
-    }
-    catch (boost::system::system_error e)
-    {
-    std::cout << "connect error: " << e.code() << " - " << e.what() << std::endl;
-    }
-    */
-
+    //
     ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 8001);
     auto shrd_client = AsyncClient::start(ep, "");
     char buffer[1024] = {};
@@ -578,39 +568,7 @@ int testAsio::test()
 
     iocontext.run();
 
-    // server
-
-    io_service service1;
-    ip::tcp::endpoint ep1(ip::tcp::v4(), 2001); // listen on 2001
-
-    ip::tcp::acceptor acc(service1, ep1);
-    while (true) {
-        socket_ptr sock(new ip::tcp::socket(service1));
-        //    if(!sock.get()->is_open())
-        //        sock.get()->open(ip::tcp::v4());
-        try {
-            // reuse addr ip::tcp::socket::reuse_address ra(true);
-            sock.get()->set_option(ip::tcp::socket::reuse_address(true));
-
-            ip::tcp::socket::receive_buffer_size rbs;
-            sock.get()->get_option(rbs);
-            std::cout << rbs.value() << std::endl;
-        }
-        catch (boost::system::system_error &e)
-        {
-            std::cout << "set_option error: " << e.code() << " - " << e.what() << std::endl;
-        }
-
-        try {
-            acc.accept(*sock);     // async_accept
-            boost::thread(&client_session, sock);  // boost::bind(client_session, sock)
-        }
-        catch (boost::system::system_error &e)
-        {
-            std::cout << "set_option error: " << e.code() << " - " << e.what() << std::endl;
-        }
-
-    }
+   
 
     return 0;
 }

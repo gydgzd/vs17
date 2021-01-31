@@ -17,9 +17,9 @@ public:
     int test();
 };
 
-#define MEM_FN(x)       boost::bind(&self_type::x, shared_from_this())
-#define MEM_FN1(x,y)    boost::bind(&self_type::x, shared_from_this(),y)
-#define MEM_FN2(x,y,z)  boost::bind(&self_type::x, shared_from_this(),y,z)
+#define MEM_FN(x)         boost::bind(&self_type::x, shared_from_this())
+#define MEM_FN1(x,y)      boost::bind(&self_type::x, shared_from_this(),y)
+#define MEM_FN2(x,y,z)    boost::bind(&self_type::x, shared_from_this(),y,z)
 #define MEM_FN3(x,w,y,z)  boost::bind(&self_type::x, shared_from_this(),w,y,z)
 //extern boost::asio::io_service service;
 extern boost::asio::io_context iocontext;
@@ -35,7 +35,7 @@ public:
 
     size_t read_complete(const boost::system::error_code & err, size_t bytes);
 
-    void do_read(ip::tcp::socket &sock);
+    void do_read();
     void do_write(const std::string & msg);
 
 private:
@@ -43,7 +43,7 @@ private:
     AsyncClient() : sock_(iocontext), started_(true), message_("") {}
     void start(ip::tcp::endpoint ep);
     void on_connect(ip::tcp::endpoint ep, const asio_error & err);
-    void on_read(ip::tcp::socket &sock, const asio_error & err, size_t bytes);
+    void on_read(const asio_error & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
 
     ip::tcp::socket sock_;
