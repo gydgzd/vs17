@@ -101,74 +101,13 @@ void AsyncClient::do_write(const std::string & msg) {
     std::copy(msg.begin(), msg.end(), write_buffer_);
     sock_.async_write_some(buffer(write_buffer_, msg.size()), MEM_FN2(on_write, _1, _2));
 }
-
-/******** AsyncServer **********/
-//ip::tcp::acceptor AsyncServer::m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), 8001));// 放在非静态成员变量中，会导致一个端口多个listen, 无法再次收到连接
-AsyncServer::array AsyncServer::s_clients;
-AsyncServer::AsyncServer(int listenPort) : m_sock_(iocontext), timer_(iocontext), m_acceptor(iocontext)
+/******** AsyncConnection **********/
+AsyncConnection::AsyncConnection() : m_sock_(iocontext)
 {
-    mn_listenPort = listenPort;
-};
-AsyncServer::client_ptr AsyncServer::start(int listenPort) {
-    client_ptr client(new AsyncServer(listenPort));
-    int ret = client->init();
-    if (ret == -1)
-        return nullptr;
-    client->start();
-    return client;
-}
-int AsyncServer::init()
-{
-    try {
-        m_acceptor.open(ip::tcp::v4());
-        m_acceptor.set_option(socket_base::reuse_address(true));
-        m_acceptor.bind(ip::tcp::endpoint(ip::address::from_string("127.0.0.1"), mn_listenPort)); // ip::address::from_string("127.0.0.1")   // ip::tcp::v4()
-        m_acceptor.listen(10000);
-    }
-    catch (boost::system::system_error &e)
-    {
-        std::cout << "error: " << e.code() << " - " << e.what() << std::endl;
-        return -1;
-    }
-    return 0;
-}
-// start-->accept-->
-int AsyncServer::start()
-{
-    //m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), listen_port));
-    m_acceptor.async_accept(m_sock_, boost::bind(&AsyncServer::on_accept, shared_from_this(), shared_from_this(), _1));
-    return 0;
+
 }
 
-void AsyncServer::stop() {
-    if (!started_)
-        return;
-    started_ = false;
-    m_sock_.shutdown(ip::tcp::socket::shutdown_both);
-    m_sock_.close();
-    client_ptr self = shared_from_this();
-    array::iterator it = std::find(s_clients.begin(), s_clients.end(), self);
-    s_clients.erase(it);
-}
-
-void AsyncServer::on_accept(client_ptr client, const asio_error & err)
-{
-    if (err.code())
-    {
-        std::cout << "on_accept error: " << err.code() << " - " << err.what() << std::endl;
-        return;
-    }
-    ip::tcp::endpoint ep = client->m_sock_.remote_endpoint();
-    std::cout << ep.address().to_string() << " : " << ep.port() << " connected." << "local port:" << client->m_sock_.local_endpoint().port() << std::endl;
-    started_ = true;
-    s_clients.push_back(shared_from_this());
-    //last_ping = boost::posix_time::microsec_clock::local_time();
-    do_read(client); //首先，我们等待客户端连接
-
-    client->start();
-}
-
-void AsyncServer::on_read(client_ptr client, const asio_error & err, size_t bytes) {
+void AsyncConnection::on_read(Conn_ptr client, const asio_error & err, size_t bytes) {
     if (err.code())
     {
         stop();
@@ -187,19 +126,19 @@ void AsyncServer::on_read(client_ptr client, const asio_error & err, size_t byte
     std::cout << read_buffer_ << std::endl;
 }
 
-void AsyncServer::do_read(client_ptr client) {
+void AsyncConnection::do_read(Conn_ptr client) {
     // async_read(client->sock(), buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
     client->sock().async_read_some(buffer(read_buffer_), MEM_FN3(on_read, client, _1, _2));
 }
 
-size_t AsyncServer::is_read_complete(const boost::system::error_code & err, size_t bytes) {
+size_t AsyncConnection::is_read_complete(const boost::system::error_code & err, size_t bytes) {
     if (err)
         return 0;
     bool found = std::find(read_buffer_, read_buffer_ + bytes, '\n') < read_buffer_ + bytes;
     // 我们一个一个读取直到读到回车，不缓存
     return found ? 0 : 1;
 }
-void AsyncServer::on_write(const asio_error & err, size_t bytes)
+void AsyncConnection::on_write(const asio_error & err, size_t bytes)
 {
     if (!err.code()) {
         std::string copy(write_buffer_, bytes);
@@ -211,7 +150,7 @@ void AsyncServer::on_write(const asio_error & err, size_t bytes)
         stop();
     }
 }
-void AsyncServer::msgProcess(client_ptr client, char * buff)
+void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
 {
     Overload *overload = (Overload *)buff;
     overload->tag = ntohs(overload->tag);
@@ -368,6 +307,76 @@ void AsyncServer::msgProcess(client_ptr client, char * buff)
 
     }
 }
+
+
+
+
+/******** AsyncServer **********/
+//ip::tcp::acceptor AsyncServer::m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), 8001));// 放在非静态成员变量中，会导致一个端口多个listen, 无法再次收到连接
+AsyncServer::AsyncServer(int listenPort) :  timer_(iocontext), m_acceptor(iocontext)
+{
+    mn_listenPort = listenPort;
+};
+Conn_ptr AsyncServer::start(int listenPort) {
+    Server_ptr server(new AsyncServer(listenPort));
+    int ret = server->init();
+    if (ret == -1)
+        return nullptr;
+    server->start();
+    return server;
+}
+int AsyncServer::init()
+{
+    try {
+        m_acceptor.open(ip::tcp::v4());
+        m_acceptor.set_option(socket_base::reuse_address(true));
+        m_acceptor.bind(ip::tcp::endpoint(ip::address::from_string("127.0.0.1"), mn_listenPort)); // ip::address::from_string("127.0.0.1")   // ip::tcp::v4()
+        m_acceptor.listen(10000);
+    }
+    catch (boost::system::system_error &e)
+    {
+        std::cout << "error: " << e.code() << " - " << e.what() << std::endl;
+        return -1;
+    }
+    return 0;
+}
+// start-->accept-->
+int AsyncServer::start()
+{
+    //m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), listen_port));
+    Conn_ptr conn(new AsyncConnection());
+    m_acceptor.async_accept(conn->sock(), boost::bind(&AsyncServer::on_accept, shared_from_this(), conn, _1));
+    return 0;
+}
+
+void AsyncServer::stop() {
+    if (!started_)
+        return;
+    started_ = false;
+    m_sock_.shutdown(ip::tcp::socket::shutdown_both);
+    m_sock_.close();
+    Conn_ptr self = shared_from_this();
+    array::iterator it = std::find(s_conns.begin(), s_conns.end(), self);
+    s_conns.erase(it);
+}
+
+void AsyncServer::on_accept(Conn_ptr conn, const asio_error & err)
+{
+    if (err.code())
+    {
+        std::cout << "on_accept error: " << err.code() << " - " << err.what() << std::endl;
+        return;
+    }
+    ip::tcp::endpoint ep = conn->m_sock_.remote_endpoint();
+    std::cout << ep.address().to_string() << " : " << ep.port() << " connected." << "local port:" << conn->m_sock_.local_endpoint().port() << std::endl;
+    started_ = true;
+    s_conns.push_back(shared_from_this());
+    //last_ping = boost::posix_time::microsec_clock::local_time();
+    conn->do_read(conn); //首先，我们等待客户端连接
+
+    this->start();
+}
+
 
 
 

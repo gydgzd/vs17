@@ -54,44 +54,53 @@ private:
     std::string message_;
 };
 
+typedef boost::shared_ptr<ip::tcp::socket> Socket_ptr;
+typedef boost::shared_ptr<AsyncConnection> Conn_ptr;
+typedef boost::shared_ptr<AsyncServer>     Server_ptr;
+//split connection from server
+class AsyncConnection
+{
+public:
+    AsyncConnection();
+    ip::tcp::socket & sock() { return m_sock_; }
+    
+    void do_read(Conn_ptr client);
+    size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
 
+private:
+    void on_read(Conn_ptr client, const asio_error & err, size_t bytes);
+    void on_write(const asio_error & err, size_t bytes);
+    void msgProcess(Conn_ptr client, char *buff);
+
+    ip::tcp::socket m_sock_;
+    enum { max_msg = 1024 };
+    char read_buffer_[max_msg];
+    char write_buffer_[max_msg];
+
+};
 
 class AsyncServer : public boost::enable_shared_from_this<AsyncServer>, boost::noncopyable
 {
 public:
     typedef AsyncServer self_type;
-    typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;
-    typedef boost::shared_ptr<AsyncServer> client_ptr;
-    typedef std::vector<client_ptr> array;
-    static array s_clients;
+    typedef std::vector<Conn_ptr> array;
+    static array s_conns;
     static std::vector<int> s_ports;
 
 public:
-    static client_ptr start(int listenPort);
+    static Conn_ptr start(int listenPort);
     void stop();
     bool started() const { return started_; }
 
-    void do_read(client_ptr client);
-    ip::tcp::socket & sock() { return m_sock_; }
-
-    size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
-
 private:
     AsyncServer(int listenPort);
+    int init();
     int start();
-    void on_accept(client_ptr client, const asio_error & err);
-    void on_read(client_ptr client, const asio_error & err, size_t bytes);
-    void on_write(const asio_error & err, size_t bytes);
+    void on_accept(Conn_ptr client, const asio_error & err);
 
-    ip::tcp::socket m_sock_;
     int mn_listenPort;
-    enum { max_msg = 1024 };
-    char read_buffer_[max_msg];
-    char write_buffer_[max_msg];
     bool started_;
-
     deadline_timer timer_;
-
     ip::tcp::acceptor m_acceptor;
-    void msgProcess(client_ptr client, char *buff);
+ 
 };
