@@ -33,7 +33,7 @@ public:
     void stop();
     bool started() { return started_; }
 
-    size_t read_complete(const boost::system::error_code & err, size_t bytes);
+    size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
 
     void do_read();
     void do_write(const std::string & msg);
@@ -59,31 +59,32 @@ private:
 class AsyncServer : public boost::enable_shared_from_this<AsyncServer>, boost::noncopyable
 {
 public:
-    typedef boost::shared_ptr<AsyncServer> client_ptr;
-    typedef std::vector<client_ptr> array;
-    static array clients;
     typedef AsyncServer self_type;
     typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;
+    typedef boost::shared_ptr<AsyncServer> client_ptr;
+    typedef std::vector<client_ptr> array;
+    static array s_clients;
+    static std::vector<int> s_ports;
+
 public:
-    static client_ptr start();
+    static client_ptr start(int listenPort);
     void stop();
     bool started() const { return started_; }
 
-
     void do_read(client_ptr client);
-    ip::tcp::socket & sock() { return sock_; }
+    ip::tcp::socket & sock() { return m_sock_; }
 
     size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
 
 private:
-    AsyncServer() : sock_(iocontext), timer_(iocontext) {};
-    void start(int listen_port);
+    AsyncServer(int listenPort);
+    int start();
     void on_accept(client_ptr client, const asio_error & err);
     void on_read(client_ptr client, const asio_error & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
 
-    ip::tcp::socket sock_;
-
+    ip::tcp::socket m_sock_;
+    int mn_listenPort;
     enum { max_msg = 1024 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
@@ -91,6 +92,6 @@ private:
 
     deadline_timer timer_;
 
-    static ip::tcp::acceptor m_acceptor;
+    ip::tcp::acceptor m_acceptor;
     void msgProcess(client_ptr client, char *buff);
 };
