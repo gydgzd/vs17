@@ -2,6 +2,7 @@
 #include "testAsio.h"
 
 std::mutex g_mutex;
+std::mutex  g_mutex_conns;           // mutex of s_conns
 
 boost::asio::io_service myservice;
 //boost::asio::io_service service;    // deprecated ,replaced by io_context
@@ -31,8 +32,8 @@ AsyncClient::ptr AsyncClient::start(ip::tcp::endpoint ep, const std::string &mes
 
 void AsyncClient::stop()
 {
-    if (!started_) return;
-    started_ = false;
+    if (!m_started_) return;
+    m_started_ = false;
     sock_.close();
 }
 
@@ -101,34 +102,57 @@ void AsyncClient::do_write(const std::string & msg) {
     std::copy(msg.begin(), msg.end(), write_buffer_);
     sock_.async_write_some(buffer(write_buffer_, msg.size()), MEM_FN2(on_write, _1, _2));
 }
+
 /******** AsyncConnection **********/
-AsyncConnection::AsyncConnection() : m_sock_(iocontext)
+AsyncConnection::AsyncConnection() : m_sock_(iocontext), m_connected(true)
+{
+
+}
+AsyncConnection::AsyncConnection(Server_ptr pserver) : m_sock_(iocontext), m_connected(true), m_pserver(pserver)
 {
 
 }
 
-void AsyncConnection::on_read(Conn_ptr client, const asio_error & err, size_t bytes) {
+bool AsyncConnection::connected()
+{
+    std::lock_guard<std::mutex> lock(m_connMutex);
+    return m_connected;
+}
+
+void AsyncConnection::close()
+{
+    {
+        std::lock_guard<std::mutex> lock(m_connMutex);
+        m_connected = false;
+    }
+    m_sock_.shutdown(ip::tcp::socket::shutdown_both);
+    m_sock_.close();
+    m_pserver->deleteConn(shared_from_this());
+}
+
+
+void AsyncConnection::on_read(const asio_error & err, size_t bytes) {
     if (err.code())
     {
-        stop();
+        close();
         std::cout << "on_read error: " << err.code() << " - " << err.what() << std::endl;
     }
-    if (!started())
+    if (!connected())
         return;
     if (bytes > 0)
     {
         std::string copy(read_buffer_, bytes);
-        std::cout << "received:  " << bytes << " - " << client->m_sock_.remote_endpoint().address().to_string() << "  " << copy << std::endl;
-        msgProcess(client, read_buffer_);
+        std::cout << "received:  " << bytes << " - " << m_sock_.remote_endpoint().address().to_string() << "  " << copy << std::endl;
+        msgProcess(shared_from_this(), read_buffer_);
     }
-    do_read(client);
+    do_read();
     std::string msg(read_buffer_, bytes);
     std::cout << read_buffer_ << std::endl;
 }
 
-void AsyncConnection::do_read(Conn_ptr client) {
+void AsyncConnection::do_read() {
     // async_read(client->sock(), buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
-    client->sock().async_read_some(buffer(read_buffer_), MEM_FN3(on_read, client, _1, _2));
+    m_sock_.async_read_some(buffer(read_buffer_), MEM_FN2(on_read, _1, _2));
 }
 
 size_t AsyncConnection::is_read_complete(const boost::system::error_code & err, size_t bytes) {
@@ -147,7 +171,7 @@ void AsyncConnection::on_write(const asio_error & err, size_t bytes)
     else
     {
         std::cout << "on_write error: " << err.code() << " - " << err.what() << std::endl;
-        stop();
+        close();
     }
 }
 void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
@@ -195,7 +219,7 @@ void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
            \"msg\" : \"登录成功\"}";
             int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
             write->len = htons(len);
-            writeDevHead->len = strlen(msg);
+            writeDevHead->len = (short)strlen(msg);
             writeDevHead->len = htons(deviceHead->len);
             memcpy(json, msg, strlen(msg));
             memcpy(json + strlen(msg), &endtag, 4);
@@ -213,7 +237,7 @@ void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
                 }  ";
             int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
             write->len = htons(len);
-            writeDevHead->len = strlen(msg);
+            writeDevHead->len = (short)strlen(msg);
             writeDevHead->len = htons(deviceHead->len);
             memcpy(json, msg, strlen(msg));
             memcpy(json + strlen(msg), &endtag, 4);
@@ -237,7 +261,7 @@ void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
            \"msg\" : \"创建成功\"}";
             int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
             write->len = htons(len);
-            writeDevHead->len = strlen(msg);
+            writeDevHead->len = (short)strlen(msg);
             writeDevHead->len = htons(deviceHead->len);
             memcpy(json, msg, strlen(msg));
             memcpy(json + strlen(msg), &endtag, 4);
@@ -255,7 +279,7 @@ void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
                 }";
             int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
             write->len = htons(len);
-            writeDevHead->len = strlen(msg);
+            writeDevHead->len = (short)strlen(msg);
             writeDevHead->len = htons(deviceHead->len);
             memcpy(json, msg, strlen(msg));
             memcpy(json + strlen(msg), &endtag, 4);
@@ -272,7 +296,7 @@ void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
                 }";
             int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
             write->len = htons(len);
-            writeDevHead->len = strlen(msg);
+            writeDevHead->len = (short)strlen(msg);
             writeDevHead->len = htons(deviceHead->len);
             memcpy(json, msg, strlen(msg));
             memcpy(json + strlen(msg), &endtag, 4);
@@ -295,7 +319,7 @@ void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
            \"msg\" : \"查询成功\"}";
             int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
             write->len = htons(len);
-            writeDevHead->len = strlen(msg);
+            writeDevHead->len = (short)strlen(msg);
             writeDevHead->len = htons(deviceHead->len);
             memcpy(json, msg, strlen(msg));
             memcpy(json + strlen(msg), &endtag, 4);
@@ -308,16 +332,15 @@ void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
     }
 }
 
-
-
-
+std::vector<Conn_ptr> AsyncServer::s_conns;
+std::vector<int> AsyncServer::s_ports;
 /******** AsyncServer **********/
 //ip::tcp::acceptor AsyncServer::m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), 8001));// 放在非静态成员变量中，会导致一个端口多个listen, 无法再次收到连接
-AsyncServer::AsyncServer(int listenPort) :  timer_(iocontext), m_acceptor(iocontext)
+AsyncServer::AsyncServer(int listenPort) : timer_(iocontext), m_acceptor(iocontext)
 {
     mn_listenPort = listenPort;
 };
-Conn_ptr AsyncServer::start(int listenPort) {
+Server_ptr AsyncServer::start(int listenPort) {
     Server_ptr server(new AsyncServer(listenPort));
     int ret = server->init();
     if (ret == -1)
@@ -330,8 +353,10 @@ int AsyncServer::init()
     try {
         m_acceptor.open(ip::tcp::v4());
         m_acceptor.set_option(socket_base::reuse_address(true));
-        m_acceptor.bind(ip::tcp::endpoint(ip::address::from_string("127.0.0.1"), mn_listenPort)); // ip::address::from_string("127.0.0.1")   // ip::tcp::v4()
+        m_acceptor.bind(ip::tcp::endpoint(ip::address::from_string("0.0.0.0"), mn_listenPort)); // ip::address::from_string("127.0.0.1")   // ip::tcp::v4()
         m_acceptor.listen(10000);
+        std::lock_guard<std::mutex> lock(m_mutex_started);
+        m_started_ = true;
     }
     catch (boost::system::system_error &e)
     {
@@ -340,24 +365,20 @@ int AsyncServer::init()
     }
     return 0;
 }
-// start-->accept-->
+// start--> async_accept --> on_accept
 int AsyncServer::start()
 {
     //m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), listen_port));
-    Conn_ptr conn(new AsyncConnection());
+    Conn_ptr conn(new AsyncConnection(shared_from_this()));
     m_acceptor.async_accept(conn->sock(), boost::bind(&AsyncServer::on_accept, shared_from_this(), conn, _1));
     return 0;
 }
 
 void AsyncServer::stop() {
-    if (!started_)
+    std::lock_guard<std::mutex> lock(m_mutex_started);
+    if (!m_started_)
         return;
-    started_ = false;
-    m_sock_.shutdown(ip::tcp::socket::shutdown_both);
-    m_sock_.close();
-    Conn_ptr self = shared_from_this();
-    array::iterator it = std::find(s_conns.begin(), s_conns.end(), self);
-    s_conns.erase(it);
+    m_started_ = false;
 }
 
 void AsyncServer::on_accept(Conn_ptr conn, const asio_error & err)
@@ -367,14 +388,21 @@ void AsyncServer::on_accept(Conn_ptr conn, const asio_error & err)
         std::cout << "on_accept error: " << err.code() << " - " << err.what() << std::endl;
         return;
     }
-    ip::tcp::endpoint ep = conn->m_sock_.remote_endpoint();
-    std::cout << ep.address().to_string() << " : " << ep.port() << " connected." << "local port:" << conn->m_sock_.local_endpoint().port() << std::endl;
-    started_ = true;
-    s_conns.push_back(shared_from_this());
-    //last_ping = boost::posix_time::microsec_clock::local_time();
-    conn->do_read(conn); //首先，我们等待客户端连接
-
+    ip::tcp::endpoint remote_ep = conn->sock().remote_endpoint();
+    std::cout << remote_ep.address().to_string() << " : " << remote_ep.port() << " connected." << "local port:" << conn->sock().local_endpoint().port() << std::endl;
+    {
+        std::lock_guard<std::mutex> lock(g_mutex_conns);
+        s_conns.push_back(conn);
+    }
+    conn->do_read(); //首先，我们等待客户端连接
     this->start();
+}
+
+void AsyncServer::deleteConn(Conn_ptr conn)
+{
+    std::lock_guard<std::mutex> lock(g_mutex_conns);
+    array::iterator it = std::find(s_conns.begin(), s_conns.end(), conn);
+    s_conns.erase(it);
 }
 
 
@@ -452,7 +480,7 @@ int testAsio::test()
                 }";
     int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
     overload->len = htons(len);
-    deviceHead->len = strlen(msg);
+    deviceHead->len = (short)strlen(msg);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg, strlen(msg));
     memcpy(json + strlen(msg), &endtag, 4);
@@ -475,7 +503,7 @@ int testAsio::test()
         }";
     len = sizeof(DeviceMngHead) + strlen(msg1) + 4;
     overload->len = htons(len);
-    deviceHead->len = strlen(msg1);
+    deviceHead->len = (short)strlen(msg1);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg1, strlen(msg1));
     memcpy(json + strlen(msg), &endtag, 4);
@@ -505,7 +533,7 @@ int testAsio::test()
         }";
     len = sizeof(DeviceMngHead) + strlen(msg2) + 4;
     overload->len = htons(len);
-    deviceHead->len = strlen(msg2);
+    deviceHead->len = (short)strlen(msg2);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg2, strlen(msg2));
     memcpy(json + strlen(msg), &endtag, 4);
@@ -535,7 +563,7 @@ int testAsio::test()
         }";
     len = sizeof(DeviceMngHead) + strlen(msg3) + 4;
     overload->len = htons(len);
-    deviceHead->len = strlen(msg3);
+    deviceHead->len = (short)strlen(msg3);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg3, strlen(msg3));
     memcpy(json + strlen(msg), &endtag, 4);
@@ -560,7 +588,7 @@ int testAsio::test()
         }";
     len = sizeof(DeviceMngHead) + strlen(msg4) + 4;
     overload->len = htons(len);
-    deviceHead->len = strlen(msg4);
+    deviceHead->len = (short)strlen(msg4);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg4, strlen(msg4));
     memcpy(json + strlen(msg), &endtag, 4);
@@ -590,7 +618,7 @@ int testAsio::test()
         }";
     len = sizeof(DeviceMngHead) + strlen(msg5) + 4;
     overload->len = htons(len);
-    deviceHead->len = strlen(msg5);
+    deviceHead->len = (short)strlen(msg5);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg5, strlen(msg5));
     memcpy(json + strlen(msg), &endtag, 4);
