@@ -128,6 +128,7 @@ void AsyncConnection::close()
     m_sock_.shutdown(ip::tcp::socket::shutdown_both);
     m_sock_.close();
     m_pserver->deleteConn(shared_from_this());
+    std::cout << "connection with " << m_sock_.remote_endpoint().address().to_string() << ":" << m_sock_.remote_endpoint().port() << " closed" << std::endl;
 }
 
 
@@ -142,7 +143,7 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes) {
     if (bytes > 0)
     {
         std::string copy(read_buffer_, bytes);
-        std::cout << "received:  " << bytes << " - " << m_sock_.remote_endpoint().address().to_string() << "  " << copy << std::endl;
+        std::cout << "received:  " << bytes << " - " << m_sock_.remote_endpoint().address().to_string() << ":" << m_sock_.remote_endpoint().port() << copy << std::endl;
         msgProcess(shared_from_this(), read_buffer_);
     }
     do_read();
@@ -152,6 +153,8 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes) {
 
 void AsyncConnection::do_read() {
     // async_read(client->sock(), buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
+    if (!connected())
+        return;
     m_sock_.async_read_some(buffer(read_buffer_), MEM_FN2(on_read, _1, _2));
 }
 
@@ -166,7 +169,7 @@ void AsyncConnection::on_write(const asio_error & err, size_t bytes)
 {
     if (!err.code()) {
         std::string copy(write_buffer_, bytes);
-        std::cout << "write: " << bytes << " - " << copy << std::endl;
+        std::cout << "write to " << m_sock_.remote_endpoint().address().to_string() << ":" << m_sock_.remote_endpoint().port() << " : " << bytes << " Bytes - " << copy << std::endl;
     }
     else
     {
@@ -365,7 +368,7 @@ int AsyncServer::init()
     }
     return 0;
 }
-// start--> async_accept --> on_accept
+// start--> async_accept --> on_accept -->do_read --> start
 int AsyncServer::start()
 {
     //m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), listen_port));
@@ -383,18 +386,18 @@ void AsyncServer::stop() {
 
 void AsyncServer::on_accept(Conn_ptr conn, const asio_error & err)
 {
+    ip::tcp::endpoint remote_ep = conn->sock().remote_endpoint();
     if (err.code())
     {
-        std::cout << "on_accept error: " << err.code() << " - " << err.what() << std::endl;
+        std::cout << remote_ep.address().to_string() << " : " << remote_ep.port() << " connecte error, " << err.code() << " - " << err.what() << std::endl;
         return;
     }
-    ip::tcp::endpoint remote_ep = conn->sock().remote_endpoint();
-    std::cout << remote_ep.address().to_string() << " : " << remote_ep.port() << " connected." << "local port:" << conn->sock().local_endpoint().port() << std::endl;
     {
         std::lock_guard<std::mutex> lock(g_mutex_conns);
         s_conns.push_back(conn);
     }
     conn->do_read(); //首先，我们等待客户端连接
+    std::cout << remote_ep.address().to_string() << " : " << remote_ep.port() << " connected." << "local port:" << conn->sock().local_endpoint().port() << std::endl;
     this->start();
 }
 
