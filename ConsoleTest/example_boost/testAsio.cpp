@@ -104,11 +104,11 @@ void AsyncClient::do_write(const std::string & msg) {
 }
 
 /******** AsyncConnection **********/
-AsyncConnection::AsyncConnection() : m_sock_(iocontext), m_connected(true)
+AsyncConnection::AsyncConnection() : m_sock_(iocontext), m_connected(true), m_strand(iocontext)
 {
 
 }
-AsyncConnection::AsyncConnection(Server_ptr pserver) : m_sock_(iocontext), m_connected(true), m_pserver(pserver)
+AsyncConnection::AsyncConnection(Server_ptr pserver) : m_sock_(iocontext), m_connected(true), m_pserver(pserver), m_strand(iocontext)
 {
 
 }
@@ -154,8 +154,8 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes) {
 void AsyncConnection::do_read() {
     // async_read(client->sock(), buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
     if (!connected())
-        return;
-    m_sock_.async_read_some(buffer(read_buffer_), MEM_FN2(on_read, _1, _2));
+        return; 
+    m_sock_.async_read_some(buffer(read_buffer_), m_strand.wrap(MEM_FN2(on_read, _1, _2)));
 }
 
 size_t AsyncConnection::is_read_complete(const boost::system::error_code & err, size_t bytes) {
@@ -339,7 +339,7 @@ std::vector<Conn_ptr> AsyncServer::s_conns;
 std::vector<int> AsyncServer::s_ports;
 /******** AsyncServer **********/
 //ip::tcp::acceptor AsyncServer::m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), 8001));// 放在非静态成员变量中，会导致一个端口多个listen, 无法再次收到连接
-AsyncServer::AsyncServer(int listenPort) : timer_(iocontext), m_acceptor(iocontext)
+AsyncServer::AsyncServer(int listenPort) : timer_(iocontext), m_acceptor(iocontext), m_strand(iocontext)
 {
     mn_listenPort = listenPort;
 };
@@ -373,7 +373,7 @@ int AsyncServer::start()
 {
     //m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), listen_port));
     Conn_ptr conn(new AsyncConnection(shared_from_this()));
-    m_acceptor.async_accept(conn->sock(), boost::bind(&AsyncServer::on_accept, shared_from_this(), conn, _1));
+    m_acceptor.async_accept(conn->sock(), m_strand.wrap(boost::bind(&AsyncServer::on_accept, shared_from_this(), conn, _1)));
     return 0;
 }
 
@@ -429,7 +429,7 @@ void handler2(const boost::system::error_code &ec)
 
 void run()
 {
-    std::lock_guard <std::mutex> lock(g_mutex);
+//    std::lock_guard <std::mutex> lock(g_mutex);
     myservice.run();
 }
 typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;
@@ -451,10 +451,11 @@ void client_session(socket_ptr sock) {
 
 int testAsio::test()
 {
-    boost::asio::deadline_timer timer1(myservice, boost::posix_time::seconds(6));
-    timer1.async_wait(handler1);
-    boost::asio::deadline_timer timer2(myservice, boost::posix_time::seconds(6));
-    timer2.async_wait(handler2);
+    boost::asio::io_service::strand strand(myservice);
+    boost::asio::deadline_timer timer1(myservice, boost::posix_time::seconds(3));
+    timer1.async_wait(strand.wrap(handler1));
+    boost::asio::deadline_timer timer2(myservice, boost::posix_time::seconds(3));
+    timer2.async_wait(strand.wrap(handler2));
 
     boost::thread thread1(run);
     boost::thread thread2(run);

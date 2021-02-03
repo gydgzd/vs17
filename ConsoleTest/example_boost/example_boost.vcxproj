@@ -157,6 +157,7 @@
     <Text Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="DataProcess.h" />
     <ClInclude Include="InterProcess.h" />
     <ClInclude Include="MsgDefine.h" />
     <ClInclude Include="stdafx.h" />
@@ -164,6 +165,7 @@
     <ClInclude Include="testAsio.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="DataProcess.cpp" />
     <ClCompile Include="example_boost.cpp" />
     <ClCompile Include="InterProcess.cpp" />
     <ClCompile Include="stdafx.cpp">

@@ -6,6 +6,7 @@
 #include <string>
 #include <mutex>
 #include "MsgDefine.h"
+#include "DataProcess.h"
 using namespace boost::asio;
 
 class testAsio
@@ -42,13 +43,14 @@ public:
 
 private:
     typedef AsyncClient self_type;
-    AsyncClient() : sock_(iocontext), m_started_(true), message_("") {}
+    AsyncClient() : sock_(iocontext), m_started_(true), message_(""), m_strand(iocontext){}
     void start(ip::tcp::endpoint ep);
     void on_connect(ip::tcp::endpoint ep, const asio_error & err);
     void on_read(const asio_error & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
 
     ip::tcp::socket sock_;
+    boost::asio::io_context::strand m_strand;
     enum { max_msg = 1024 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
@@ -62,34 +64,6 @@ class AsyncServer;
 typedef boost::shared_ptr<ip::tcp::socket> Socket_ptr;
 typedef boost::shared_ptr<AsyncConnection> Conn_ptr;
 typedef boost::shared_ptr<AsyncServer>     Server_ptr;
-//split connection from server
-class AsyncConnection : public boost::enable_shared_from_this<AsyncConnection>
-{
-public:
-    typedef AsyncConnection self_type;
-    AsyncConnection();
-    AsyncConnection(Server_ptr pserver);
-    ip::tcp::socket & sock() { return m_sock_; }
-
-    void do_read();
-
-    size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
-    bool connected();
-    void close();
-private:
-    void on_read(const asio_error & err, size_t bytes);
-    void on_write(const asio_error & err, size_t bytes);
-    void msgProcess(Conn_ptr client, char *buff);
-
-    bool m_connected;                      // connection status: 0:closed, 1:connected
-    std::mutex m_connMutex;                // mutex of m_connected
-
-    ip::tcp::socket m_sock_;
-    enum { max_msg = 1024 };
-    char read_buffer_[max_msg];
-    char write_buffer_[max_msg];
-    Server_ptr m_pserver;
-};
 
 class AsyncServer : public boost::enable_shared_from_this<AsyncServer>, boost::noncopyable
 {
@@ -112,9 +86,40 @@ private:
     void on_accept(Conn_ptr conn, const asio_error & err);   // add a connection
 
     int mn_listenPort;
+    boost::asio::io_context::strand m_strand;
     bool m_started_;
     std::mutex m_mutex_started;                              // mutex of m_started
     deadline_timer timer_;
     ip::tcp::acceptor m_acceptor;
 
+};
+
+//split connection from server
+class AsyncConnection : public boost::enable_shared_from_this<AsyncConnection>
+{
+public:
+    typedef AsyncConnection self_type;
+    AsyncConnection();
+    AsyncConnection(Server_ptr pserver);
+    ip::tcp::socket & sock() { return m_sock_; }
+
+    void do_read();
+
+    size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
+    bool connected();
+    void close();
+private:
+    void on_read(const asio_error & err, size_t bytes);
+    void on_write(const asio_error & err, size_t bytes);
+    virtual void msgProcess(Conn_ptr client, char *buff); //strategy mode
+
+    bool m_connected;                      // connection status: 0:closed, 1:connected
+    std::mutex m_connMutex;                // mutex of m_connected
+
+    ip::tcp::socket m_sock_;
+    boost::asio::io_context::strand m_strand;
+    enum { max_msg = 1024 };
+    char read_buffer_[max_msg];
+    char write_buffer_[max_msg];
+    Server_ptr m_pserver;
 };
