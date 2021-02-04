@@ -23,10 +23,18 @@ public:
 #define MEM_FN1(x,y)      boost::bind(&self_type::x, shared_from_this(),y)
 #define MEM_FN2(x,y,z)    boost::bind(&self_type::x, shared_from_this(),y,z)
 #define MEM_FN3(x,w,y,z)  boost::bind(&self_type::x, shared_from_this(),w,y,z)
+class AsyncClient;
+class AsyncConnection;
+class AsyncServer;
+
+typedef boost::shared_ptr<AsyncConnection> Conn_ptr;
+typedef boost::shared_ptr<AsyncServer>     Server_ptr;
 extern std::mutex  g_mutex_conns;         // mutex of s_conns
                                           //extern boost::asio::io_service service;
 extern boost::asio::io_context iocontext;
 typedef boost::system::system_error asio_error;
+typedef boost::shared_ptr<ip::tcp::socket> Socket_ptr;
+
 class AsyncClient : public boost::enable_shared_from_this<AsyncClient>, boost::noncopyable
 {
 
@@ -43,7 +51,7 @@ public:
 
 private:
     typedef AsyncClient self_type;
-    AsyncClient() : sock_(iocontext), m_started_(true), message_(""), m_strand(iocontext){}
+    AsyncClient() : sock_(iocontext), m_started_(true), message_(""), m_strand(iocontext) {}
     void start(ip::tcp::endpoint ep);
     void on_connect(ip::tcp::endpoint ep, const asio_error & err);
     void on_read(const asio_error & err, size_t bytes);
@@ -58,12 +66,6 @@ private:
     std::string message_;
 };
 
-
-class AsyncConnection;
-class AsyncServer;
-typedef boost::shared_ptr<ip::tcp::socket> Socket_ptr;
-typedef boost::shared_ptr<AsyncConnection> Conn_ptr;
-typedef boost::shared_ptr<AsyncServer>     Server_ptr;
 
 class AsyncServer : public boost::enable_shared_from_this<AsyncServer>, boost::noncopyable
 {
@@ -104,6 +106,8 @@ public:
     ip::tcp::socket & sock() { return m_sock_; }
 
     void do_read();
+    void do_write(const std::string & msg);
+    void do_write(const char* msg, unsigned int size);
 
     size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
     bool connected();
@@ -118,7 +122,7 @@ private:
 
     ip::tcp::socket m_sock_;
     boost::asio::io_context::strand m_strand;
-    enum { max_msg = 1024 };
+    enum { max_msg = 4096 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
     Server_ptr m_pserver;

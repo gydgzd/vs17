@@ -144,7 +144,8 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes) {
     {
         std::string copy(read_buffer_, bytes);
         std::cout << "received:  " << bytes << " - " << m_sock_.remote_endpoint().address().to_string() << ":" << m_sock_.remote_endpoint().port() << copy << std::endl;
-        msgProcess(shared_from_this(), read_buffer_);
+        std::shared_ptr<BaseProcess>  bprocess = std::make_shared<BaseProcess>();
+        bprocess->dataProcess(&shared_from_this(), copy.c_str());
     }
     do_read();
     std::string msg(read_buffer_, bytes);
@@ -154,8 +155,21 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes) {
 void AsyncConnection::do_read() {
     // async_read(client->sock(), buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
     if (!connected())
-        return; 
+        return;
     m_sock_.async_read_some(buffer(read_buffer_), m_strand.wrap(MEM_FN2(on_read, _1, _2)));
+}
+
+void AsyncConnection::do_write(const std::string & msg)
+{
+    if (!connected())
+        return;
+    m_sock_.async_write_some(boost::asio::buffer(msg, msg.size()), MEM_FN2(on_write, _1, _2));
+}
+void AsyncConnection::do_write(const char* msg, unsigned int size)
+{
+    if (!connected())
+        return;
+    m_sock_.async_write_some(boost::asio::buffer(msg, size), MEM_FN2(on_write, _1, _2));
 }
 
 size_t AsyncConnection::is_read_complete(const boost::system::error_code & err, size_t bytes) {
@@ -179,160 +193,7 @@ void AsyncConnection::on_write(const asio_error & err, size_t bytes)
 }
 void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
 {
-    Overload *overload = (Overload *)buff;
-    overload->tag = ntohs(overload->tag);
-    overload->len = ntohs(overload->len);
-    std::cout << "msg tag: " << overload->tag << " len:" << overload->len << std::endl;
-    if (overload->tag == 0x6020)
-    {
-        DeviceMngHead *deviceHead = (DeviceMngHead *)(buff + sizeof(Overload));
-        deviceHead->taskNo = ntohl(deviceHead->taskNo);
-        deviceHead->deviceNo = ntohl(deviceHead->deviceNo);
-        deviceHead->cmdType = ntohs(deviceHead->cmdType);
-        deviceHead->cmd = ntohl(deviceHead->cmd);
-        deviceHead->ret = ntohs(0);
-        std::cout << "cmd:" << deviceHead->cmd << std::endl;
-        memset(write_buffer_, 0, 1024);
-        Overload *write = (Overload *)write_buffer_;
-        DeviceMngHead *writeDevHead = (DeviceMngHead *)(write_buffer_ + sizeof(Overload));
-        write->tag = htons(overload->tag);
-        writeDevHead->begin = 0xffffffff;
-        writeDevHead->taskNo = htonl(deviceHead->taskNo);
-        writeDevHead->deviceNo = htonl(deviceHead->deviceNo);
-        writeDevHead->cmdType = htons(deviceHead->cmdType);
-        writeDevHead->cmd = htonl(deviceHead->cmd);
-        writeDevHead->ret = htons(0);
-        int len = 0;
-        std::string data;
-        int endtag = 0xeeeeeeee;
-        switch (deviceHead->cmd)
-        {
-        case 101:
-        {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
-            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
-            \"phone\" : \"13599999999\",\
-            \"role\" : \"安全保密管理员\",\
-            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
-            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
-            \
-            },\
-           \"ret\": 0,\
-           \"msg\" : \"登录成功\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            data = std::string(write_buffer_, sizeof(Overload) + len);
-            client->m_sock_.async_write_some(boost::asio::buffer(write_buffer_, data.size()), MEM_FN2(on_write, _1, _2));
-        }
-        break;
-        case 121:
-        {
 
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\
-                \"ret\":0,\
-                \"msg\" : \"用户退出成功\",\
-                }  ";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            data = std::string(write_buffer_, sizeof(Overload) + len);
-            client->m_sock_.async_write_some(boost::asio::buffer(write_buffer_, data.size()), MEM_FN2(on_write, _1, _2));
-        }
-        break;
-        case 131:
-        {
-
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
-            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
-            \"phone\" : \"13599999999\",\
-            \"role\" : \"安全保密管理员\",\
-            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
-            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
-            \
-            },\
-           \"ret\": 0,\
-           \"msg\" : \"创建成功\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            data = std::string(write_buffer_, sizeof(Overload) + len);
-            client->m_sock_.async_write_some(boost::asio::buffer(write_buffer_, data.size()), MEM_FN2(on_write, _1, _2));
-        }
-        break;
-        case 141:
-        {
-
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\
-                \"ret\": 0,\
-                \"msg\" : \"修改成功\"\
-                }";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            data = std::string(write_buffer_, sizeof(Overload) + len);
-            client->m_sock_.async_write_some(boost::asio::buffer(write_buffer_, data.size()), MEM_FN2(on_write, _1, _2));
-        }
-        break;
-        case 151:
-        {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\
-                \"ret\": 0,\
-                \"msg\" : \"删除成功\"\
-                }";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            data = std::string(write_buffer_, sizeof(Overload) + len);
-            client->m_sock_.async_write_some(boost::asio::buffer(write_buffer_, data.size()), MEM_FN2(on_write, _1, _2));
-        }
-        break;
-        case 161:
-        {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
-            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
-            \"phone\" : \"13599999999\",\
-            \"role\" : \"安全保密管理员\",\
-            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
-            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
-            \
-            },\
-           \"ret\": 0,\
-           \"msg\" : \"查询成功\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            data = std::string(write_buffer_, sizeof(Overload) + len);
-            client->m_sock_.async_write_some(boost::asio::buffer(write_buffer_, data.size()), MEM_FN2(on_write, _1, _2));
-        }
-        break;
-        }
-
-    }
 }
 
 std::vector<Conn_ptr> AsyncServer::s_conns;
@@ -429,7 +290,7 @@ void handler2(const boost::system::error_code &ec)
 
 void run()
 {
-//    std::lock_guard <std::mutex> lock(g_mutex);
+    //    std::lock_guard <std::mutex> lock(g_mutex);
     myservice.run();
 }
 typedef boost::shared_ptr<ip::tcp::socket> socket_ptr;
