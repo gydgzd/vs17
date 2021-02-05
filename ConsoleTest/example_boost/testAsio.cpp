@@ -20,12 +20,12 @@ testAsio::~testAsio()
 void AsyncClient::start(ip::tcp::endpoint ep)
 {
     std::cout << "connecting to " << ep.address().to_string() << ":" << int(ep.port()) << std::endl;//  << " / " << ep.protocol()
-    sock_.async_connect(ep, MEM_FN2(on_connect, ep, _1));
+    m_sock_.async_connect(ep, MEM_FN2(on_connect, ep, _1));
 }
 
-AsyncClient::ptr AsyncClient::start(ip::tcp::endpoint ep, const std::string &message)
+Client_ptr AsyncClient::start(ip::tcp::endpoint ep, const std::string &message)
 {
-    ptr new_(new AsyncClient());
+    Client_ptr new_(new AsyncClient());
     new_->start(ep);
     return new_;
 }
@@ -34,7 +34,7 @@ void AsyncClient::stop()
 {
     if (!m_started_) return;
     m_started_ = false;
-    sock_.close();
+    m_sock_.close();
 }
 
 void AsyncClient::on_connect(ip::tcp::endpoint ep, const asio_error & err)
@@ -42,7 +42,6 @@ void AsyncClient::on_connect(ip::tcp::endpoint ep, const asio_error & err)
     if (!err.code())
     {
         std::cout << "connected to: " << ep.address().to_string() << ":" << int(ep.port()) << std::endl;
-        do_write(message_ + "\n");
     }
     else
     {
@@ -53,20 +52,21 @@ void AsyncClient::on_connect(ip::tcp::endpoint ep, const asio_error & err)
 
 void AsyncClient::on_read(const asio_error & err, size_t bytes)
 {
+    ip::tcp::endpoint remote_ep = m_sock_.remote_endpoint();
+    ip::tcp::endpoint local_ep = m_sock_.local_endpoint();
     if (!err.code()) {
         if (bytes > 0)
         {
-            std::string copy(read_buffer_, bytes);
-            std::cout << "received:  " << sock_.remote_endpoint().address().to_string() << "  " << copy << std::endl;
+            std::string msg(read_buffer_, bytes);
+            std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " received " << bytes << " bytes - " << msg << std::endl;
         }
         do_read();
     }
     else
     {
-        std::cout << "on_read error: " << sock_.remote_endpoint().address().to_string() << err.code() << " - " << err.what() << std::endl;
+        std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << "received error: " << err.code() << " - " << err.what() << std::endl;
         stop();
     }
-
 }
 
 size_t AsyncClient::is_read_complete(const boost::system::error_code & err, size_t bytes) {
@@ -79,12 +79,16 @@ size_t AsyncClient::is_read_complete(const boost::system::error_code & err, size
 
 void AsyncClient::on_write(const asio_error & err, size_t bytes)
 {
+    ip::tcp::endpoint remote_ep = m_sock_.remote_endpoint();
+    ip::tcp::endpoint local_ep = m_sock_.local_endpoint();
     if (!err.code()) {
+        std::string copy(write_buffer_, bytes);
+        std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << " wrote " << bytes << " Bytes" << std::endl;
         do_read();
     }
     else
     {
-        std::cout << "on_write error: " << err.code() << " - " << err.what() << std::endl;
+        std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << " write error: " << err.code() << " - " << err.what() << std::endl;
         stop();
     }
 }
@@ -93,14 +97,14 @@ void AsyncClient::do_read() {
     if (!started())
         return;
     //    async_read(sock_, buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN3(on_read, boost::ref(sock_), _1, _2));   // sock_ will be error,use boost::ref(sock_)
-    sock_.async_read_some(buffer(read_buffer_), MEM_FN2(on_read, _1, _2));   // MEM_FN3(on_read, boost::ref(sock_), _1, _2)
+    m_sock_.async_read_some(buffer(read_buffer_), m_strand.wrap(MEM_FN2(on_read, _1, _2)));   // MEM_FN3(on_read, boost::ref(sock_), _1, _2)
 }
 
 void AsyncClient::do_write(const std::string & msg) {
     if (!started())
         return;
     std::copy(msg.begin(), msg.end(), write_buffer_);
-    sock_.async_write_some(buffer(write_buffer_, msg.size()), MEM_FN2(on_write, _1, _2));
+    m_sock_.async_write_some(buffer(write_buffer_, msg.size()), m_strand.wrap(MEM_FN2(on_write, _1, _2)));
 }
 
 /******** AsyncConnection **********/
@@ -139,7 +143,7 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes)
     if (err.code())
     {
         close();
-        std::cout << "on_read error: " << err.code() << " - " << err.what() << std::endl;
+        std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << "received error: " << err.code() << " - " << err.what() << std::endl;
     }
     if (!connected())
         return;
@@ -150,7 +154,6 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes)
         m_pserver->msgProcess(shared_from_this(), msg.c_str());
     }
     do_read();
-
 }
 
 void AsyncConnection::do_read() {
@@ -326,6 +329,12 @@ void client_session(socket_ptr sock) {
             write(*sock, buffer("ok", 2));
     }
 }
+int testUserManager(Client_ptr shrd_client);
+int testDeviceManager(Client_ptr shrd_client);
+int testConferenceManager(Client_ptr shrd_client);
+int testAuthManager(Client_ptr shrd_client);
+int testUpgradeManager(Client_ptr shrd_client);
+int testConfigManager(Client_ptr shrd_client);
 
 int testAsio::test()
 {
@@ -340,8 +349,209 @@ int testAsio::test()
     thread1.join();
     thread2.join();
     //
-    ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 8001);
-    auto shrd_client = AsyncClient::start(ep, "");
+    ip::tcp::endpoint ep_user(ip::address::from_string("127.0.0.1"), 8001);
+    Client_ptr client_user = AsyncClient::start(ep_user, "");
+
+    ip::tcp::endpoint ep_device(ip::address::from_string("127.0.0.1"), 8002);
+    Client_ptr client_device = AsyncClient::start(ep_device, "");
+
+    ip::tcp::endpoint ep_conf(ip::address::from_string("127.0.0.1"), 8003);
+    Client_ptr client_conf = AsyncClient::start(ep_conf, "");
+
+    ip::tcp::endpoint ep_auth(ip::address::from_string("127.0.0.1"), 8004);
+    Client_ptr client_auth = AsyncClient::start(ep_auth, "");
+
+    ip::tcp::endpoint ep_upgrade(ip::address::from_string("127.0.0.1"), 8005);
+    Client_ptr client_upgrade = AsyncClient::start(ep_upgrade, "");
+
+    ip::tcp::endpoint ep_config(ip::address::from_string("127.0.0.1"), 8006);
+    Client_ptr client_config = AsyncClient::start(ep_config, "");
+
+    std::thread th_user{ testUserManager, client_user };
+/*    std::thread th_user{ testDeviceManager };
+    std::thread th_user{ testUserManager };
+    std::thread th_user{ testUserManager };
+    std::thread th_user{ testUserManager };
+    std::thread th_user{ testUserManager };
+    */
+    iocontext.run();
+
+    
+    th_user.join();
+    return 0;
+}
+
+int testUserManager(Client_ptr shrd_client)
+{
+    char buffer[1024] = {};
+    int endtag = 0xeeeeeeee;
+    Overload *overload = (Overload *)buffer;
+    overload->tag = htons(0x6020);
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    int len = 0;
+    std::string data = "";
+    ////101
+ /*   */
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(101);
+    deviceHead->ret = htons(0);
+    char msg[] = "{   \
+                \"user\":\"zhangsan1\",\
+                \"passwd\" : \"e10adc3949ba59abbe56e057f20f883e\"\
+                }";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////121
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(121);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg1[] = "{\
+        \"loginName\":\"zhangsan1\",\
+        \"access_token\" : \"e10adc3949ba59abbe56e057f20f883e\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg1) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg1);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg1, strlen(msg1));
+    memcpy(json + strlen(msg1), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////131
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(131);
+    deviceHead->ret = htons(0);
+
+    char msg2[] = "{\
+        \"user\":\"zhangsan1\",\
+        \"passwd\" : \"e10adc3949ba59abbe56e057f20f883e\",\
+        \"name\" : \"王方军\",\
+        \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+        \"phone\" : \"13599999999\",\
+        \"role\" : \"安全保密管理员\",\
+        \"dept\" : \"xx部xx办公室\",\
+        \"secureLevel\" : \"0\",\
+        \"address\" : \"xxx路xx号\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg2) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg2);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg2, strlen(msg2));
+    memcpy(json + strlen(msg2), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////141
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(141);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg3[] = "{\
+        \"user\":\"zhangsan1\",\
+        \"passwd\" : \"e10adc3949ba59abbe56e057f20f883e\",\
+        \"name\" : \"王方军\",\
+        \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+        \"phone\" : \"13599999999\",\
+        \"role\" : \"安全保密管理员\",\
+        \"dept\" : \"xx部xx办公室\",\
+        \"secureLevel\" : \"0\",\
+        \"address\" : \"xxx路xx号\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg3) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg3);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg3, strlen(msg3));
+    memcpy(json + strlen(msg3), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////151
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(151);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg4[] = "{\
+        \"user\":\"zhangsan1\",\
+        \"role\" : \"安全保密管理员\",\
+        \"secureLevel\" : \"0\",\
+        \"deleteUserId\" : \" awdaw83f15bd42411e8basdwadwad0134505a\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg4) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg4);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg4, strlen(msg4));
+    memcpy(json + strlen(msg4), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////161
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0001);
+    deviceHead->cmd = htonl(161);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    char msg5[] = "{\
+        \"user\":\"zhangsan1\",\
+        \"passwd\" : \"e10adc3949ba59abbe56e057f20f883e\",\
+        \"name\" : \"王方军\",\
+        \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+        \"phone\" : \"13599999999\",\
+        \"role\" : \"安全保密管理员\",\
+        \"dept\" : \"xx部xx办公室\",\
+        \"secureLevel\" : \"0\",\
+        \"address\" : \"xxx路xx号\"\
+        }";
+    len = sizeof(DeviceMngHead) + strlen(msg5) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg5);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg5, strlen(msg5));
+    memcpy(json + strlen(msg5), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    return 0;
+}
+int testDeviceManager(Client_ptr shrd_client)
+{
     char buffer[1024] = {};
     int endtag = 0xeeeeeeee;
     Overload *overload = (Overload *)buffer;
@@ -388,7 +598,7 @@ int testAsio::test()
     deviceHead->len = (short)strlen(msg1);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg1, strlen(msg1));
-    memcpy(json + strlen(msg), &endtag, 4);
+    memcpy(json + strlen(msg1), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////131
@@ -418,7 +628,7 @@ int testAsio::test()
     deviceHead->len = (short)strlen(msg2);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg2, strlen(msg2));
-    memcpy(json + strlen(msg), &endtag, 4);
+    memcpy(json + strlen(msg2), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////141
@@ -448,7 +658,7 @@ int testAsio::test()
     deviceHead->len = (short)strlen(msg3);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg3, strlen(msg3));
-    memcpy(json + strlen(msg), &endtag, 4);
+    memcpy(json + strlen(msg3), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////151
@@ -473,7 +683,7 @@ int testAsio::test()
     deviceHead->len = (short)strlen(msg4);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg4, strlen(msg4));
-    memcpy(json + strlen(msg), &endtag, 4);
+    memcpy(json + strlen(msg4), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////161
@@ -503,13 +713,9 @@ int testAsio::test()
     deviceHead->len = (short)strlen(msg5);
     deviceHead->len = htons(deviceHead->len);
     memcpy(json, msg5, strlen(msg5));
-    memcpy(json + strlen(msg), &endtag, 4);
+    memcpy(json + strlen(msg5), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
-
-    iocontext.run();
-
-
-
     return 0;
+
 }

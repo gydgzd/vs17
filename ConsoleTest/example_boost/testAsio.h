@@ -26,7 +26,7 @@ public:
 class AsyncClient;
 class AsyncConnection;
 class AsyncServer;
-
+typedef boost::shared_ptr<AsyncClient> Client_ptr;
 typedef boost::shared_ptr<AsyncConnection> Conn_ptr;
 typedef boost::shared_ptr<AsyncServer>     Server_ptr;
 extern std::mutex  g_mutex_conns;         // mutex of s_conns
@@ -39,8 +39,8 @@ class AsyncClient : public boost::enable_shared_from_this<AsyncClient>, boost::n
 {
 
 public:
-    typedef boost::shared_ptr<AsyncClient> ptr;
-    static ptr start(ip::tcp::endpoint ep, const std::string &message);
+
+    static Client_ptr start(ip::tcp::endpoint ep, const std::string &message);
     void stop();
     bool started() { return m_started_; }
 
@@ -51,13 +51,13 @@ public:
 
 private:
     typedef AsyncClient self_type;
-    AsyncClient() : sock_(iocontext), m_started_(true), message_(""), m_strand(iocontext) {}
+    AsyncClient() : m_sock_(iocontext), m_started_(true), message_(""), m_strand(iocontext) {}
     void start(ip::tcp::endpoint ep);
     void on_connect(ip::tcp::endpoint ep, const asio_error & err);
     void on_read(const asio_error & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
 
-    ip::tcp::socket sock_;
+    ip::tcp::socket m_sock_;
     boost::asio::io_context::strand m_strand;
     enum { max_msg = 1024 };
     char read_buffer_[max_msg];
