@@ -93,7 +93,7 @@ private:
     std::mutex m_mutex_started;                              // mutex of m_started
     deadline_timer timer_;
     ip::tcp::acceptor m_acceptor;
-    static BaseProcess *m_processor;
+    BaseProcess *m_processor;
 
 };
 

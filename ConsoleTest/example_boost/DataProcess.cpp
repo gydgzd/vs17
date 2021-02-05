@@ -11,8 +11,6 @@ BaseProcess::BaseProcess()
 
 BaseProcess* BaseProcess::getProcessor(int port)
 {
-    if (m_process != nullptr)
-        return m_process;
     switch (port)
     {
     case 8001:     // UserManager
@@ -38,7 +36,8 @@ BaseProcess* BaseProcess::getProcessor(int port)
     case 8006:     // ConfigManager
     {
         m_process = new ConfigManager();
-    }break;
+        break;
+    }
     }
     return m_process;
 }
@@ -50,8 +49,7 @@ int BaseProcess::headProcess(void *client, const char *buff)
 
 int BaseProcess::dataProcess(void *client, const char *buff)
 {
-    BaseProcess *bp = new UserManager();
-    bp->dataProcess(client, buff);
+
     return 0;
 }
 
@@ -66,7 +64,156 @@ int ConferenceManager::dataProcess(void *client, const char *buff)
 /* DeviceManager */
 int DeviceManager::dataProcess(void *client, const char *buff)
 {
+    Overload *overload = (Overload *)buff;
+    overload->tag = ntohs(overload->tag);
+    overload->len = ntohs(overload->len);
+    std::cout << "msg tag: " << overload->tag << " len:" << overload->len << std::endl;
+    if (overload->tag == 0x6020)
+    {
+        DeviceMngHead *deviceHead = (DeviceMngHead *)(buff + sizeof(Overload));
+        deviceHead->taskNo = ntohl(deviceHead->taskNo);
+        deviceHead->deviceNo = ntohl(deviceHead->deviceNo);
+        deviceHead->cmdType = ntohs(deviceHead->cmdType);
+        deviceHead->cmd = ntohl(deviceHead->cmd);
+        deviceHead->ret = ntohs(0);
+        std::cout << "cmd:" << deviceHead->cmd << std::endl;
 
+        char write_buffer_[4096];
+        memset(write_buffer_, 0, 4096);
+        Overload *write = (Overload *)write_buffer_;
+        DeviceMngHead *writeDevHead = (DeviceMngHead *)(write_buffer_ + sizeof(Overload));
+        write->tag = htons(overload->tag);
+        writeDevHead->begin = 0xffffffff;
+        writeDevHead->taskNo = htonl(deviceHead->taskNo);
+        writeDevHead->deviceNo = htonl(deviceHead->deviceNo);
+        writeDevHead->cmdType = htons(deviceHead->cmdType);
+        writeDevHead->cmd = htonl(deviceHead->cmd);
+        writeDevHead->ret = htons(0);
+
+        int endtag = 0xeeeeeeee;
+        switch (deviceHead->cmd)
+        {
+        case 101:
+        {
+            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+            char msg[] = "{\"Msg\":\"\",\
+                \"count\": 2, \"Data\" : [{\"id\":\"1231324\", \"accloudid\" : \"2\", \"name\" : \"\", \"master\" : \"北京服务器1\", \"sn\" : \"\", \"logicid\" : \"\", \
+                \"soft\" : \"1.0\", \"level\" : \"\", \"numpre\" : \"22111\", \"logicpre\" : \"\", \"ippre\" : "", \"ktz\" : \"\", \"ktywsj\" : \"\", \"sheng\" : \
+                \"beijing\", \"shi\" : \"beijing\"}]}";
+            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+            write->len = htons(len);
+            writeDevHead->len = (short)strlen(msg);
+            writeDevHead->len = htons(deviceHead->len);
+            memcpy(json, msg, strlen(msg));
+            memcpy(json + strlen(msg), &endtag, 4);
+            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+            (*(Conn_ptr*)client)->do_write(data);
+        }
+        break;
+        case 102:
+        {
+            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+            char msg[] = "{\"Msg\":\"OK\"}";
+            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+            write->len = htons(len);
+            writeDevHead->len = (short)strlen(msg);
+            writeDevHead->len = htons(deviceHead->len);
+            memcpy(json, msg, strlen(msg));
+            memcpy(json + strlen(msg), &endtag, 4);
+            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+        }
+        break;
+        case 103:
+        {
+            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+            char msg[] = "{\"Msg\":\"\"}";
+            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+            write->len = htons(len);
+            writeDevHead->len = (short)strlen(msg);
+            writeDevHead->len = htons(deviceHead->len);
+            memcpy(json, msg, strlen(msg));
+            memcpy(json + strlen(msg), &endtag, 4);
+            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+        }
+        break;
+        case 104:
+        {
+            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+            char msg[] = "{\"Msg\":\"\", \"Data\":{\"accloudid\":\"10011\", \"name\" : \"zizhi2\", \"cldname\" : \"zz\", \"sn\" : \"\", \"region\" : \"\", \"softver\" : \"1.0.0\",\
+                \"glip\" : \"\", \"glport\" : \"\", \"logid\" : \"\", \"mac\" : \"\", \"ether\" : \"\", \"vlan\" : \"\", \"level\" : \"\", \"numfix\" : \"\", \"logfix\" : \"\",\
+                \"jfxxdz\" : \"\", \"jgh\" : \"\", \"zbjd\" : \"\".\"zbwd\" : \"\", \"fzr\" : \"\", \"fzrdh\" : "", \"khlxr\" : \"\", \"khlxrdh\" : \"\", \"yysm\" : \"\", \"yyslxr\" \
+                : \"\", \"yyslxrdh\" : \"\", \"azr\" : \"\", \"azrdh\" : \"\", \"topo\" : \"\", \"workstate\", \"baksn\" : \"\", \"baklogicid\" : \"\", \"bakmac\" : \"\", \
+                \"bakworkstate\" : \"\", \"bakhbtimeout\" : \"\", \"ut\" : \"\"}}";
+            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+            write->len = htons(len);
+            writeDevHead->len = (short)strlen(msg);
+            writeDevHead->len = htons(deviceHead->len);
+            memcpy(json, msg, strlen(msg));
+            memcpy(json + strlen(msg), &endtag, 4);
+            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+        }
+        break;
+        case 105:
+        {
+            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+            char msg[] = "{\"Msg\":\"OK\"}";
+            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+            write->len = htons(len);
+            writeDevHead->len = (short)strlen(msg);
+            writeDevHead->len = htons(deviceHead->len);
+            memcpy(json, msg, strlen(msg));
+            memcpy(json + strlen(msg), &endtag, 4);
+            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+        }
+        break;
+        case 107:
+        {
+            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+            char msg[] = "{\"Msg\":\"OK\"}";
+            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+            write->len = htons(len);
+            writeDevHead->len = (short)strlen(msg);
+            writeDevHead->len = htons(deviceHead->len);
+            memcpy(json, msg, strlen(msg));
+            memcpy(json + strlen(msg), &endtag, 4);
+            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+        }
+        break;
+        case 108:
+        {
+            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+            char msg[] = "{\"Msg\":\"OK\"}";
+            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+            write->len = htons(len);
+            writeDevHead->len = (short)strlen(msg);
+            writeDevHead->len = htons(deviceHead->len);
+            memcpy(json, msg, strlen(msg));
+            memcpy(json + strlen(msg), &endtag, 4);
+            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+        }
+        break;
+        case 109:
+        {
+            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+            char msg[] = "{\"Msg\":\"OK\"}";
+            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+            write->len = htons(len);
+            writeDevHead->len = (short)strlen(msg);
+            writeDevHead->len = htons(deviceHead->len);
+            memcpy(json, msg, strlen(msg));
+            memcpy(json + strlen(msg), &endtag, 4);
+            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+        }
+        break;
+        }
+    }
     return 0;
 }
 
@@ -77,7 +224,7 @@ int UserManager::dataProcess(void *client, const char *buff)
     overload->tag = ntohs(overload->tag);
     overload->len = ntohs(overload->len);
     std::cout << "msg tag: " << overload->tag << " len:" << overload->len << std::endl;
-    if (overload->tag == 0x6020)
+    if (overload->tag == 0x6021)
     {
         DeviceMngHead *deviceHead = (DeviceMngHead *)(buff + sizeof(Overload));
         deviceHead->taskNo = ntohl(deviceHead->taskNo);
