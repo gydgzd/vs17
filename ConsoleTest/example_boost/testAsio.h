@@ -78,8 +78,8 @@ public:
 public:
     static Server_ptr start(int listenPort);
     void stop();
-    bool started() { std::lock_guard<std::mutex> lock(m_mutex_started); return m_started_; }             // server status
-
+    bool started() { std::lock_guard<std::mutex> lock(m_mutex_started); return m_started_; }    // server status
+    void msgProcess(Conn_ptr client, const char *buff);           //strategy mode
     void deleteConn(Conn_ptr conn);                         // remove a connection
 private:
     AsyncServer(int listenPort);
@@ -93,6 +93,7 @@ private:
     std::mutex m_mutex_started;                              // mutex of m_started
     deadline_timer timer_;
     ip::tcp::acceptor m_acceptor;
+    static BaseProcess *m_processor;
 
 };
 
@@ -106,7 +107,7 @@ public:
     ip::tcp::socket & sock() { return m_sock_; }
 
     void do_read();
-    void do_write(const std::string & msg);
+    void do_write(std::string & msg);
     void do_write(const char* msg, unsigned int size);
 
     size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
@@ -115,7 +116,7 @@ public:
 private:
     void on_read(const asio_error & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
-    virtual void msgProcess(Conn_ptr client, char *buff); //strategy mode
+    void msgProcess(Conn_ptr client, char *buff); //strategy mode
 
     bool m_connected;                      // connection status: 0:closed, 1:connected
     std::mutex m_connMutex;                // mutex of m_connected

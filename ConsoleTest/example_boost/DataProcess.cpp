@@ -1,5 +1,47 @@
 #include "stdafx.h"
 #include "DataProcess.h"
+#include "testAsio.h"
+
+BaseProcess* BaseProcess::m_process = nullptr;
+BaseProcess::BaseProcess()
+{
+    //mmap_processor[8001] = std::make_shared<BaseProcess>();
+
+}
+
+BaseProcess* BaseProcess::getProcessor(int port)
+{
+    if (m_process != nullptr)
+        return m_process;
+    switch (port)
+    {
+    case 8001:     // UserManager
+    {
+        m_process = new UserManager();
+    }break;
+    case 8002:     // DeviceManager
+    {
+        m_process = new DeviceManager();
+    }break;
+    case 8003:     // ConferenceManager
+    {
+        m_process = new ConferenceManager();
+    }break;
+    case 8004:     // AuthManager
+    {
+        m_process = new AuthManager();
+    }break;
+    case 8005:     // UpgradeManager
+    {
+        m_process = new UpgradeManager();
+    }break;
+    case 8006:     // ConfigManager
+    {
+        m_process = new ConfigManager();
+    }break;
+    }
+    return m_process;
+}
 
 int BaseProcess::headProcess(void *client, const char *buff)
 {

@@ -125,14 +125,17 @@ void AsyncConnection::close()
         std::lock_guard<std::mutex> lock(m_connMutex);
         m_connected = false;
     }
+    std::cout << "connection with " << m_sock_.remote_endpoint().address().to_string() << ":" << m_sock_.remote_endpoint().port() << " closed" << std::endl;
     m_sock_.shutdown(ip::tcp::socket::shutdown_both);
     m_sock_.close();
     m_pserver->deleteConn(shared_from_this());
-    std::cout << "connection with " << m_sock_.remote_endpoint().address().to_string() << ":" << m_sock_.remote_endpoint().port() << " closed" << std::endl;
 }
 
 
-void AsyncConnection::on_read(const asio_error & err, size_t bytes) {
+void AsyncConnection::on_read(const asio_error & err, size_t bytes)
+{
+    ip::tcp::endpoint remote_ep = m_sock_.remote_endpoint();
+    ip::tcp::endpoint local_ep = m_sock_.local_endpoint();
     if (err.code())
     {
         close();
@@ -142,14 +145,12 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes) {
         return;
     if (bytes > 0)
     {
-        std::string copy(read_buffer_, bytes);
-        std::cout << "received:  " << bytes << " - " << m_sock_.remote_endpoint().address().to_string() << ":" << m_sock_.remote_endpoint().port() << copy << std::endl;
-        std::shared_ptr<BaseProcess>  bprocess = std::make_shared<BaseProcess>();
-        bprocess->dataProcess(&shared_from_this(), copy.c_str());
+        std::string msg(read_buffer_, bytes);
+        std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " received " << bytes << " bytes - " << msg << std::endl;
+        m_pserver->msgProcess(shared_from_this(), msg.c_str());
     }
     do_read();
-    std::string msg(read_buffer_, bytes);
-    std::cout << read_buffer_ << std::endl;
+
 }
 
 void AsyncConnection::do_read() {
@@ -159,11 +160,16 @@ void AsyncConnection::do_read() {
     m_sock_.async_read_some(buffer(read_buffer_), m_strand.wrap(MEM_FN2(on_read, _1, _2)));
 }
 
-void AsyncConnection::do_write(const std::string & msg)
+void AsyncConnection::do_write(std::string & msg)
 {
     if (!connected())
         return;
-    m_sock_.async_write_some(boost::asio::buffer(msg, msg.size()), MEM_FN2(on_write, _1, _2));
+    std::copy(msg.begin(), msg.end(), write_buffer_);
+    m_sock_.async_write_some(boost::asio::const_buffer(msg.c_str(), msg.size()), MEM_FN2(on_write, _1, _2));
+    // m_sock_.async_write_some(boost::asio::buffer(msg, msg.size()), MEM_FN2(on_write, _1, _2));
+
+    // boost::asio::buffer(msg, msg.size()) not safe, will cause an error - iterator not dereferencable 
+    // m_sock_.async_write_some(boost::asio::const_buffer(msg.c_str(), msg.size()), MEM_FN2(on_write, _1, _2)); work OK
 }
 void AsyncConnection::do_write(const char* msg, unsigned int size)
 {
@@ -181,13 +187,15 @@ size_t AsyncConnection::is_read_complete(const boost::system::error_code & err, 
 }
 void AsyncConnection::on_write(const asio_error & err, size_t bytes)
 {
+    ip::tcp::endpoint remote_ep = m_sock_.remote_endpoint();
+    ip::tcp::endpoint local_ep = m_sock_.local_endpoint();
     if (!err.code()) {
         std::string copy(write_buffer_, bytes);
-        std::cout << "write to " << m_sock_.remote_endpoint().address().to_string() << ":" << m_sock_.remote_endpoint().port() << " : " << bytes << " Bytes - " << copy << std::endl;
+        std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << " wrote " << bytes << " Bytes" << std::endl;
     }
     else
     {
-        std::cout << "on_write error: " << err.code() << " - " << err.what() << std::endl;
+        std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << " write error: " << err.code() << " - " << err.what() << std::endl;
         close();
     }
 }
@@ -200,9 +208,11 @@ std::vector<Conn_ptr> AsyncServer::s_conns;
 std::vector<int> AsyncServer::s_ports;
 /******** AsyncServer **********/
 //ip::tcp::acceptor AsyncServer::m_acceptor = ip::tcp::acceptor(iocontext, ip::tcp::endpoint(ip::tcp::v4(), 8001));// 放在非静态成员变量中，会导致一个端口多个listen, 无法再次收到连接
+BaseProcess * AsyncServer::m_processor = nullptr;
 AsyncServer::AsyncServer(int listenPort) : timer_(iocontext), m_acceptor(iocontext), m_strand(iocontext)
 {
     mn_listenPort = listenPort;
+    m_processor = m_processor->getProcessor(listenPort);
 };
 Server_ptr AsyncServer::start(int listenPort) {
     Server_ptr server(new AsyncServer(listenPort));
@@ -210,6 +220,7 @@ Server_ptr AsyncServer::start(int listenPort) {
     if (ret == -1)
         return nullptr;
     server->start();
+    std::cout << "Start server on port " << listenPort << std::endl;
     return server;
 }
 int AsyncServer::init()
@@ -248,9 +259,10 @@ void AsyncServer::stop() {
 void AsyncServer::on_accept(Conn_ptr conn, const asio_error & err)
 {
     ip::tcp::endpoint remote_ep = conn->sock().remote_endpoint();
+    ip::tcp::endpoint local_ep = conn->sock().local_endpoint();
     if (err.code())
     {
-        std::cout << remote_ep.address().to_string() << " : " << remote_ep.port() << " connecte error, " << err.code() << " - " << err.what() << std::endl;
+        std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " connecte error, " << err.code() << " - " << err.what() << std::endl;
         return;
     }
     {
@@ -258,8 +270,13 @@ void AsyncServer::on_accept(Conn_ptr conn, const asio_error & err)
         s_conns.push_back(conn);
     }
     conn->do_read(); //首先，我们等待客户端连接
-    std::cout << remote_ep.address().to_string() << " : " << remote_ep.port() << " connected." << "local port:" << conn->sock().local_endpoint().port() << std::endl;
+    std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " connected." << std::endl;
     this->start();
+}
+
+void AsyncServer::msgProcess(Conn_ptr client, const char * buff)
+{
+    m_processor->dataProcess(&client, buff);
 }
 
 void AsyncServer::deleteConn(Conn_ptr conn)
