@@ -89,130 +89,420 @@ int DeviceManager::dataProcess(void *client, const char *buff)
         writeDevHead->cmdType = htons(deviceHead->cmdType);
         writeDevHead->cmd = htonl(deviceHead->cmd);
         writeDevHead->ret = htons(0);
-
+        std::string msg = "";
         int endtag = 0xeeeeeeee;
+        int len = 0;
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
         switch (deviceHead->cmd)
         {
         case 101:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\"Msg\":\"\",\
+            msg = "{\"Msg\":\"\",\
                 \"count\": 2, \"Data\" : [{\"id\":\"1231324\", \"accloudid\" : \"2\", \"name\" : \"\", \"master\" : \"北京服务器1\", \"sn\" : \"\", \"logicid\" : \"\", \
                 \"soft\" : \"1.0\", \"level\" : \"\", \"numpre\" : \"22111\", \"logicpre\" : \"\", \"ippre\" : "", \"ktz\" : \"\", \"ktywsj\" : \"\", \"sheng\" : \
                 \"beijing\", \"shi\" : \"beijing\"}]}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(data);
         }
         break;
         case 102:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\"Msg\":\"OK\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+            msg = "{\"Msg\":\"OK\"}";
         }
         break;
         case 103:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\"Msg\":\"\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+            msg = "{\"Msg\":\"\"}";
         }
         break;
         case 104:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\"Msg\":\"\", \"Data\":{\"accloudid\":\"10011\", \"name\" : \"zizhi2\", \"cldname\" : \"zz\", \"sn\" : \"\", \"region\" : \"\", \"softver\" : \"1.0.0\",\
+            msg = "{\"Msg\":\"\", \"Data\":{\"accloudid\":\"10011\", \"name\" : \"zizhi2\", \"cldname\" : \"zz\", \"sn\" : \"\", \"region\" : \"\", \"softver\" : \"1.0.0\",\
                 \"glip\" : \"\", \"glport\" : \"\", \"logid\" : \"\", \"mac\" : \"\", \"ether\" : \"\", \"vlan\" : \"\", \"level\" : \"\", \"numfix\" : \"\", \"logfix\" : \"\",\
                 \"jfxxdz\" : \"\", \"jgh\" : \"\", \"zbjd\" : \"\".\"zbwd\" : \"\", \"fzr\" : \"\", \"fzrdh\" : "", \"khlxr\" : \"\", \"khlxrdh\" : \"\", \"yysm\" : \"\", \"yyslxr\" \
                 : \"\", \"yyslxrdh\" : \"\", \"azr\" : \"\", \"azrdh\" : \"\", \"topo\" : \"\", \"workstate\", \"baksn\" : \"\", \"baklogicid\" : \"\", \"bakmac\" : \"\", \
                 \"bakworkstate\" : \"\", \"bakhbtimeout\" : \"\", \"ut\" : \"\"}}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
         }
         break;
         case 105:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\"Msg\":\"OK\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+            msg = "{\"Msg\":\"OK\"}";
         }
         break;
         case 107:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\"Msg\":\"OK\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+            msg = "{\"Msg\":\"OK\"}";
         }
         break;
         case 108:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\"Msg\":\"OK\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+            msg = "{\"Msg\":\"OK\"}";
         }
         break;
         case 109:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\"Msg\":\"OK\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+            msg = "{\"Msg\":\"OK\"}";
         }
         break;
+        case 110:
+        {
+            msg = "{\"Msg\":\"\",\"count\":\"44\",\"Data\":[{\"devno\":\"22211\",\"v2vno\":\"11111\",\"useflg\":\"1\"}]}";
+
         }
+        break;
+        case 111:
+        {
+            msg = "{\"Msg\":\"\"}";
+
+        }
+        break;
+        case 112:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":{\"version\":\"1.0.2\"}}";
+
+        }
+        break;
+        case 114:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 115:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":{\"timeout\":\"7\"}}";
+        }
+        break;
+        case 116:
+        {
+            msg = "{\"Msg\":\"\",\"count\":\"111\",\"Data\":[{\"id\":\"333\",\"category\":\"\",\"no\",\"\",\"type\":\"\",\"level\":\"\",\"logtime\":\
+                \"\",\"cloudid\":\"\",\"devno\":\"\",\"occurtime\":\"\",\"queueid\":\"\",\"queuetype\":\"\",\"flag\":\"\",\"stype\":\"\",\"dstno\":\"\",\
+                \"dstsub\":\"\",\"dstch\":\"\",\"srcno\":\"\",\"srcsub\":\"\",\"srcch\":\"\",\"reason\":\"\"}]}";
+        }
+        break;
+        case 117:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 118:
+        {
+            msg = "{\"Msg\":\"\",\"mptmband\":\"20\",\"mptvband\":\"20\",\"gptmband\":\"30\",\"gptvband\":\"30\"}";
+        }
+        break;
+        case 119:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 390:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"id\":\"\",\"name\":\"\",\"sn\":\"\",\"logicid\":\"\",\"mac\":\"\",\"glip\":\"\",\"glport\":\
+                \"\",\"acsip\":\"\",\"acsport\":\"\",\"linkstate\":\"\",\"createid\":\"\",\"createtime\":\"\",\"linkcontent\":\"\"}]}";
+        }
+        break;
+        case 391:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 392:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 393:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 394:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 395:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":{\"mstate\":\"\",\"slavestate\":\"\",\"IOthread\":\"\",\"SQLthread\":\"\"}}";
+        }
+        break;
+        case 396:
+        {
+            msg = "{\"Msg\":\"\",\"count\":\"3\",\"Data\":{\"id\":\"11212\",\"name\":\"zz3\",\"state\":\"\",\"sn\":\"\",\"logicid\":\"\",\"mac\":\"\",\
+                \"glip\":\"\",\"glport\":\"\",\"acsip\":\"\",\"acsport\":\"\",\"svrid\":\"\",\"priority\":\"\",\"createid\":\"\",\"createtime\":\"\"}}";
+        }
+        break;
+        case 397:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 398:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 399:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 120:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"id\":\"\",\"name\":\"\",\"usemode\":\"\",\"secretlevel\":\"\",\"sn\":\"\",\
+                \"index\":\"\",\"no\":\"\",\"globalno\":\"\",\"v2vno\":\"\",\"ssxmname\",\"\",\"ssmxbh\":\"\",\"topo\":\"\",\"devicetype\":\"\",\
+                \"logicid\":\"\",\"mac0\":\"\",\"mac1\":\"\",\"svrtype\":\"\",\"sheng\":\"\",\"shi\":\"\",\"qx\":\"\"}]}";
+        }
+        break;
+        case 121:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"id\":\"\",\"name\":\"\",\"usemode\":\"\",\"sn\":\"\",\"state\":\"\",\"index\":\"\",\"no\":\
+                \"\",\"globalno\":\"\",\"v2vno\":\"\",\"ssxmname\",\"\",\"ssmxbh\":\"\",\"topo\":\"\",\"devicetype\":\"\",\"svrtype\":\"\",\"regioninfo\":\
+                \"\",\"secretlevel\":\"\",\"logicid\":\"\",\"mac0\":\"\",\"mac1\":\"\",\"dspvsn\":\"\",\"upgdspvsn\":\"\",\"fgpavsn\":\"\",\"upgfgpavsn\":\
+                \"\",\"upgstate\",\"up0\":\"\",\"down0\":\"\",\"up1\":\"\",\"down1\":\"\",\"avaipos\":\"\",\"bakstate\":\"\",\"workstate\":\"\",\"bakworkstate\
+                \":\"\"}]}";
+        }
+        break;
+        case 122:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 123:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 124:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":{\"name\":\"\",\"usemode\":\"\",\"sn\":\"\",\"region\":\"\",\"state\":\"\",\"index\":\"\",\
+                \"svrtype\":\"\",\"devno\":\"\",\"topo\":\"\",\"devicetype\":\"\",\"logtype\":\"\",\"phytype\":\"\",\"logid\":\"\",\"subcount\
+                \":\"\",\"glbdevno\":\"\",\"v2vno\":\"\",\"ssxmid\":\"\",\"jfxxdz\":\"\",\"jgh\":\"\",\"zbjd\":\"\".\"zbwd\":\"\",\"fzr\":\"\"\
+                ,\"fzrdh\":\"\",\"khlxr\":\"\",\"khlxrdh\":\"\",\"yysmc\":\"\",\"yyslxr\":\"\",\"yyslxrdh\":\"\",\"azr\":\"\",\"azrdh\":\"\",\
+                \"network\":\"\",\"usemode\":\"\",\"secretlevel\":\"\",\"ut\":\"\",\"dspvsn\":\"\",\"upgdspvsn\":\"\",\"fpgavsn\":\"\",\"upgfpgavsn\
+                \":\"\",\"upgstate\",\"upgtime\":\"\",\"logport\":[{\"port\":\"\",\"mac\":\"\",\"ether\":\"\",\"vlan\":\"\",\"glblogaddr\":\"\"}],\
+                \"baksn\":\"\",\"baklogicid\":\"\",\"bakmac0\":\"\",\"bakmac1\":\"\",\"bakstate\":\"\",\"workstate\":\"\",\"bakworkstate\":\"\",\
+                \"devtype\":\"\",\"bakdevtype\":\"\"}";
+        }
+        break;
+        case 125:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 126:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 127:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 128:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 129:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 130:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 131:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 132:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":[{\"id\":\"\",\"name\":\"\"}]}";
+        }
+        break;
+        case 133:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":{\"count\":\"\"}}";
+        }
+        break;
+        case 700:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":[{\"gid\":\"\",\"pid\":\"\",\"gradeid\":\"\",\"groupname\":\"\",\"leaderid\":\"\",\"leader\":\"\",\"bz\":\"\"}]}";
+        }
+        break;
+        case 701:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 702:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":[{\"gid\":\"\",\"pid\":\"\",\"gradeid\":\"\",\"groupname\":\"\",\"leaderid\":\"\",\"leader\":\"\",\"bz\":\"\"}]}";
+        }
+        break;
+        case 703:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 704:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 705:
+        {
+            msg = "{\"Msg\":\"\"}";
+        }
+        break;
+        case 706:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":[{\"gid\":\"\",\"devid\":\"\",\"devname\":\"\",\"devtype\":\"\",\"devrole\":\"\",\"devno\":\"\",\
+                \"devport\":\"\",\"routeflg\":\"\"}]}";
+            break;
+        }
+        case 707:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 708:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 140:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"id\":\"\",\"endid\":\"\",\"name\":\"\",\"sn\":\"\",\"no\":\"\",\"globalno\":\"\",\
+                \"v2vno\":\"\",\"logid\":\"\",\"ip\":\"\",\"logtype\":\"\",\"mac\":\"\",\"phytype\":\"\",\"sub\":\"\",\"sheng\":\"\",\"shi\":\
+                \"\",\"qx\":\"\",\"usemode\":\"\"}]}";
+            break;
+        }
+        case 141:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"id\":\"\",\"endid\":\"\",\"name\":\"\",\"sn\":\"\",\"no\":\"\",\"globalno\":\"\",\"v2vno\"\
+                :\"\",\"logid\":\"\",\"logtype\":\"\",\"mac\":\"\",\"ip\":\"\",\"phytype\":\"\",\"sub\":\"\",\"sheng\":\"\",\"shi\":\"\",\"qx\":\"\",\
+                \"state\":\"\",\"servicetype\":\"\",\"lgcdevnum\":\"\",\"endtime\":\"\",\"softvsn\":\"\",\"upgsoftvsn\":\"\",\"menuvsn\":\"\",\"upgmenuvsn\":\
+                \"\",\"kernel\":\"\",\"upgkernel\":\"\",\"filesys\":\"\",\"upgfilesys\":\"\",\"font\":\"\",\"upgfont\":\"\",\"upgstate\":\"\",\"upgvsntm\":\
+                \"\",\"up\":\"\",\"down\":\"\",\"lossrate\":\"\",\"usemode\":\"\"}]}";
+            break;
+        }
+        case 142:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 143:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 144:
+        {
+            msg = "{\"id\":\"\",\"endid\":\"\",\"svrid\":\"\",\"name\":\"\",\"usemode\":\"\",\"sn\":\"\",\"state\":\"\",\"softvsn\":\"\",\"upgsoftvsn\":\
+                \"\",\"menuvsn\":\"\",\"upgmenuvsn\":\"\",\"kernel\":\"\",\"upgkernel\":\"\",\"filesys\":\"\",\"upgfilesys\":\"\",\"font\":\"\",\"upgfont\":\
+                \"\",\"isallowpmr\":\"\",\"upgstate\":\"\",\"upgvsntm\":\"\",\"bsnstate\":\"\",\"devno\":\"\",\"phytype\":\"\",\"glbdevno\":\"\",\"v2vno\":\
+                \"\",\"khmc\":\"\",\"ssxm\":\"\",\"region\":\"\",\"khlxr1\":\"\",\"khlxrdh1\":\"\",\"khlxrzw1\":\"\",\"khlxr2\":\"\",\"khlxrdh2\":\"\",\
+                \"khlxrzw2\":\"\",\"khlxr3\":\"\",\"khlxrdh3\":\"\",\"khlxrzw3\":\"\",\"khhy\":\"\",\"khjb\":\"\",\"contract\":\"\",\"hospital\":\"\",\"khbw\
+                \":\"\",\"xxdz\":\"\",\"yysmc\":\"\",\"yyslxr\":\"\",\"yyslxrdh\":\"\",\"zbjd\":\"\",\"zbwd\":\"\",\"azr\":\"\",\"azrdh\":\"\",\"fzr1\":\"\",\
+                \"fzrdh1\":\"\",\"fzr2\":\"\",\"fzrdh2\":\"\",\"network\":\"\",\"logid\":\"\",\"logtype\":\"\",\"sub\":\"\",\"ktsx\":\"\",\"zzsj\":\"\",\
+                \"instlunit\":\"\",\"instlunitinfo\":\"\",\"logport\":[{\"mac\":\"\",\"ether\":\"\",\"vlan\":\"\",\"ip\":\"\"},\"ut\":\"\",\"opener\":\"\",\
+                \"opentime\":\"\"]}";
+            break;
+        }
+        case 145:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 146:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 147:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 148:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 149:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 150:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 151:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 152:
+        {
+            msg = "{\"Msg\":\"\",\"version\":\"\",\"type\":\"\"}";
+            break;
+        }
+        case 153:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 154:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 155:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 156:
+        {
+            msg = "{\"Msg\":\"\",\"config\":\"\"}";
+            break;
+        }
+        case 157:
+        {
+            msg = "{\"Msg\":\"\",\"version\":\"\",\"state\":\"\",\"ip\":\"\",\"gateway\":\"\",\"mask\":\"\"}";
+            break;
+        }
+        case 158:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 159:
+        {
+            msg = "{\"Msg\":\"\",\"count\":\"\",\"Data\":[{\"svrid\":\"\",\"svrname\":\"\",\"teamname\":\"\",\"teamtype\":\"\",\"teamid\":\"\",\"acid\":\
+                \"\",\"acname\":\"\",\"name\":\"\",\"id\":\"\",\"mac\":\"\",\"sn\":\"\",\"devno\":\"\",\"ktywqf\":\"\",\"devtype\":\"\",\"khmc\":\"\"}]}";
+            break;
+        }
+        case 281:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        }
+        len = sizeof(DeviceMngHead) + msg.length() + 4;
+        write->len = htons(len);
+        writeDevHead->len = (short)msg.length();
+        writeDevHead->len = htons(deviceHead->len);
+        memcpy(json, msg.c_str(), msg.length());
+        memcpy(json + msg.length(), &endtag, 4);
+        std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+        (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+
     }
     return 0;
 }
@@ -245,14 +535,15 @@ int UserManager::dataProcess(void *client, const char *buff)
         writeDevHead->cmdType = htons(deviceHead->cmdType);
         writeDevHead->cmd = htonl(deviceHead->cmd);
         writeDevHead->ret = htons(0);
-
+        std::string msg = "";
         int endtag = 0xeeeeeeee;
+        int len = 0;
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
         switch (deviceHead->cmd)
         {
         case 101:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
             \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
             \"phone\" : \"13599999999\",\
             \"role\" : \"安全保密管理员\",\
@@ -262,38 +553,20 @@ int UserManager::dataProcess(void *client, const char *buff)
             },\
            \"ret\": 0,\
            \"msg\" : \"登录成功\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(data);
+           
         }
         break;
         case 121:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\
+            msg = "{\
                 \"ret\":0,\
                 \"msg\" : \"用户退出成功\",\
                 }  ";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
         }
         break;
         case 131:
         {
-
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
             \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
             \"phone\" : \"13599999999\",\
             \"role\" : \"安全保密管理员\",\
@@ -303,55 +576,27 @@ int UserManager::dataProcess(void *client, const char *buff)
             },\
            \"ret\": 0,\
            \"msg\" : \"创建成功\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
         }
         break;
         case 141:
         {
-
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\
+            msg = "{\
                 \"ret\": 0,\
                 \"msg\" : \"修改成功\"\
                 }";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
         }
         break;
         case 151:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{\
+            msg = "{\
                 \"ret\": 0,\
                 \"msg\" : \"删除成功\"\
                 }";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
         }
         break;
         case 161:
         {
-            char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
-            char msg[] = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
             \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
             \"phone\" : \"13599999999\",\
             \"role\" : \"安全保密管理员\",\
@@ -361,17 +606,18 @@ int UserManager::dataProcess(void *client, const char *buff)
             },\
            \"ret\": 0,\
            \"msg\" : \"查询成功\"}";
-            int len = sizeof(DeviceMngHead) + strlen(msg) + 4;
-            write->len = htons(len);
-            writeDevHead->len = (short)strlen(msg);
-            writeDevHead->len = htons(deviceHead->len);
-            memcpy(json, msg, strlen(msg));
-            memcpy(json + strlen(msg), &endtag, 4);
-            std::string data = std::string(write_buffer_, sizeof(Overload) + len);
-            (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
         }
         break;
         }
+        len = sizeof(DeviceMngHead) + msg.length() + 4;
+        write->len = htons(len);
+        writeDevHead->len = (short)msg.length();
+        writeDevHead->len = htons(deviceHead->len);
+        memcpy(json, msg.c_str(), msg.length());
+        memcpy(json + msg.length(), &endtag, 4);
+        std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+        (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+
     }
     return 0;
 }

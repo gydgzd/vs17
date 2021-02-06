@@ -557,7 +557,7 @@ int testDeviceManager(Client_ptr shrd_client)
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6020);
     std::string msg = "";
-    ////101
+    ////101  zz
     DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -714,6 +714,1270 @@ int testDeviceManager(Client_ptr shrd_client)
 
     json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
     msg = "{\"id\":\"53412\",\"operid\":\"2312312eadwa\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////110
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(110);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"212\",\"custmid\":\"312131\",\"devno\":\"11221\",\"notype\":\"end\",\"operid\":\"33\",\"pageno\":\"3\",\"pagecount\":\"20\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////111
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(111);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"2211\",\"operid\":\"333\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////112
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(112);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"333\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////114
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(114);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"22131\",\"timeout\":\"20\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////115
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(115);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11211\",\"operid\":\"213123\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////116
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(116);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"213\",\"category\":\"82\",\"devno\":\"11221\",\"begindate\":\"\",\"enddate\":\"\",\"pageno\":\"31\",\"pagecount\":\"33\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////117
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(117);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"11221\",\"operid\":\"333\",\"mptmband\":\"10\",\"mptvband\":\"10\",\"gptmband\":\"100\",\"gptvband\":\"20\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////118
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(118);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"11211\",\"operid\":\"2233\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////119
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(119);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"11221\",\"gradeid\":\"31213\",\"devnopre\":\"00000\",\"addrpre\":\"12313\",\"operid\":\"333\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////390
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(390);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"name\":\"zz\",\"pageno\":3,\"pagecount\":30}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////391
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(391);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"33\",\"delacid\":\"11211\",\"delacflg\":\"1\",\"addacid\":{\"id\":\"11\",\"name\":\"zz2\",\"sn\":\"\",\"logicid\":\"\",\"mac\":\
+        \"\",\"glip\":\"\",\"glport\":\"\",\"acsip\":\"\",\"acsport\",\"devtype\":\"\"}}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////392
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(392);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"33\",\"masteracid\":\"11312\",\"name\":\"zz2\",\"sn\":\"\",\"logicid\":\"\",\"glip\":\"\",\"glport\":\"\",\"acip\":\"\",\"devtype\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////393
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(393);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"211\",\"id\":\"11221\",\"loginuser\":\"cx\",\"loginpwd\":\"123456\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////394
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(394);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"333\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////395
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(395);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"333\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////396
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(396);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"33\",\"pageno\":\"2\",\"pagecount\":\"22\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////397
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(397);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"333\",\"id\":\"14213\",\"name\":\"zz2\",\"sn\":\"\",\"logicid\":\"\",\"mac\":\"\",\"glip\":\"\",\"glport\":\"\",\"acsip\":\"\",\
+        \"acsport\":\"\",\"priority\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////398
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(398);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"333\",\"id\":\"11312\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////399
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(399);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"33\",\"id\":\"13121\",\"svrid\":\"00000\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////120 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(120);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"11211\",\"name\":\"zza\",\"usemode\":\"\",\"sn\":\"\",\"devno\":\"\",\"logicid\":\"\",\"mac\":\"\",\"pageno\":,\"pagecount\":}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////121 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(122);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(121);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"11222\",\"name\":\"wy\",\"usemode\":\"1\",\"sn\":\"\",\"devno\":\"\",\"logicid\":\"\",\"mac\":\"\",\"operid\":\"\",\"pageno\":,\"pagecount\":}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////122 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(122);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"\",\"name\":\"\",\"usemode\":\"\",\"ssxmid\":\"\",\"ssxmname\":\"\",\"ssxmbh\":\"\",\"sn\":\"\",\"devtype\":\"\",\"usemode\":\
+        \"\",\"secretlevel\":\"\",\"region\":\"\",\"topo\":\"\",\"logid\":\"\",\"subcount\":\"\",\"svrtype\":\"\",\"jfxxdz\":\"\",\"jgh\":\"\",\
+        \"zbjd\":\"\".\"zbwd\":\"\",\"fzr\":\"\",\"fzrdh\":\"\",\"khlxr\":\"\",\"khlxrdh\":\"\",\"yysmc\":\"\",\"yyslxr\":\"\",\"yyslxrdh\":\"\",\
+        \"azr\":\"\",\"azrdh\":\"\",\"network\":\"\",\"operid\":\"\",\"logport\":[{\"mac\":\"\",\"ether\":\"\",\"vlan\":\"\"}],\"bakdevinfo\":{\"baksn\"\
+        :\"\",\"baklogicid\":\"\",\"bakmac0\":\"\",\"bakmac1\":\"\"}}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////123 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(123);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\",\"name\":\"\",\"usemode\":\"\",\"ssxmid\":\"\",\"ssxmname\":\"\",\"ssxmbh\":\"\",\"region\":\"\",\"topo\":\"\",\"logid\":\
+        \"\",\"subcount\":\"\",\"jfxxdz\":\"\",\"jgh\":\"\",\"zbjd\":\"\",\"zbwd\":\"\",\"fzr\":\"\",\"fzrdh\":\"\",\"khlxr\":\"\",\"khlxrdh\":\
+        \"\",\"yysmc\":\"\",\"yyslxr\":\"\",\"yyslxrdh\":\"\",\"azr\":\"\",\"azrdh\":\"\",\"network\":\"\",\"usemode\":\"\",\"secretlevel\":\"\",\
+        \"operid\":\"\",\"ut\":\"\",\"logport\":[{\"port\":\"\",\"mac\":\"\",\"ether\":\"\",\"vlan\":\"\"}],\"bakdevinfo\":{\"baksn\":\"\",\
+        \"baklogicid\":\"\",\"bakmac0\":\"\",\"bakmac1\":\"\"}}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////124 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(124);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"12112\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////125 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(125);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11211\",\"name\":\"wy2\",\"operid\":\"11221\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////126 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(126);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////127 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(127);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////128 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(128);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////130 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(130);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"11222\",\"name\":\"zzz\",\"sn\":\"\",\"devno\":\"11213\",\"logicid\":\"\",\"mac\":\"\",\"pageno\":,\"pagecount\":}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////131 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(131);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11\",\"operid\":\"112\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////132 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(132);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"11222\",\"svrtype\":\"master\",\"operid\":\"111\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////133 weiyun
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(133);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"operid\":\"33\",\"id\":\"11211\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////700 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(700);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"groupname\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////701 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(701);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"groupname\": \"\",\"gradeid\":\"\",\"pid\":\"\",\"svrlist\":\"\",\"leaderid\":\"\",\"bz\":\"\" ,\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////702 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(702);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"gid\":\"1\",\"groupname\": \"\",\"bz\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////703 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(703);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"gid\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////704 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(704);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"gid\":\"\",\"adddevlist\": \"\",\"deldevlist\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////705 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(705);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"grouplist\":[{\"gid\":\"\",\"leaderid\": \"\"}],\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////706 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(706);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"gid\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////707 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(707);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"devid\":\"\",\"devtype\":\"\".\"opertype\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////708 zf
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(708);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"devid\":\"\",\"devtype\":\"\",\"opertype\":\"\",\"srcdevid\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////140 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(140);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"\",\"svrid\":\"\",\"name\":\"\",\"sn\":\"\",\"mac\":\"\",\"logicid\":\"\",\"devno\":\"\",\"devtype\":\"\",\"usemode\":\"\",\
+        \"teamtype\":\"\",\"teamid\":\"\",\"pageno\":\"\",\"pagecount\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////141 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(141);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"\",\"svrid\":\"\",\"gatewayid\":\"\",\"name\":\"\",\"sn\":\"\",\"mac\":\"\",\"logicid\":\"\",\"devno\":\"\",\"devtype\":\
+        \"\",\"usemode\":\"\",\"teamtype\":\"\",\"teamid\":\"\",\"ktywqf\":\"\",\"pageno\":\"\",\"pagecount\":\"\",\"opertype\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////142 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(142);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"\",\"svrid\":\"\",\"name\":\"\",\"sn\":\"\",\"usemode\":\"\",\"phytype\":\"\",\"khid\":\"\",\"khmc\":\"\",\"ssxm\":\"\",\"isallowpmr\"\
+        :\"\",\"khlxr1\":\"\",\"khlxrdh1\":\"\",\"khlxrzw1\":\"\",\"khlxr2\":\"\",\"khlxrdh2\":\"\",\"khlxrzw2\":\"\",\"khlxr3\":\"\",\"khlxrdh3\":\"\",\
+        \"khlxrzw3\":\"\",\"khhy\":\"\",\"khjb\":\"\",\"khbw\":\"\",\"region\":\"\",\"xxdz\":\"\",\"yysmc\":\"\",\"yyslxr\":\"\",\"yyslxrdh\":\"\",\"useflg\":\
+        \"\",\"orgid\":\"\",\"contractid\":\"\",\"contract\":\"\",\"hospitalid\":\"\",\"zbjd\":\"\",\"zbwd\":\"\",\"azr\":\"\",\"azrdh\":\"\",\"fzr1\":\"\",\
+        \"fzrdh1\":\"\",\"fzr2\":\"\",\"fzrdh2\":\"\",\"network\":\"\",\"usemode\":\"\",\"operid\":\"\",\"loginfo\":[{\"logid\":\"\",\"devno\":\"\",\"nouseflg\
+        \":\"\",\"logtype\":\"\",\"sub\":\"\",\"ktsx\":\"\",\"zzsj\":\"\",\"instlunit\":\"\",\"instlunitinfo\":\"\",\"logport\":[{\"mac\":\"\",\"ether\":\"\",\
+        \"vlan\":\"\"}]}]}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////143 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(143);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\",\"endid\":\"\",\"name\":\"\",\"usemode\":\"\",\"zbjd\":\"\",\"zbwd\":\"\",\"azr\":\"\",\"azrdh\":\"\",\"fzr1\":\"\",\"fzrdh1\":\"\",\
+        \"fzr2\":\"\",\"fzrdh2\":\"\",\"network\":\"\",\"isallowpmr\":\"\",\"operid\":\"\",\"ut\":\"\",\"logid\":\"\",\"logtype\":\"\",\"sub\":\"\",\"ktsx\":\
+        \"\",\"zzsj\":\"\",\"instlunit\":\"\",\"instlunitinfo\":\"\",logport[{\"mac\":\"\",\"ether\":\"\",\"vlan\":\"\"}]}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////144 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(144);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"\",\"id\":\"\",\"endid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////145 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(145);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"\",\"id\":\"\",\"endid\":\"\",\"name\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////146 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(146);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\",\"operid\":\"\",\"cmscntno\":\"\",\"acscmsid\":\"\",\"bridgeno\":\"\",\"ispmr\":\"\",\"isencrypt\":\"\",\"istelnet\":\"\",\"isshow\":\
+        \"\",\"islogin\":\"\",\"isshowdevsec\":\"\",\"isshowywsec\":\"\",\"isauxiliary\":\"\",\"secretlevel\":\"\",\"mcname\":\"\",\"mcid\":\"\",\"mcno\":\
+        \"\",\"mcsubno\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////147 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(147);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11211\",\"operid\":\"33\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////148 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(148);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11211\",\"operid\":\"33\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////149 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(149);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11211\",\"operid\":\"33\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////150 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(150);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11211\",\"operid\":\"33\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////151 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(151);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11211\",\"operid\":\"33\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////152 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(152);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"11211\",\"operid\":\"33\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////153 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(153);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"endid\":\"\",\"id\":\"\",\"operid\":\"\",\"sn\":\"\",\"mac\":\"\",\"logicid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////154 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(154);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\",\"svrid\":\"\",\"no\":\"\",\"swapsvrid\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////155 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(155);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"Msg\":\"\",\"count\":\"\",\"Data\":[{\"time\":\"\",\"svrname\":\"\",\"name\":\"\",\"sn\":\"\",\"endno\":\"\",\"endtype\":\"\"]}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////156 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(156);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////157 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(157);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"id\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////158 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(158);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"acid\":\"\",\"id\":\"\",\"ip\":\"\",\"gateway\":\"\",\"mask\":\"\",\"operid\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////159 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(159);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"cnd\":\"\",¡°operid\":\"\",\"pageno\":\"\",\"pagecount\":\"\"}";
+    len = sizeof(DeviceMngHead) + msg.length() + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)msg.length();
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg.c_str(), msg.length());
+    memcpy(json + msg.length(), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////281 zd
+    std::this_thread::sleep_for(chrono::seconds(2));
+    deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(332);
+    deviceHead->deviceNo = htonl(22211);
+    deviceHead->cmdType = htons(0x0002);
+    deviceHead->cmd = htonl(281);
+    deviceHead->ret = htons(0);
+
+    json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    msg = "{\"svrid\":\"\",\"teamtype.\":\"\",\"teamid\":\"\",\"sn\":\"\",\"devtype\":\"\",\"custmid\":\"\",\"operid\":\"\",\"subcount\":\"\",\"instlnuit\":\
+        \"\",\"unstlunitinfo\":\"\",\"usemode\":\"\",\"name\":\"\",\"zbwd\":\"\",\"zbjd\":\"\",'azr\":\"\",\"azrdh\":\"\",\"fzr1\":\"\",\"fzrdh1\":\"\",\
+        \"network\":\"\",\"ethertype\":\"\",\"vlan\":\"\",\"addtype\":\"\"}";
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
