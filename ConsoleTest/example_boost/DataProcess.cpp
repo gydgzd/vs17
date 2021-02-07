@@ -16,24 +16,34 @@ BaseProcess* BaseProcess::getProcessor(int port)
     case 8001:     // UserManager
     {
         m_process = new UserManager();
-    }break;
+        break;
+    }
     case 8002:     // DeviceManager
     {
         m_process = new DeviceManager();
-    }break;
+        break;
+    }
     case 8003:     // ConferenceManager
     {
         m_process = new ConferenceManager();
-    }break;
-    case 8004:     // AuthManager
+        break;
+    }
+    case 8004:     // ConferenceDistributor
+    {
+        m_process = new ConferenceDistributor();
+        break;
+    }
+    case 8005:     // AuthManager
     {
         m_process = new AuthManager();
-    }break;
-    case 8005:     // UpgradeManager
+        break;
+    }
+    case 8006:     // UpgradeManager
     {
         m_process = new UpgradeManager();
-    }break;
-    case 8006:     // ConfigManager
+        break;
+    }
+    case 8007:     // ConfigManager
     {
         m_process = new ConfigManager();
         break;
@@ -53,15 +63,14 @@ int BaseProcess::dataProcess(void *client, const char *buff)
     return 0;
 }
 
-
-/* ConferenceManager */
-int ConferenceManager::dataProcess(void *client, const char *buff)
+/* ConferenceDistributor 0x6012*/
+int ConferenceDistributor::dataProcess(void * client, const char * buff)
 {
-
     return 0;
 }
 
-/* DeviceManager */
+
+/* DeviceManager 0x6020*/
 int DeviceManager::dataProcess(void *client, const char *buff)
 {
     Overload *overload = (Overload *)buff;
@@ -493,6 +502,131 @@ int DeviceManager::dataProcess(void *client, const char *buff)
             msg = "{\"Msg\":\"\"}";
             break;
         }
+        case 282:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 283:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 284:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":[{\"devname\":\"\",\"devno\":\"\",\"globaldevno\":\"\",\"devsubno\":\"\"}]}";
+            break;
+        }
+        case 286:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":{\"count\":\"\"}}";
+            break;
+        }
+        case 287:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"id\":\"\",\"endid\":\"\",\"name\":\"\",\"sn\":\"\",\"no\":\"\",\"globalno\":\"\",\"v2vno\":\"\",\
+                \"logid\":\"\",\"devtype\":\"\",\"mac\":\"\",,\"sheng\":\"\",\"shi\":\"\",\"qx\":\"\"，\"state\":\"\",\"ut\":\"\"}]}";
+            break;
+        }
+        case 288:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 289:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 290:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 291:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 292:
+        {
+            msg = "{\"Msg\":\"\"，\"Data\":{\"svrcount\":\"\",\"sucscount\":\"\",\"failcount\":\"\"}}";
+            break;
+        }
+        case 293:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":[{\"acscmsname\":\"\",\"devname\":\"\",\"gatewayname\":\"\",\"devno\":\"\",\"bridgename\":\"\",\"stgdevno\":\"\",\
+                \"ispmr\":\"\",\"isencrypt\":\"\",\"istelnet\":\"\",\"isshow\":\"\",\"islogin\":\"\",\"isshowdevsec\":\"\",\"isshowywsec\":\"\",\"isauxiliary\
+                \":\"\",\"secretlevel\":\"\",\"mcname\",\"mcno\":\"\",\"mcsubno\":\"\"}]}";
+            break;
+        }
+        case 294:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":[{\"name\":\"\",\"devtype\":\"\",\"devno\":\"\",\"authstate\":\"\",\"authtime\":\"\"}]}";
+            break;
+        }
+        case 295:
+        {
+            msg = "{\"Msg\":\"\",\"Data\":{\"servicetype\":\"\",\"softvsn\":\"\",\"menuvsn\":\"\",\"kernel\":\"\",\"filesys\":\"\",\"font\":\"\",\"model\":\
+                \"\",\"upgstate\":\"\",\"upgvsntm\":\"\", \"ip\":\"\",\"gateway\":\"\":\"submask\"：\"\",\"upflow\":\"\",\"downflow\":\"\",\"lossratevalue\":\
+                \"\",\"videolossratevalue\":\"\",\"audiolossratevalue\":\"\",\"cpuvalue\":\"\",\"memoryvalue\":\"\",\"mcno\":\"\",\"mcsubno\":\"\"}}";
+            break;
+        }
+        case 296:
+        {
+            msg = "{\"Msg\":\"\",\"cpu\":\"\",\"cputhreshold\":\"\",\"memory\":\"\",\"memorythreshold\":\"\",\"lossrate\":\"\",\"videolossrate\":\"\",\
+                \"audiolossrate\":\"\",\"lossvideo\":\"\",\"lossaudio\":\"\":\"reboot\"：\"\",\"upgradefailed\":\"\",\"cardexception\":\"\",\"reporttvmask\":\
+                \"\",\"inputsourceloss\":\"\",\"repeatpkgrate\":\"\"}";
+            break;
+        }
+        case 300:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"subno\":\"\",\"servicetype\":\"\"}]}";
+            break;
+        }
+        case 230:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 231:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"id\":\"\",\"endid\":\"\",\"svrid\":\"\",\"name\":\"\",\"devtypename\":\"\",\"devicetype\":\"\":\"sn\":\
+                \"\",\"mac\":\"\",\"svrname\":\"\",\"custmname\":\"\",\"devno\":\"\",\"globaldevno\":\"\",\"v2vno\":\"\",\"state\":\"\",\"teamname\":\"\",\
+                \"teamtypename\":\"\",\"softvsn\":\"\",\"upgsoftvsn\":\"\",\"menuvsn\":\"\",\"upgmenuvsn\":\"\",\"kernel\":\"\",\"upgkernel\":\"\",\"filesys\":\
+                \"\",\"upgfilesys\":\"\",\"font\":\"\",\"upgfont\":\"\",\"upgstate\":\"\",\"upgvsntm\":\"\",\"remarks\":\"\",\"secretlevel\":\"\"}]}";
+            break;
+        }
+        case 232:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 233:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 501:
+        {
+            msg = "{\"Msg\":\"\",\"count\":,\"Data\":[{\"id\":\"\",\"name\":\"\",\"fuzeren\":\"\",\"phone\":\"\",\"v2vno\":\"\",\"mac\":\"\",\"createtime\":\"\",\"bz\":\"\"}]}";
+            break;
+        }
+        case 502:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 503:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
+        case 504:
+        {
+            msg = "{\"Msg\":\"\"}";
+            break;
+        }
         }
         len = sizeof(DeviceMngHead) + msg.length() + 4;
         write->len = htons(len);
@@ -507,7 +641,7 @@ int DeviceManager::dataProcess(void *client, const char *buff)
     return 0;
 }
 
-/* UserManager */
+/* UserManager 0x6021 */
 int UserManager::dataProcess(void *client, const char *buff)
 {
     Overload *overload = (Overload *)buff;
@@ -622,20 +756,137 @@ int UserManager::dataProcess(void *client, const char *buff)
     return 0;
 }
 
-/* AuthManager */
+/* AuthManager 0x6022 */
 int AuthManager::dataProcess(void *client, const char *buff)
 {
     return 0;
 }
 
-/* UpgradeManager */
+/* ConferenceManager 0x6023 */
+int ConferenceManager::dataProcess(void *client, const char *buff)
+{
+    Overload *overload = (Overload *)buff;
+    overload->tag = ntohs(overload->tag);
+    overload->len = ntohs(overload->len);
+    std::cout << "msg tag: " << overload->tag << " len:" << overload->len << std::endl;
+    if (overload->tag == 0x6023)
+    {
+        DeviceMngHead *deviceHead = (DeviceMngHead *)(buff + sizeof(Overload));
+        deviceHead->taskNo = ntohl(deviceHead->taskNo);
+        deviceHead->deviceNo = ntohl(deviceHead->deviceNo);
+        deviceHead->cmdType = ntohs(deviceHead->cmdType);
+        deviceHead->cmd = ntohl(deviceHead->cmd);
+        deviceHead->ret = ntohs(0);
+        std::cout << "cmd:" << deviceHead->cmd << std::endl;
+
+        char write_buffer_[4096];
+        memset(write_buffer_, 0, 4096);
+        Overload *write = (Overload *)write_buffer_;
+        DeviceMngHead *writeDevHead = (DeviceMngHead *)(write_buffer_ + sizeof(Overload));
+        write->tag = htons(overload->tag);
+        writeDevHead->begin = 0xffffffff;
+        writeDevHead->taskNo = htonl(deviceHead->taskNo);
+        writeDevHead->deviceNo = htonl(deviceHead->deviceNo);
+        writeDevHead->cmdType = htons(deviceHead->cmdType);
+        writeDevHead->cmd = htonl(deviceHead->cmd);
+        writeDevHead->ret = htons(0);
+        std::string msg = "";
+        int endtag = 0xeeeeeeee;
+        int len = 0;
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        switch (deviceHead->cmd)
+        {
+        case 101:
+        {
+            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+            \"phone\" : \"13599999999\",\
+            \"role\" : \"安全保密管理员\",\
+            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
+            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
+            \
+            },\
+           \"ret\": 0,\
+           \"msg\" : \"登录成功\"}";
+
+        }
+        break;
+        case 121:
+        {
+            msg = "{\
+                \"ret\":0,\
+                \"msg\" : \"用户退出成功\",\
+                }  ";
+        }
+        break;
+        case 131:
+        {
+            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+            \"phone\" : \"13599999999\",\
+            \"role\" : \"安全保密管理员\",\
+            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
+            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
+            \
+            },\
+           \"ret\": 0,\
+           \"msg\" : \"创建成功\"}";
+        }
+        break;
+        case 141:
+        {
+            msg = "{\
+                \"ret\": 0,\
+                \"msg\" : \"修改成功\"\
+                }";
+        }
+        break;
+        case 151:
+        {
+            msg = "{\
+                \"ret\": 0,\
+                \"msg\" : \"删除成功\"\
+                }";
+        }
+        break;
+        case 161:
+        {
+            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
+            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
+            \"phone\" : \"13599999999\",\
+            \"role\" : \"安全保密管理员\",\
+            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
+            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
+            \
+            },\
+           \"ret\": 0,\
+           \"msg\" : \"查询成功\"}";
+        }
+        break;
+        }
+        len = sizeof(DeviceMngHead) + msg.length() + 4;
+        write->len = htons(len);
+        writeDevHead->len = (short)msg.length();
+        writeDevHead->len = htons(deviceHead->len);
+        memcpy(json, msg.c_str(), msg.length());
+        memcpy(json + msg.length(), &endtag, 4);
+        std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+        (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+
+    }
+    return 0;
+
+}
+
+/* UpgradeManager 0x6024 */
 int UpgradeManager::dataProcess(void *client, const char *buff)
 {
     return 0;
 }
 
-/* ConfigManager */
+/* ConfigManager 0x6025 */
 int ConfigManager::dataProcess(void *client, const char *buff)
 {
     return 0;
 }
+

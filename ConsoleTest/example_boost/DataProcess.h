@@ -15,7 +15,13 @@ public:
 private:
     static BaseProcess* m_process;
 };
-
+/* ConferenceDistributor */
+class ConferenceDistributor :public BaseProcess
+{
+public:
+    ConferenceDistributor() {};
+    virtual int dataProcess(void *client, const char *buff);
+};
 /* ConferenceManager */
 class ConferenceManager :public BaseProcess
 {
