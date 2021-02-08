@@ -329,10 +329,11 @@ void client_session(socket_ptr sock) {
             write(*sock, buffer("ok", 2));
     }
 }
+int testConferenceDistributor(Client_ptr shrd_client);
 int testUserManager(Client_ptr shrd_client);
 int testDeviceManager(Client_ptr shrd_client);
-int testConferenceManager(Client_ptr shrd_client);
 int testAuthManager(Client_ptr shrd_client);
+int testConferenceManager(Client_ptr shrd_client);
 int testUpgradeManager(Client_ptr shrd_client);
 int testConfigManager(Client_ptr shrd_client);
 
@@ -2498,4 +2499,363 @@ int testDeviceManager(Client_ptr shrd_client)
     shrd_client->do_write(data);
     return 0;
 
+}
+int testAuthManager(Client_ptr shrd_client)
+{
+    char buffer[1024] = {};
+    int endtag = 0xeeeeeeee;
+    Overload *overload = (Overload *)buffer;
+    overload->tag = htons(0x6022);
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    int len = 0;
+    std::string data = "";
+    ////01
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0010);
+    deviceHead->cmd = htonl(1);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\
+        \"user_id\": \"shenjiyuan\",\
+        \"query\": {\
+        \"begin_time\": \"2020-12-14 14:52:11\",\
+        \"end_time\": \"2020-12-21 14:52:11\",\
+        \"user_id\": \"zhangsan\",\
+        \"moudle_type\": \"1\",\
+        \"user_id\": \"shenjiyuan\",\
+        \"event_type\": \"101\",	\
+        \"object_id\": \"\",\
+        \"object_type\": \"\",\
+        \"content\": \"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////02
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0010);
+    deviceHead->cmd = htonl(2);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\
+        \"user_id\": \"shenjiyuan\",\
+        \"query\": {\
+        \"begin_time\": \"2020-12-14 14:52:11\",\
+        \"end_time\": \"2020-12-21 14:52:11\",\
+        \"moudle_type\": \"1\",\
+        \"user_id\": \"shenjiyuan\",\
+        \"event_type\": \"101\",	\
+        \"object_id\": \"\",\
+        \"object_type\": \"\",\
+        \"content\": \"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    return 0;
+}
+int testConferenceManager(Client_ptr shrd_client)
+{
+    char buffer[1024] = {};
+    int endtag = 0xeeeeeeee;
+    Overload *overload = (Overload *)buffer;
+    overload->tag = htons(0x6023);
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    int len = 0;
+    std::string data = "";
+    ////601
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0003);
+    deviceHead->cmd = htonl(601);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"startTime\":\"\",\
+        \"endTime\":\"\",\
+        \"creatorId\":\"\",\
+        \"reqId \":\"\",\
+        \"status\":\"\",\
+        \"pageNum\":\"\",\
+        \"pageSize\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////602
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0003);
+    deviceHead->cmd = htonl(602);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"startTime\":\"\",\
+        \"endTime\":\"\",\
+        \"creatorId\":\"\",\
+        \"reqId\":\"\",\
+        \"status\":\"2\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////603
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0003);
+    deviceHead->cmd = htonl(603);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"startTime\":\"\",\
+        \"endTime\":\"\",\
+        \"creatorId\":\"\",\
+        \"reqId\":\"\",}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    return 0;
+}
+
+int testUpgradeManager(Client_ptr shrd_client)
+{
+    char buffer[1024] = {};
+    int endtag = 0xeeeeeeee;
+    Overload *overload = (Overload *)buffer;
+    overload->tag = htons(0x6024);
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    int len = 0;
+    std::string data = "";
+    ////703
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(703);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"file_name\":\"\",\
+        \"path\":\"\",\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"reqId\":\"\",\
+        \"datetime\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////704
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(704);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"datetime\":\"\",\
+        \"reqId\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////705
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(705);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"file_name\":\"\",\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"reqId\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////706
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(706);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"file_name\":\"\",\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"reqId\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////707
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(707);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"file_name\":\"\",\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"reqId\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    return 0;
+}
+int testConfigManager(Client_ptr shrd_client)
+{
+    char buffer[1024] = {};
+    int endtag = 0xeeeeeeee;
+    Overload *overload = (Overload *)buffer;
+    overload->tag = htons(0x6025);
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
+    char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
+    int len = 0;
+    std::string data = "";
+    ////101
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0005);
+    deviceHead->cmd = htonl(101);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"file_name\":\"\",\
+        \"path\":\"\",\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"reqId\":\"\",\
+        \"datetime\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////704
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(704);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"datetime\":\"\",\
+        \"reqId\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////705
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(705);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"file_name\":\"\",\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"reqId\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////706
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(706);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"file_name\":\"\",\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"reqId\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ////707
+    deviceHead->begin = 0xffffffff;
+    deviceHead->taskNo = htonl(123);
+    deviceHead->deviceNo = htonl(456);
+    deviceHead->cmdType = htons(0x0004);
+    deviceHead->cmd = htonl(707);
+    deviceHead->ret = htons(0);
+    char msg[] = "{\"file_name\":\"\",\
+        \"product\":\"\",\
+        \"version\":\"\",\
+        \"reqId\":\"\"}";
+    len = sizeof(DeviceMngHead) + strlen(msg) + 4;
+    overload->len = htons(len);
+    deviceHead->len = (short)strlen(msg);
+    deviceHead->len = htons(deviceHead->len);
+    memcpy(json, msg, strlen(msg));
+    memcpy(json + strlen(msg), &endtag, 4);
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    return 0;
 }

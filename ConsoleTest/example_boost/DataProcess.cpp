@@ -13,37 +13,37 @@ BaseProcess* BaseProcess::getProcessor(int port)
 {
     switch (port)
     {
-    case 8001:     // UserManager
-    {
-        m_process = new UserManager();
-        break;
-    }
-    case 8002:     // DeviceManager
-    {
-        m_process = new DeviceManager();
-        break;
-    }
-    case 8003:     // ConferenceManager
-    {
-        m_process = new ConferenceManager();
-        break;
-    }
-    case 8004:     // ConferenceDistributor
+    case 8001:     // ConferenceDistributor  0x6012
     {
         m_process = new ConferenceDistributor();
         break;
     }
-    case 8005:     // AuthManager
+    case 8002:     // DeviceManager 0x6020
+    {
+        m_process = new DeviceManager();
+        break;
+    }
+    case 8003:     // UserManager 0x6021
+    {
+        m_process = new UserManager();
+        break;
+    }
+    case 8004:     // AuthManager  0x6022
     {
         m_process = new AuthManager();
         break;
     }
-    case 8006:     // UpgradeManager
+    case 8005:     // ConferenceManager  0x6023
+    {
+        m_process = new ConferenceManager();
+        break;
+    }
+    case 8006:     // UpgradeManager 0x6024 
     {
         m_process = new UpgradeManager();
         break;
     }
-    case 8007:     // ConfigManager
+    case 8007:     // ConfigManager  0x6025
     {
         m_process = new ConfigManager();
         break;
@@ -759,6 +759,78 @@ int UserManager::dataProcess(void *client, const char *buff)
 /* AuthManager 0x6022 */
 int AuthManager::dataProcess(void *client, const char *buff)
 {
+    Overload *overload = (Overload *)buff;
+    overload->tag = ntohs(overload->tag);
+    overload->len = ntohs(overload->len);
+    std::cout << "msg tag: " << overload->tag << " len:" << overload->len << std::endl;
+    if (overload->tag == 0x6022)
+    {
+        DeviceMngHead *deviceHead = (DeviceMngHead *)(buff + sizeof(Overload));
+        deviceHead->taskNo = ntohl(deviceHead->taskNo);
+        deviceHead->deviceNo = ntohl(deviceHead->deviceNo);
+        deviceHead->cmdType = ntohs(deviceHead->cmdType);
+        deviceHead->cmd = ntohl(deviceHead->cmd);
+        deviceHead->ret = ntohs(0);
+        std::cout << "cmd:" << deviceHead->cmd << std::endl;
+
+        char write_buffer_[4096];
+        memset(write_buffer_, 0, 4096);
+        Overload *write = (Overload *)write_buffer_;
+        DeviceMngHead *writeDevHead = (DeviceMngHead *)(write_buffer_ + sizeof(Overload));
+        write->tag = htons(overload->tag);
+        writeDevHead->begin = 0xffffffff;
+        writeDevHead->taskNo = htonl(deviceHead->taskNo);
+        writeDevHead->deviceNo = htonl(deviceHead->deviceNo);
+        writeDevHead->cmdType = htons(deviceHead->cmdType);
+        writeDevHead->cmd = htonl(deviceHead->cmd);
+        writeDevHead->ret = htons(0);
+        std::string msg = "";
+        int endtag = 0xeeeeeeee;
+        int len = 0;
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        switch (deviceHead->cmd)
+        {
+        case 1:
+        {
+            msg = "{\
+                \"msg\": \"\",\
+                \"result\": 0,\
+                \"data\":[{\
+                \"time\": \"2020-12-21 14:52:11\",\
+                \"moudle_type\": \"1\",\
+                \"user_id\": \" shenjiyuan\",\
+                \"event_type\": \"101\",	\
+                \"object_id\": \"zhangsan\",\
+                \"object_type\": \"user\",\
+                \"content\": \"\"\
+        }, {}] } ";
+            break;
+        }
+        case 2:
+        {
+            msg = "{\
+                \"msg\": \"\",\
+                \"result\": 0,\
+                \"data\":[{\
+                \"time\": \"2020-12-21 14:52:11\",\
+                \"moudle_type\": \"1\",\
+                \"user_id\": \" shenjiyuan\",\
+                \"event_type\": \"101\",	\
+                \"object_id\": \"zhangsan\",\
+                \"object_type\": \"user\",\
+                \"content\": \"\"}, {}]} ";
+            break;
+        }
+        }
+        len = sizeof(DeviceMngHead) + msg.length() + 4;
+        write->len = htons(len);
+        writeDevHead->len = (short)msg.length();
+        writeDevHead->len = htons(deviceHead->len);
+        memcpy(json, msg.c_str(), msg.length());
+        memcpy(json + msg.length(), &endtag, 4);
+        std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+        (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+    }
     return 0;
 }
 
@@ -796,73 +868,21 @@ int ConferenceManager::dataProcess(void *client, const char *buff)
         char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
         switch (deviceHead->cmd)
         {
-        case 101:
-        {
-            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
-            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
-            \"phone\" : \"13599999999\",\
-            \"role\" : \"安全保密管理员\",\
-            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
-            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
-            \
-            },\
-           \"ret\": 0,\
-           \"msg\" : \"登录成功\"}";
-
-        }
-        break;
-        case 121:
-        {
-            msg = "{\
-                \"ret\":0,\
-                \"msg\" : \"用户退出成功\",\
-                }  ";
-        }
-        break;
-        case 131:
-        {
-            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
-            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
-            \"phone\" : \"13599999999\",\
-            \"role\" : \"安全保密管理员\",\
-            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
-            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
-            \
-            },\
-           \"ret\": 0,\
-           \"msg\" : \"创建成功\"}";
-        }
-        break;
-        case 141:
-        {
-            msg = "{\
-                \"ret\": 0,\
-                \"msg\" : \"修改成功\"\
-                }";
-        }
-        break;
-        case 151:
-        {
-            msg = "{\
-                \"ret\": 0,\
-                \"msg\" : \"删除成功\"\
-                }";
-        }
-        break;
-        case 161:
-        {
-            msg = "{ \"access_token\": \"4e29de6b9c3511e9be51a4bf01303dd7\", \"data\" :   { \"loginName\": \"bao\", \"name\" : \"王方军\",\
-            \"permission\" : \"1,1,1,1,1,0,0,0,0\",\
-            \"phone\" : \"13599999999\",\
-            \"role\" : \"安全保密管理员\",\
-            \"roleId\" : \"005020d2abc511e6802eb82a72db6d4d\",\
-            \"userid\" : \"d783f15bd42411e8b8b5a4bf0134505a\"\
-            \
-            },\
-           \"ret\": 0,\
-           \"msg\" : \"查询成功\"}";
-        }
-        break;
+            case 601:
+            {
+                msg = "{\"Msg\":\"\"}";
+                break;
+            }
+            case 602:
+            {
+                msg = "{\"Msg\":\"\"}";
+                break;
+            }
+            case 603:
+            {
+                msg = "{\"Msg\":\"\"}";
+                break;
+            }
         }
         len = sizeof(DeviceMngHead) + msg.length() + 4;
         write->len = htons(len);
@@ -875,18 +895,87 @@ int ConferenceManager::dataProcess(void *client, const char *buff)
 
     }
     return 0;
-
 }
 
 /* UpgradeManager 0x6024 */
 int UpgradeManager::dataProcess(void *client, const char *buff)
 {
+    Overload *overload = (Overload *)buff;
+    overload->tag = ntohs(overload->tag);
+    overload->len = ntohs(overload->len);
+    std::cout << "msg tag: " << overload->tag << " len:" << overload->len << std::endl;
+    if (overload->tag == 0x6024)
+    {
+        DeviceMngHead *deviceHead = (DeviceMngHead *)(buff + sizeof(Overload));
+        deviceHead->taskNo = ntohl(deviceHead->taskNo);
+        deviceHead->deviceNo = ntohl(deviceHead->deviceNo);
+        deviceHead->cmdType = ntohs(deviceHead->cmdType);
+        deviceHead->cmd = ntohl(deviceHead->cmd);
+        deviceHead->ret = ntohs(0);
+        std::cout << "cmd:" << deviceHead->cmd << std::endl;
+
+        char write_buffer_[4096];
+        memset(write_buffer_, 0, 4096);
+        Overload *write = (Overload *)write_buffer_;
+        DeviceMngHead *writeDevHead = (DeviceMngHead *)(write_buffer_ + sizeof(Overload));
+        write->tag = htons(overload->tag);
+        writeDevHead->begin = 0xffffffff;
+        writeDevHead->taskNo = htonl(deviceHead->taskNo);
+        writeDevHead->deviceNo = htonl(deviceHead->deviceNo);
+        writeDevHead->cmdType = htons(deviceHead->cmdType);
+        writeDevHead->cmd = htonl(deviceHead->cmd);
+        writeDevHead->ret = htons(0);
+        std::string msg = "";
+        int endtag = 0xeeeeeeee;
+        int len = 0;
+        char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+        switch (deviceHead->cmd)
+        {
+        case 703:
+        {
+            msg = "{\"ret\":\"\",\"Msg\":\"\"}";
+            break;
+        }
+        case 704:
+        {
+            msg = "{\"list\":[{\"file_name\":\"\",\
+                \"product\":\"\",\
+                \"version\":\"\",\
+                \"datetime\":\"\"}],\"Msg\":\"\"}";
+            break;
+        }
+        case 705:
+        {
+            msg = "{\"ret\":\"\",\"Msg\":\"\"}";
+            break;
+        }
+        case 706:
+        {
+            msg = "{\"ret\":\"\",\"Msg\":\"\"}";
+            break;
+        }
+        case 707:
+        {
+            msg = "{\"ret\":\"\",\"Msg\":\"\"}";
+            break;
+        }
+        }
+        len = sizeof(DeviceMngHead) + msg.length() + 4;
+        write->len = htons(len);
+        writeDevHead->len = (short)msg.length();
+        writeDevHead->len = htons(deviceHead->len);
+        memcpy(json, msg.c_str(), msg.length());
+        memcpy(json + msg.length(), &endtag, 4);
+        std::string data = std::string(write_buffer_, sizeof(Overload) + len);
+        (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+    }
     return 0;
 }
 
 /* ConfigManager 0x6025 */
 int ConfigManager::dataProcess(void *client, const char *buff)
 {
+
     return 0;
 }
 
