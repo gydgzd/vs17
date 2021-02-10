@@ -2,7 +2,9 @@
 #include <iostream>
 #include <string>      // getline
 using namespace std;
-
+//stringstream ss;
+//ss.str("");   // .str() and .clear() work together to clean the content
+//ss.clear();
 int readFileStream()
 {
 	ifstream infile;
