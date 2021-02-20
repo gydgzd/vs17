@@ -104,17 +104,28 @@ void AsyncClient::do_write(const std::string & msg) {
     if (!started())
         return;
     std::copy(msg.begin(), msg.end(), write_buffer_);
-    m_sock_.async_write_some(buffer(write_buffer_, msg.size()), m_strand.wrap(MEM_FN2(on_write, _1, _2)));
+//    m_sock_.async_write_some(buffer(write_buffer_, msg.size()), m_strand.wrap(MEM_FN2(on_write, _1, _2)));
+    try {
+        m_sock_.send(buffer(write_buffer_, msg.size()));
+        do_read();
+    }
+    catch (boost::system::system_error &e)
+    {
+        std::cout << "send error: " << e.code() << " - " << e.what() << std::endl;
+    }
+    
 }
 
 /******** AsyncConnection **********/
 AsyncConnection::AsyncConnection() : m_sock_(iocontext), m_connected(true), m_strand(iocontext)
 {
-
+    m_read_pos = 0;
+    m_write_pos = 0;
 }
 AsyncConnection::AsyncConnection(Server_ptr pserver) : m_sock_(iocontext), m_connected(true), m_pserver(pserver), m_strand(iocontext)
 {
-
+    m_read_pos = 0;
+    m_write_pos = 0;
 }
 
 bool AsyncConnection::connected()
@@ -149,9 +160,21 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes)
         return;
     if (bytes > 0)
     {
-        std::string msg(read_buffer_, bytes);
+        m_read_pos += bytes;
+        std::string msg(read_buffer_, m_read_pos);
         std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " received " << bytes << " bytes - " << msg << std::endl;
-        m_pserver->msgProcess(shared_from_this(), msg.c_str());
+        int ret = m_pserver->msgGet(msg, mq_recv);
+        if (ret > 0)
+        {
+            memmove(read_buffer_, read_buffer_ + ret, max_msg - ret);
+            m_read_pos -= ret;
+        }
+        while (!mq_recv.empty())
+        {
+            std::string tmp = mq_recv.front();
+            mq_recv.pop();
+            m_pserver->msgProcess(shared_from_this(), tmp);
+        }
     }
     do_read();
 }
@@ -160,7 +183,7 @@ void AsyncConnection::do_read() {
     // async_read(client->sock(), buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN2(on_read, _1, _2));
     if (!connected())
         return;
-    m_sock_.async_read_some(buffer(read_buffer_), m_strand.wrap(MEM_FN2(on_read, _1, _2)));
+    m_sock_.async_read_some(buffer(read_buffer_ + m_read_pos, max_msg - m_read_pos), m_strand.wrap(MEM_FN2(on_read, _1, _2)));
 }
 
 void AsyncConnection::do_write(std::string & msg)
@@ -168,8 +191,8 @@ void AsyncConnection::do_write(std::string & msg)
     if (!connected())
         return;
     std::copy(msg.begin(), msg.end(), write_buffer_);
-    m_sock_.async_write_some(boost::asio::const_buffer(msg.c_str(), msg.size()), MEM_FN2(on_write, _1, _2));
-    // m_sock_.async_write_some(boost::asio::buffer(msg, msg.size()), MEM_FN2(on_write, _1, _2));
+    //    m_sock_.async_write_some(boost::asio::const_buffer(msg.c_str(), msg.size()), MEM_FN2(on_write, _1, _2));
+    m_sock_.async_write_some(boost::asio::buffer(msg.c_str(), msg.size()), MEM_FN2(on_write, _1, _2));
 
     // boost::asio::buffer(msg, msg.size()) not safe, will cause an error - iterator not dereferencable 
     // m_sock_.async_write_some(boost::asio::const_buffer(msg.c_str(), msg.size()), MEM_FN2(on_write, _1, _2)); work OK
@@ -201,10 +224,6 @@ void AsyncConnection::on_write(const asio_error & err, size_t bytes)
         std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << " write error: " << err.code() << " - " << err.what() << std::endl;
         close();
     }
-}
-void AsyncConnection::msgProcess(Conn_ptr client, char * buff)
-{
-
 }
 
 std::vector<Conn_ptr> AsyncServer::s_conns;
@@ -277,16 +296,22 @@ void AsyncServer::on_accept(Conn_ptr conn, const asio_error & err)
     this->start();
 }
 
-void AsyncServer::msgProcess(Conn_ptr client, const char * buff)
+int AsyncServer::msgGet(const std::string & buff, std::queue<std::string>& q_recv)
 {
-    m_processor->dataProcess(&client, buff);
+    return m_processor->msgGet(buff, q_recv);
+}
+
+int AsyncServer::msgProcess(Conn_ptr client, const std::string &buff)
+{
+    return m_processor->msgProcess(&client, buff);
 }
 
 void AsyncServer::deleteConn(Conn_ptr conn)
 {
     std::lock_guard<std::mutex> lock(g_mutex_conns);
     array::iterator it = std::find(s_conns.begin(), s_conns.end(), conn);
-    s_conns.erase(it);
+    if (it != s_conns.end())
+        s_conns.erase(it);
 }
 
 
@@ -370,7 +395,7 @@ int testAsio::test()
     Client_ptr client_config = AsyncClient::start(ep_config, "");
     */
     //    std::thread th_device{ testDeviceManager, client_device };
-    std::thread th_user{ testUserManager, client_user };
+    std::thread th_user{ testConferenceDistributor, client_user };
     //    std::thread th_auth{ testAuthManager, client_auth };
 
     /*   std::thread th_conf{ testConferenceManager, client_conf };
@@ -383,11 +408,839 @@ int testAsio::test()
     th_user.join();
     //    th_auth.join();
     //    th_device.join();
+    return 0;
 }
-
+int testConferenceDistributor(Client_ptr shrd_client)
+{
+    char buffer[4096] = {};
+    Overload *overload = (Overload *)buffer;
+    overload->tag = htons(0x6012);
+    ConferenceMngHead *confHead = (ConferenceMngHead *)(buffer + sizeof(Overload));
+    confHead->version[0] = 0x01;
+    confHead->version[1] = 0x02;
+    confHead->version[2] = 0x08;
+    confHead->version[3] = 0x05;
+    int id = 0;
+    char* json = (char*)(buffer + sizeof(Overload) + sizeof(ConferenceMngHead));
+    int len = 0;
+    std::string data = "";
+    std::string msg = "";
+    ////0x0600
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0600);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"userId\": \"7dd21363732911ea8362a4bf01303dd7\",\
+        \"uuid\": \"5021846b3db911eba1e2a4bf01303dd7\",\
+        \"content\": {\
+        \"is_auto\": 1,\
+        \"meet_type\": 0,\
+        \"is_encry\": 0,\
+        \"meet_name\": \"创建一个一周的会\",\
+        \"brige_master_ip\": \"\",\
+        \"master_no\": \"100-321-2750-0-0\",\
+        \"area_number\": 11,\
+        \"devs\": [\
+    {\
+        \"dev_no\": \"00100-00321-01900-00000-00000\", \
+            \"devName\": \"1900\",\
+            \"devType\": 5,\
+            \"hwType\": 0\
+    },\
+    {\
+        \"dev_no\": \"00100-00321-02750-00000-00000\",\
+        \"devName\": \"2750\",\
+            \"devType\": 5,\
+            \"hwType\": 0\
+    }\
+    ],\
+    \"config_list\": [\
+        {\
+            \"output_mode_dvi\": 1,\
+                \"display_source_dvi\": 0,\
+                \"output_mode_hdmi\": 4,\
+                \"display_source_hdmi\": 4501\
+        }\
+    ]\
+}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0601
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0601);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"userId\": \"7dd21363732911ea8362a4bf01303dd7\",\
+        \"uuid\": \"5021846b3db911eba1e2a4bf01303dd7\",\
+        \"content\": {\
+        \"is_auto\": 1,\
+        \"meet_type\": 0,\
+        \"is_encry\": 0,\
+        \"meet_name\": \"创建一个一周的会\",\
+        \"brige_master_ip\": \"\",\
+        \"master_no\": \"100-321-2750-0-0\",\
+        \"area_number\": 11,\
+        \"devs\": [\
+    {\
+        \"dev_no\": \"00100-00321-01900-00000-00000\", \
+            \"devName\": \"1900\",\
+            \"devType\": 5,\
+            \"hwType\": 0\
+    },\
+    {\
+        \"dev_no\": \"00100-00321-02750-00000-00000\",\
+        \"devName\": \"2750\",\
+            \"devType\": 5,\
+            \"hwType\": 0\
+    }\
+    ],\
+    \"config_list\": [\
+        {\
+            \"output_mode_dvi\": 1,\
+                \"display_source_dvi\": 0,\
+                \"output_mode_hdmi\": 4,\
+                \"display_source_hdmi\": 4501\
+        }\
+    ]\
+}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0602
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0602);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"cmd\": 1538,\
+        \"userId\": \"7cb37f3ef77711e7ad1100f1f5119e46\",\
+        \"content\":{\
+        \"scheduleId\":\"XXXXX\"\
+ }} ";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0101
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0101);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"userId\": \"7dd21363732911ea8362a4bf01303dd7\",\
+        \"uuid\": \"5021846b3db911eba1e2a4bf01303dd7\",\
+        \"content\": {\
+        \"is_auto\": 1,\
+        \"meet_type\": 0,\
+        \"is_encry\": 0,\
+        \"meet_name\": \"创建一个一周的会\",\
+        \"brige_master_ip\": \"\",\
+        \"master_no\": \"100-321-2750-0-0\",\
+        \"area_number\": 11,\
+        \"devs\": [\
+    {\
+        \"dev_no\": \"00100-00321-01900-00000-00000\", \
+            \"devName\": \"1900\",\
+            \"devType\": 5,\
+            \"hwType\": 0\
+    },\
+    {\
+        \"dev_no\": \"00100-00321-02750-00000-00000\",\
+        \"devName\": \"2750\",\
+            \"devType\": 5,\
+            \"hwType\": 0\
+    }\
+    ],\
+    \"config_list\": [\
+        {\
+            \"output_mode_dvi\": 1,\
+                \"display_source_dvi\": 0,\
+                \"output_mode_hdmi\": 4,\
+                \"display_source_hdmi\": 4501\
+        }\
+    ]\
+}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0103
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0103);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"userId\": \"7dd21363732911ea8362a4bf01303dd7\",\
+        \"uuid\": \"5021846b3db911eba1e2a4bf01303dd7\",\
+        \"content\": {\
+        \"person_num\": 1,\
+        \"dev_num\": 11\
+}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0103
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0103);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"userId\": \"7dd21363732911ea8362a4bf01303dd7\",\
+        \"uuid\": \"5021846b3db911eba1e2a4bf01303dd7\",\
+        \"content\": {\
+        \"person_num\": 1,\
+        \"dev_num\": 11\
+}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0605
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0605);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"pageNum\": 1,\
+        \"hours\": 24,\
+        \"pf_type\": \"huiguan\",\
+        \"businessType\": 1,\
+        \"access_token\": \"44e5c7fc097911e9a59568f72892a3fc\",\
+        \"pageSize\": 10,\
+}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0606
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0606);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"pageNum\": 1,\
+        \"hours\": 24,\
+        \"pf_type\": \"huiguan\",\
+        \"businessType\": 1,\
+        \"access_token\": \"44e5c7fc097911e9a59568f72892a3fc\",\
+        \"pageSize\": 10,\
+}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0312
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0312);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":\
+    {\
+        \"dev_info:\"[\
+        {\
+            \"dev_no\":\"\",\
+                \"devName\":\"\",\
+                \"devType\":0,\
+                \"hwType\":0\
+        }]    }";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0313
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0313);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":\
+    {\
+        \"dev_info:\"[\
+        {\
+            \"dev_no\":\"\",\
+                \"devName\":\"\",\
+                \"devType\":0,\
+                \"hwType\":0\
+        }]    }";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0153
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0153);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"userId\": \"f8348588bd5d11e889b4a4bf0134505a\",\
+        \"uuid\": \"193718955eda11e993b5a4bf01303dd7\",\
+        \"content\": {\
+        \"item\": [{     \
+        \"src_devno_1\": \"100, 321,2511,0,0\"\
+        \"dst_devno_1\": \"100, 321,2512,0,0\"\
+        \"dst_index\": 1,         \
+        \"source_channel\": 0, \
+        \"status\": -1;\
+        },\
+       { \"src_devno_1\": \"100, 321,2511,0,0\"\
+       \"dst_devno_1\": \"100, 321,2513,0,0\"\
+       \"dst_index\": 1,         \
+       \"source_channel\": 2, \
+       \"status\": 0;\
+       }]}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0164
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0164);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":\
+       {\
+        \"dev_info:\"[\
+        {\
+            \"dev_no\":\"\",\
+                \"devName\":\"\",\
+                \"devType\":0,\
+                \"hwType\":0\
+        }]} ";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0111
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0111);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":\
+       {\
+        \"dev_info:\"[\
+        {\
+            \"dev_no\":\"\",\
+                \"devName\":\"\",\
+                \"devType\":0,\
+                \"hwType\":0\
+        }]} ";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0141
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0141);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"rq_info\":{\
+        \"dev_no\":{\
+        \"devno_2\":101,\
+        \"devno_3\":10333,\
+        \"devno_4\":0,\
+        \"devno_5\":0\
+        },\
+       \"act_type\":1,\
+       \"value\":1\
+       }}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0140
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0140);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"rq_info\":{\
+        \"dev_no\": \"\",\
+        \"act_type\":1,\
+        \"value\":1\
+        }}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0142
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0142);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"rq_info\":{\
+        \"dev_no\": \"\",\
+        \"enable\":1\
+}}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0143
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0143);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"pf_type\":\"huiguan\",\
+        \"timestamp\":\"1553669045430\",\
+        \"content\":{\
+        \"rq_info\":{\
+        \"dev_no\": \"\",\
+        \"enable\":1\
+    }}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0105
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0105);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"dev_no\":\"100-101-12675-0-0\"}\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0110
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0110);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"speaker_no\":\"100-101-12675-0-0\"\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0160
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0160);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"speaker_no\":\"100-101-12675-0-0\"\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0123
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0123);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"speaker_no\":\"100-101-12675-0-0\"\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0113
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0113);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"speaker_no\":\"100-101-12675-0-0\"\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0127
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0127);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"speaker_no\":\"100-101-12675-0-0\"\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0146
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0146);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"speaker_no\":\"100-101-12675-0-0\"\
+        },\
+        \"enable\":1\
+        }";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0112
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0112);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"speaker_no\":\"100-101-12675-0-0\"\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0128
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0128);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"dev_no\":\"100-101-12675-0-0\",\
+        \"font_pos\":1,\
+        \"font_size\":1,\
+        \"font_remaintime\":1,\
+        \"font_length\":1,\
+        \"font_msg\":\"123\"\
+}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0311
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0311);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"11919199911\",\
+        \"content\":{\
+        \"dev_no\":[\"100-101-12675-0-0\",\
+        \"100-101-12676-0-0\",\
+        \"100-101-12677-0-0\"\
+        ]\
+        \"font_pos\":1,\
+        \"font_size\":1,\
+        \"font_remaintime\":1,\
+        \"font_length\":1,\
+        \"font_msg\":\"123\"\
+       }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0106
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0106);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"userId\": \"acb0b581dc2111e88ba5a4bf0134505a\",\
+        \"uuid\": \"d506837a0e3911e9bcfaa4bf0134505a\",\
+        \"content\": {\
+        \"globle_id_1\": \"100-101-12\",\
+        \"meet_id\": 0,\
+        \"rec_mode\": 1,\
+        \"display_mode\": 0,\
+        \"rec_name\": \"fengjtTest20190103174918\",\
+        \"rec_svr_no\": \"100-101-12675-0-0\",\
+        \"mixer_server_id\": \"100-101-12676-0-0\",\
+        \"vedio_list\": [{\
+        \"dev_no\": \"100-101-12675-0-0\",\
+        \"is_sec_stream\": 0,\
+        \"role\": 0\
+}, {\
+    \"dev_no\": \"100-101-12675-0-0\",\
+    \"is_sec_stream\": 0,\
+        \"role\": 0\
+}, {\
+    \"dev_no\": \"100-101-12675-0-0\",\
+    \"is_sec_stream\": 0,\
+        \"role\": 0\
+}, {\
+    \"dev_no\": \"100-101-12675-0-0\",\
+    \"is_sec_stream\": 0,\
+        \"role\": 0\
+}],\
+\"audio_list\": [{\
+\"dev_no\": \"100-101-12675-0-0\",\
+\"is_sec_stream\": 0,\
+\"role\": 0\
+}, {\
+    \"dev_no\": \"100-101-12675-0-0\",\
+    \"is_sec_stream\": 0,\
+        \"role\": 0\
+}, {\
+    \"dev_no\": \"100-101-12675-0-0\",\
+    \"is_sec_stream\": 0,\
+        \"role\": 0\
+}, {\
+    \"dev_no\": \"100-101-12675-0-0\",\
+    \"is_sec_stream\": 0,\
+        \"role\": 0\
+}\
+\"alarm_id\" : \" \"\
+]}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0107
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0107);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"userId\": \"acb0b581dc2111e88ba5a4bf0134505a\",\
+        \"uuid\": \"d506837a0e3911e9bcfaa4bf0134505a\",\
+        \"content\": {\
+        \"dev_no\": \"100-101-12675-0-0\"\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0300  //no reply
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0300);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"notify\":\
+    {\
+        \"meetingId\":\"\",\
+            \"dev_no\":\"\"\
+    }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0126 
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0126);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"xxfadxx0103sxccxc\",\
+        \"content\":{\
+        \"dev_no\":{\
+        \"devno_1\":100,\
+        \"devno_2\":101,\
+        \"devno_3\":13244,\
+        \"devno_4\":0,\
+        \"devno_5\":0\
+},\
+\"uphand_list\":[\
+    {\
+        \"dev_no\":{\
+            \"devno_1\":100,\
+            \"devno_2\":101,\
+            \"devno_3\":13245,\
+            \"devno_4\":0,\
+            \"devno_5\":0\
+    },\
+        \"devName\":\"13245\",\
+            \"devType\":1,\
+            \"hwType\":0\
+}]}}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    ///////0x0134 
+    //std::this_thread::sleep_for(chrono::seconds(2));
+    confHead->cmdType = htons(0x0100);
+    confHead->cmd = htons(0x0134);
+    confHead->id = htonll(id++);
+    confHead->total = htons(1);
+    confHead->index = htons(1);
+    msg = "{\
+        \"uuid\":\"xxxxxxxxxxxx\",\
+        \"content\":{\
+        \"dev_no\":{\
+        \"devno_1\":100,\
+        \"devno_2\":101,\
+        \"devno_3\":13244,\
+        \"devno_4\":0,\
+        \"devno_5\":0\
+        },\
+       \"enable\":true\
+       }}";
+    len = sizeof(ConferenceMngHead) + msg.length();
+    overload->len = htons(len);
+    confHead->len = htons((short)msg.length());
+    memcpy(json, msg.c_str(), msg.length());
+    data = std::string(buffer, sizeof(Overload) + len);
+    shrd_client->do_write(data);
+    std::this_thread::sleep_for(chrono::seconds(3));
+    return 0;
+}
 int testUserManager(Client_ptr shrd_client)
 {
-    char buffer[1024] = {};
+    char buffer[4096] = {};
     int endtag = 0xeeeeeeee;
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6021);
@@ -417,7 +1270,7 @@ int testUserManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////121
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -440,7 +1293,7 @@ int testUserManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////131
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -469,7 +1322,7 @@ int testUserManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////141
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -499,7 +1352,7 @@ int testUserManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////151
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -524,7 +1377,7 @@ int testUserManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////161
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -557,7 +1410,7 @@ int testUserManager(Client_ptr shrd_client)
 }
 int testDeviceManager(Client_ptr shrd_client)
 {
-    char buffer[1024] = {};
+    char buffer[4096] = {};
     int endtag = 0xeeeeeeee;
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6020);
@@ -605,7 +1458,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////103
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -628,7 +1481,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////104
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -648,7 +1501,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////105
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -668,7 +1521,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////107
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -688,7 +1541,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////108
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -708,7 +1561,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////109
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -728,7 +1581,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////110
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -748,7 +1601,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////111
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -768,7 +1621,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////112
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -788,7 +1641,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////114
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -808,7 +1661,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////115
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -828,7 +1681,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////116
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -848,7 +1701,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////117
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -868,7 +1721,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////118
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(123);
@@ -888,7 +1741,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////119
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -908,7 +1761,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////390
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -928,7 +1781,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////391
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -949,7 +1802,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////392
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -969,7 +1822,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////393
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -989,7 +1842,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////394
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -1009,7 +1862,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////395
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -1029,7 +1882,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////396
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -1049,7 +1902,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////397
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -1070,7 +1923,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////398
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -1090,7 +1943,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////399
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -1110,7 +1963,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////120 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -1130,7 +1983,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////121 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(122);
@@ -1150,7 +2003,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////122 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1174,7 +2027,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////123 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1198,7 +2051,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////124 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1218,7 +2071,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////125 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1238,7 +2091,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////126 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1258,7 +2111,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////127 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1278,7 +2131,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////128 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1298,7 +2151,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////130 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1318,7 +2171,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////131 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1338,7 +2191,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////132 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1358,7 +2211,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////133 weiyun
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1378,7 +2231,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////700 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1398,7 +2251,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////701 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1418,7 +2271,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////702 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1438,7 +2291,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////703 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1458,7 +2311,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////704 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1478,7 +2331,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////705 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1498,7 +2351,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////706 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1518,7 +2371,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////707 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1538,7 +2391,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////708 zf
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1558,7 +2411,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////140 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1579,7 +2432,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////141 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1600,7 +2453,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////142 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1626,7 +2479,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////143 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1648,7 +2501,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////144 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1668,7 +2521,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////145 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1688,7 +2541,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////146 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1710,7 +2563,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////147 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1730,7 +2583,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////148 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1750,7 +2603,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////149 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1770,7 +2623,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////150 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1790,7 +2643,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////151 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1810,7 +2663,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////152 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1830,7 +2683,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////153 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1850,7 +2703,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////154 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1870,7 +2723,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////155 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1890,7 +2743,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////156 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1910,7 +2763,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////157 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1930,7 +2783,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////158 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1950,7 +2803,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////159 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1970,7 +2823,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////281 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -1992,7 +2845,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////282 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2017,7 +2870,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////283 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2038,7 +2891,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////284 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2058,7 +2911,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////286 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2078,7 +2931,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////287 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2099,7 +2952,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////289 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2119,7 +2972,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////288 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2141,7 +2994,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////289 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2161,7 +3014,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////290 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2181,7 +3034,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////291 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2201,7 +3054,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////292 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2221,7 +3074,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////293 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2241,7 +3094,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////294 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2261,7 +3114,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////295 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2281,7 +3134,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////295 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2301,7 +3154,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////296 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2321,7 +3174,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////300 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2341,7 +3194,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////230 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2361,7 +3214,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////231 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2382,7 +3235,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////232 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2402,7 +3255,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////233 zd
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2422,7 +3275,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////501 zjgl
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2442,7 +3295,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////502 zjgl
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2462,7 +3315,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////503 zjgl
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2482,7 +3335,7 @@ int testDeviceManager(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     ///////504 zjgl
-    std::this_thread::sleep_for(chrono::seconds(2));
+    //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
     deviceHead->taskNo = htonl(332);
@@ -2506,7 +3359,7 @@ int testDeviceManager(Client_ptr shrd_client)
 }
 int testAuthManager(Client_ptr shrd_client)
 {
-    char buffer[1024] = {};
+    char buffer[4096] = {};
     int endtag = 0xeeeeeeee;
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6022);
@@ -2572,7 +3425,7 @@ int testAuthManager(Client_ptr shrd_client)
 }
 int testConferenceManager(Client_ptr shrd_client)
 {
-    char buffer[1024] = {};
+    char buffer[4096] = {};
     int endtag = 0xeeeeeeee;
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6023);
@@ -2647,7 +3500,7 @@ int testConferenceManager(Client_ptr shrd_client)
 
 int testUpgradeManager(Client_ptr shrd_client)
 {
-    char buffer[1024] = {};
+    char buffer[4096] = {};
     int endtag = 0xeeeeeeee;
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6024);
@@ -2758,7 +3611,7 @@ int testUpgradeManager(Client_ptr shrd_client)
 }
 int testConfigManager(Client_ptr shrd_client)
 {
-    char buffer[1024] = {};
+    char buffer[4096] = {};
     int endtag = 0xeeeeeeee;
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6025);

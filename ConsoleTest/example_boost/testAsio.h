@@ -4,6 +4,7 @@
 #include <boost/thread.hpp> 
 #include <iostream>
 #include <string>
+#include <queue>
 #include <mutex>
 #include "MsgDefine.h"
 #include "DataProcess.h"
@@ -59,7 +60,7 @@ private:
 
     ip::tcp::socket m_sock_;
     boost::asio::io_context::strand m_strand;
-    enum { max_msg = 1024 };
+    enum { max_msg = 4096 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
     bool m_started_;
@@ -79,18 +80,20 @@ public:
     static Server_ptr start(int listenPort);
     void stop();
     bool started() { std::lock_guard<std::mutex> lock(m_mutex_started); return m_started_; }    // server status
-    void msgProcess(Conn_ptr client, const char *buff);           //strategy mode
-    void deleteConn(Conn_ptr conn);                         // remove a connection
+    int msgGet(const std::string &buff, std::queue<std::string>& q_recv);
+    int msgProcess(Conn_ptr client, const std::string &buff);           //strategy mode
+
+    void deleteConn(Conn_ptr conn);                                     // remove a connection
 private:
     AsyncServer(int listenPort);
     int init();
     int start();
-    void on_accept(Conn_ptr conn, const asio_error & err);   // add a connection
+    void on_accept(Conn_ptr conn, const asio_error & err);              // add a connection
 
     int mn_listenPort;
     boost::asio::io_context::strand m_strand;
     bool m_started_;
-    std::mutex m_mutex_started;                              // mutex of m_started
+    std::mutex m_mutex_started;                                         // mutex of m_started
     deadline_timer timer_;
     ip::tcp::acceptor m_acceptor;
     BaseProcess *m_processor;
@@ -116,7 +119,6 @@ public:
 private:
     void on_read(const asio_error & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
-    void msgProcess(Conn_ptr client, char *buff); //strategy mode
 
     bool m_connected;                      // connection status: 0:closed, 1:connected
     std::mutex m_connMutex;                // mutex of m_connected
@@ -126,5 +128,9 @@ private:
     enum { max_msg = 4096 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
+    int m_read_pos;
+    int m_write_pos;
+    std::queue<std::string> mq_recv;
+    std::queue<std::string> mq_send;
     Server_ptr m_pserver;
 };
