@@ -41,6 +41,7 @@ void AsyncClient::on_connect(ip::tcp::endpoint ep, const asio_error & err)
 {
     if (!err.code())
     {
+        m_sock_.set_option(boost::asio::ip::tcp::no_delay(true));
         std::cout << "connected to: " << ep.address().to_string() << ":" << int(ep.port()) << std::endl;
     }
     else
@@ -58,7 +59,7 @@ void AsyncClient::on_read(const asio_error & err, size_t bytes)
         if (bytes > 0)
         {
             std::string msg(read_buffer_, bytes);
-            std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " received " << bytes << " bytes - " << msg << std::endl;
+            std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " received " << bytes << " bytes - " << std::endl;
         }
         do_read();
     }
@@ -162,7 +163,7 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes)
     {
         m_read_pos += bytes;
         std::string msg(read_buffer_, m_read_pos);
-        std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " received " << bytes << " bytes - " << msg << std::endl;
+        std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " received " << bytes << " bytes - " << std::endl;
         int ret = m_pserver->msgGet(msg, mq_recv);
         if (ret > 0)
         {
@@ -395,7 +396,7 @@ int testAsio::test()
     Client_ptr client_config = AsyncClient::start(ep_config, "");
     */
     //    std::thread th_device{ testDeviceManager, client_device };
-    std::thread th_user{ testConferenceDistributor, client_user };
+    std::thread th_user{ testConfigManager, client_user };
     //    std::thread th_auth{ testAuthManager, client_auth };
 
     /*   std::thread th_conf{ testConferenceManager, client_conf };
@@ -471,6 +472,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0601
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -518,6 +520,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0602
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -537,6 +540,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0101
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -584,6 +588,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0103
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -604,6 +609,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0103
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -624,6 +630,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0605
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -645,6 +652,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0606
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -666,6 +674,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0312
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -690,6 +699,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0313
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -714,6 +724,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0153
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -744,6 +755,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0164
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -768,6 +780,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0111
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -792,6 +805,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0141
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -818,6 +832,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0140
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -839,6 +854,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0142
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -859,6 +875,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0143
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -881,6 +898,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0105
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -899,6 +917,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0110
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -917,6 +936,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0160
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -935,6 +955,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0123
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -953,6 +974,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0113
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -971,6 +993,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0127
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -989,6 +1012,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0146
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1009,6 +1033,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0112
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1027,6 +1052,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0128
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1050,6 +1076,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0311
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1076,6 +1103,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0106
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1136,6 +1164,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0107
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1155,6 +1184,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0300  //no reply
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1174,6 +1204,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0126 
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1210,6 +1241,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0134 
     //std::this_thread::sleep_for(chrono::seconds(2));
     confHead->cmdType = htons(0x0100);
@@ -1235,6 +1267,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
+    std::cout << "write id:" << id - 1 << std::endl;
     std::this_thread::sleep_for(chrono::seconds(3));
     return 0;
 }
@@ -1247,12 +1280,13 @@ int testUserManager(Client_ptr shrd_client)
     DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
     int len = 0;
+    int taskNo = 0;
     std::string data = "";
     std::string msg = "";
     ////101
     /*   */
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0001);
     deviceHead->cmd = htonl(101);
@@ -1273,7 +1307,7 @@ int testUserManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0001);
     deviceHead->cmd = htonl(121);
@@ -1296,7 +1330,7 @@ int testUserManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0001);
     deviceHead->cmd = htonl(131);
@@ -1325,7 +1359,7 @@ int testUserManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0001);
     deviceHead->cmd = htonl(141);
@@ -1355,7 +1389,7 @@ int testUserManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0001);
     deviceHead->cmd = htonl(151);
@@ -1380,7 +1414,7 @@ int testUserManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0001);
     deviceHead->cmd = htonl(161);
@@ -1415,10 +1449,11 @@ int testDeviceManager(Client_ptr shrd_client)
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6020);
     std::string msg = "";
+    int taskNo = 0;
     ////101  zz
     DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(101);
@@ -1438,7 +1473,7 @@ int testDeviceManager(Client_ptr shrd_client)
     std::this_thread::sleep_for(chrono::seconds(1));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(100);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(41);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(102);
@@ -1461,7 +1496,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(103);
@@ -1484,7 +1519,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(104);
@@ -1504,7 +1539,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(105);
@@ -1524,7 +1559,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(107);
@@ -1544,7 +1579,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(108);
@@ -1564,7 +1599,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(109);
@@ -1584,7 +1619,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(110);
@@ -1604,7 +1639,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(111);
@@ -1624,7 +1659,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(112);
@@ -1644,7 +1679,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(114);
@@ -1664,7 +1699,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(115);
@@ -1684,7 +1719,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(116);
@@ -1704,7 +1739,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(117);
@@ -1724,7 +1759,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(118);
@@ -1744,7 +1779,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(119);
@@ -1764,7 +1799,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(390);
@@ -1784,7 +1819,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(391);
@@ -1805,7 +1840,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(392);
@@ -1825,7 +1860,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(393);
@@ -1845,7 +1880,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(394);
@@ -1865,7 +1900,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(395);
@@ -1885,7 +1920,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(396);
@@ -1905,7 +1940,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(397);
@@ -1926,7 +1961,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(398);
@@ -1946,7 +1981,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(399);
@@ -1966,7 +2001,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(120);
@@ -1986,7 +2021,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(122);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(121);
@@ -2006,7 +2041,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(122);
@@ -2030,7 +2065,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(123);
@@ -2054,7 +2089,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(124);
@@ -2074,7 +2109,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(125);
@@ -2094,7 +2129,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(126);
@@ -2114,7 +2149,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(127);
@@ -2134,7 +2169,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(128);
@@ -2154,7 +2189,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(130);
@@ -2174,7 +2209,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(131);
@@ -2194,7 +2229,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(132);
@@ -2214,7 +2249,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(133);
@@ -2234,7 +2269,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(700);
@@ -2254,7 +2289,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(701);
@@ -2274,7 +2309,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(702);
@@ -2294,7 +2329,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(703);
@@ -2314,7 +2349,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(704);
@@ -2334,7 +2369,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(705);
@@ -2354,7 +2389,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(706);
@@ -2374,7 +2409,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(707);
@@ -2394,7 +2429,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(708);
@@ -2414,7 +2449,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(140);
@@ -2435,7 +2470,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(141);
@@ -2456,7 +2491,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(142);
@@ -2482,7 +2517,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(143);
@@ -2504,7 +2539,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(144);
@@ -2524,7 +2559,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(145);
@@ -2544,7 +2579,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(146);
@@ -2566,7 +2601,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(147);
@@ -2586,7 +2621,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(148);
@@ -2606,7 +2641,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(149);
@@ -2626,7 +2661,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(150);
@@ -2646,7 +2681,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(151);
@@ -2666,7 +2701,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(152);
@@ -2686,7 +2721,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(153);
@@ -2706,7 +2741,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(154);
@@ -2726,7 +2761,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(155);
@@ -2746,7 +2781,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(156);
@@ -2766,7 +2801,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(157);
@@ -2786,7 +2821,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(158);
@@ -2806,7 +2841,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(159);
@@ -2826,7 +2861,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(281);
@@ -2848,7 +2883,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(282);
@@ -2873,7 +2908,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(283);
@@ -2894,7 +2929,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(284);
@@ -2914,7 +2949,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(286);
@@ -2934,7 +2969,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(287);
@@ -2955,7 +2990,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(289);
@@ -2975,7 +3010,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(288);
@@ -2997,7 +3032,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(289);
@@ -3017,7 +3052,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(289);
@@ -3037,7 +3072,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(291);
@@ -3057,7 +3092,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(292);
@@ -3077,7 +3112,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(293);
@@ -3097,7 +3132,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(294);
@@ -3117,7 +3152,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(295);
@@ -3137,7 +3172,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(295);
@@ -3157,7 +3192,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(296);
@@ -3177,7 +3212,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(300);
@@ -3197,7 +3232,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(230);
@@ -3217,7 +3252,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(231);
@@ -3238,7 +3273,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(232);
@@ -3258,7 +3293,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(233);
@@ -3278,7 +3313,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(501);
@@ -3298,7 +3333,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(502);
@@ -3318,7 +3353,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(503);
@@ -3338,7 +3373,7 @@ int testDeviceManager(Client_ptr shrd_client)
     //std::this_thread::sleep_for(chrono::seconds(2));
     deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(332);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(22211);
     deviceHead->cmdType = htons(0x0002);
     deviceHead->cmd = htonl(504);
@@ -3366,11 +3401,12 @@ int testAuthManager(Client_ptr shrd_client)
     DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
     int len = 0;
+    int taskNo = 0;
     std::string msg = "";
     std::string data = "";
     ////01
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0010);
     deviceHead->cmd = htonl(1);
@@ -3397,7 +3433,7 @@ int testAuthManager(Client_ptr shrd_client)
     shrd_client->do_write(data);
     ////02
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0010);
     deviceHead->cmd = htonl(2);
@@ -3432,11 +3468,12 @@ int testConferenceManager(Client_ptr shrd_client)
     DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
     int len = 0;
+    int taskNo = 0;
     std::string data = "";
     std::string msg = "";
     ////601
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0003);
     deviceHead->cmd = htonl(601);
@@ -3458,7 +3495,7 @@ int testConferenceManager(Client_ptr shrd_client)
     shrd_client->do_write(data);
     ////602
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0003);
     deviceHead->cmd = htonl(602);
@@ -3478,7 +3515,7 @@ int testConferenceManager(Client_ptr shrd_client)
     shrd_client->do_write(data);
     ////603
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0003);
     deviceHead->cmd = htonl(603);
@@ -3507,11 +3544,12 @@ int testUpgradeManager(Client_ptr shrd_client)
     DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
     int len = 0;
+    int taskNo = 0;
     std::string data = "";
     std::string msg = "";
     ////703
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0004);
     deviceHead->cmd = htonl(703);
@@ -3532,7 +3570,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     shrd_client->do_write(data);
     ////704
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0004);
     deviceHead->cmd = htonl(704);
@@ -3552,7 +3590,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     shrd_client->do_write(data);
     ////705
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0004);
     deviceHead->cmd = htonl(705);
@@ -3571,7 +3609,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     shrd_client->do_write(data);
     ////706
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0004);
     deviceHead->cmd = htonl(706);
@@ -3590,7 +3628,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     shrd_client->do_write(data);
     ////707
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0004);
     deviceHead->cmd = htonl(707);
@@ -3618,11 +3656,12 @@ int testConfigManager(Client_ptr shrd_client)
     DeviceMngHead *deviceHead = (DeviceMngHead *)(buffer + sizeof(Overload));
     char* json = (char*)(buffer + sizeof(Overload) + sizeof(DeviceMngHead));
     int len = 0;
+    int taskNo = 0;
     std::string data = "";
     std::string msg = "";
     ////101
     deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
+    deviceHead->taskNo = htonl(taskNo++);
     deviceHead->deviceNo = htonl(456);
     deviceHead->cmdType = htons(0x0005);
     deviceHead->cmd = htonl(101);
@@ -3633,83 +3672,6 @@ int testConfigManager(Client_ptr shrd_client)
         \"version\":\"\",\
         \"reqId\":\"\",\
         \"datetime\":\"\"}";
-    len = sizeof(DeviceMngHead) + msg.length() + 4;
-    overload->len = htons(len);
-    deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
-    memcpy(json, msg.c_str(), msg.length());
-    memcpy(json + msg.length(), &endtag, 4);
-    data = std::string(buffer, sizeof(Overload) + len);
-    shrd_client->do_write(data);
-    ////704
-    deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
-    deviceHead->deviceNo = htonl(456);
-    deviceHead->cmdType = htons(0x0004);
-    deviceHead->cmd = htonl(704);
-    deviceHead->ret = htons(0);
-    msg = "{\
-        \"product\":\"\",\
-        \"version\":\"\",\
-        \"datetime\":\"\",\
-        \"reqId\":\"\"}";
-    len = sizeof(DeviceMngHead) + msg.length() + 4;
-    overload->len = htons(len);
-    deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
-    memcpy(json, msg.c_str(), msg.length());
-    memcpy(json + msg.length(), &endtag, 4);
-    data = std::string(buffer, sizeof(Overload) + len);
-    shrd_client->do_write(data);
-    ////705
-    deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
-    deviceHead->deviceNo = htonl(456);
-    deviceHead->cmdType = htons(0x0004);
-    deviceHead->cmd = htonl(705);
-    deviceHead->ret = htons(0);
-    msg = "{\"file_name\":\"\",\
-        \"product\":\"\",\
-        \"version\":\"\",\
-        \"reqId\":\"\"}";
-    len = sizeof(DeviceMngHead) + msg.length() + 4;
-    overload->len = htons(len);
-    deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
-    memcpy(json, msg.c_str(), msg.length());
-    memcpy(json + msg.length(), &endtag, 4);
-    data = std::string(buffer, sizeof(Overload) + len);
-    shrd_client->do_write(data);
-    ////706
-    deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
-    deviceHead->deviceNo = htonl(456);
-    deviceHead->cmdType = htons(0x0004);
-    deviceHead->cmd = htonl(706);
-    deviceHead->ret = htons(0);
-    msg = "{\"file_name\":\"\",\
-        \"product\":\"\",\
-        \"version\":\"\",\
-        \"reqId\":\"\"}";
-    len = sizeof(DeviceMngHead) + msg.length() + 4;
-    overload->len = htons(len);
-    deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
-    memcpy(json, msg.c_str(), msg.length());
-    memcpy(json + msg.length(), &endtag, 4);
-    data = std::string(buffer, sizeof(Overload) + len);
-    shrd_client->do_write(data);
-    ////707
-    deviceHead->begin = 0xffffffff;
-    deviceHead->taskNo = htonl(123);
-    deviceHead->deviceNo = htonl(456);
-    deviceHead->cmdType = htons(0x0004);
-    deviceHead->cmd = htonl(707);
-    deviceHead->ret = htons(0);
-    msg = "{\"file_name\":\"\",\
-        \"product\":\"\",\
-        \"version\":\"\",\
-        \"reqId\":\"\"}";
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();

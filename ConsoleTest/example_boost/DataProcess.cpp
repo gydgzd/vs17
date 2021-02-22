@@ -92,13 +92,13 @@ int BaseProcess::msgGet(const std::string & buff, std::queue<std::string>& q_rec
 
 int ConferenceDistributor::msgGet(const std::string & buff, std::queue<std::string>& q_recv)
 {
-    if (buff.length() <= sizeof(Overload) + sizeof(ConferenceMngHead))
+    if (buff.length() <= sizeof(ConferenceMngHead))
         return 0;
     std::string tmp = buff;
     int handleLen = 0;
-    while (tmp.length() > sizeof(Overload) + sizeof(ConferenceMngHead))
+    while (tmp.length() > sizeof(ConferenceMngHead))
     {
-        Overload *confHead = (Overload *)(tmp.c_str());
+        ConferenceMngHead *confHead = (ConferenceMngHead *)(tmp.c_str());
         int len = ntohs(confHead->len);
         // judge if length is valid
         if (len > 4096)
@@ -106,10 +106,10 @@ int ConferenceDistributor::msgGet(const std::string & buff, std::queue<std::stri
             std::cout << "data is too big: " << len << std::endl;
             return buff.length();
         }
-        if (tmp.length() < sizeof(Overload) + len)
+        if (tmp.length() < sizeof(ConferenceMngHead) + len)
             break;
         // put msg into the queue
-        len = sizeof(Overload) + len;
+        len = sizeof(ConferenceMngHead) + len;
         q_recv.emplace(tmp.substr(0, len));
         tmp = tmp.substr(len);
         handleLen += len;
@@ -137,7 +137,7 @@ int ConferenceDistributor::msgProcess(void * client, const std::string &msg)
     confHead->total = ntohs(confHead->total);
     confHead->index = ntohs(confHead->index);
     confHead->len = ntohs(confHead->len);
-    std::cout << "cmd:" << confHead->cmd << std::endl;
+    std::cout << "cmd:" << confHead->cmd << " id:" << confHead->id << std::endl;
 
     char write_buffer_[4096];
     memset(write_buffer_, 0, 4096);
@@ -603,7 +603,7 @@ int DeviceManager::msgProcess(void *client, const std::string &msg)
     deviceHead->cmdType = ntohs(deviceHead->cmdType);
     deviceHead->cmd = ntohl(deviceHead->cmd);
     deviceHead->ret = ntohs(0);
-    std::cout << "cmd:" << deviceHead->cmd << std::endl;
+    std::cout << "cmd:" << deviceHead->cmd << " taskNo:" << deviceHead->taskNo << std::endl;
 
     char write_buffer_[4096];
     memset(write_buffer_, 0, 4096);
@@ -1179,7 +1179,7 @@ int UserManager::msgProcess(void *client, const std::string &msg)
     deviceHead->cmdType = ntohs(deviceHead->cmdType);
     deviceHead->cmd = ntohl(deviceHead->cmd);
     deviceHead->ret = ntohs(0);
-    std::cout << "cmd:" << deviceHead->cmd << std::endl;
+    std::cout << "cmd:" << deviceHead->cmd << " taskNo:" << deviceHead->taskNo << std::endl;
 
     char write_buffer_[4096];
     memset(write_buffer_, 0, 4096);
@@ -1301,7 +1301,7 @@ int AuthManager::msgProcess(void *client, const std::string &msg)
     deviceHead->cmdType = ntohs(deviceHead->cmdType);
     deviceHead->cmd = ntohl(deviceHead->cmd);
     deviceHead->ret = ntohs(0);
-    std::cout << "cmd:" << deviceHead->cmd << std::endl;
+    std::cout << "cmd:" << deviceHead->cmd << " taskNo:" << deviceHead->taskNo << std::endl;
 
     char write_buffer_[4096];
     memset(write_buffer_, 0, 4096);
@@ -1385,7 +1385,7 @@ int ConferenceManager::msgProcess(void *client, const std::string &msg)
     deviceHead->cmdType = ntohs(deviceHead->cmdType);
     deviceHead->cmd = ntohl(deviceHead->cmd);
     deviceHead->ret = ntohs(0);
-    std::cout << "cmd:" << deviceHead->cmd << std::endl;
+    std::cout << "cmd:" << deviceHead->cmd << " taskNo:" << deviceHead->taskNo << std::endl;
 
     char write_buffer_[4096];
     memset(write_buffer_, 0, 4096);
@@ -1447,13 +1447,13 @@ int UpgradeManager::msgProcess(void *client, const std::string &msg)
         {
             DeviceMngHead *deviceHead = (DeviceMngHead *)(data.c_str() + sizeof(Overload));
             */
-    DeviceMngHead *deviceHead = (DeviceMngHead *)(msg.c_str() + sizeof(Overload));
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(msg.c_str());
     deviceHead->taskNo = ntohl(deviceHead->taskNo);
     deviceHead->deviceNo = ntohl(deviceHead->deviceNo);
     deviceHead->cmdType = ntohs(deviceHead->cmdType);
     deviceHead->cmd = ntohl(deviceHead->cmd);
     deviceHead->ret = ntohs(0);
-    std::cout << "cmd:" << deviceHead->cmd << std::endl;
+    std::cout << "cmd:" << deviceHead->cmd << " taskNo:" << deviceHead->taskNo << std::endl;
 
     char write_buffer_[4096];
     memset(write_buffer_, 0, 4096);
@@ -1518,6 +1518,58 @@ int UpgradeManager::msgProcess(void *client, const std::string &msg)
 /* ConfigManager 0x6025 */
 int ConfigManager::msgProcess(void *client, const std::string &msg)
 {
+    if (msg.length() == 0)
+        return 0;
+
+    /*     Overload *overload = (Overload *)data.c_str();
+    overload->tag = ntohs(overload->tag);
+    overload->len = ntohs(overload->len);
+    std::cout << "msg tag: " << overload->tag << " len:" << overload->len << std::endl;
+    if (overload->tag == 0x6025)
+    {
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(data.c_str() + sizeof(Overload));
+    */
+    DeviceMngHead *deviceHead = (DeviceMngHead *)(msg.c_str());
+    deviceHead->taskNo = ntohl(deviceHead->taskNo);
+    deviceHead->deviceNo = ntohl(deviceHead->deviceNo);
+    deviceHead->cmdType = ntohs(deviceHead->cmdType);
+    deviceHead->cmd = ntohl(deviceHead->cmd);
+    deviceHead->ret = ntohs(0);
+    std::cout << "cmd:" << deviceHead->cmd << " taskNo:" << deviceHead->taskNo << " taskNo:" << deviceHead->taskNo << std::endl;
+
+    char write_buffer_[4096];
+    memset(write_buffer_, 0, 4096);
+    //      Overload *write = (Overload *)write_buffer_;
+    //      DeviceMngHead *writeDevHead = (DeviceMngHead *)(write_buffer_ + sizeof(Overload));
+    //      write->tag = htons(overload->tag);
+    DeviceMngHead *writeDevHead = (DeviceMngHead *)(write_buffer_);
+    writeDevHead->begin = 0xffffffff;
+    writeDevHead->taskNo = htonl(deviceHead->taskNo);
+    writeDevHead->deviceNo = htonl(deviceHead->deviceNo);
+    writeDevHead->cmdType = htons(deviceHead->cmdType);
+    writeDevHead->cmd = htonl(deviceHead->cmd);
+    writeDevHead->ret = htons(0);
+    std::string response = "";
+    int endtag = 0xeeeeeeee;
+    int len = 0;
+    char* json = (char*)(write_buffer_ + sizeof(Overload) + sizeof(DeviceMngHead));
+    switch (deviceHead->cmd)
+    {
+    case 101:
+    {
+        response = "{\"ret\":\"\",\"Msg\":\"\"}";
+        break;
+    }
+    }
+    if (response.length() == 0)
+        return 0;
+    len = sizeof(DeviceMngHead) + response.length() + 4;
+    //     write->len = htons(len);
+    writeDevHead->len = htons((short)response.length());
+    memcpy(json, response.c_str(), response.length());
+    memcpy(json + response.length(), &endtag, 4);
+    (*(Conn_ptr*)client)->do_write(write_buffer_, sizeof(Overload) + len);
+    //    }
 
     return 0;
 }

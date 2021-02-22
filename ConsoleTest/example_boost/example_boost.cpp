@@ -42,7 +42,7 @@ int main()
 {
 	using namespace boost::lambda;
 	typedef std::istream_iterator<int> in;
-	std::cout << "Input some number please:" << std::endl;
+/*	std::cout << "Input some number please:" << std::endl;
 //	std::for_each(
 //		in(std::cin), in(), std::cout << (_1 * 3) << " ");
     Precision_Sleep(1);
@@ -50,7 +50,7 @@ int main()
     testThread();
     testMultiIndex();
 
-
+    */
 	testAsio myAsio;
 	myAsio.test();
 
