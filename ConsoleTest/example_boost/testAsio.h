@@ -3,6 +3,7 @@
 #include <boost/asio.hpp> 
 #include <boost/thread.hpp> 
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <queue>
 #include <mutex>
@@ -60,7 +61,7 @@ private:
 
     ip::tcp::socket m_sock_;
     boost::asio::io_context::strand m_strand;
-    enum { max_msg = 4096 };
+    enum { max_msg = 65536 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
     bool m_started_;
@@ -86,6 +87,7 @@ public:
     void deleteConn(Conn_ptr conn);                                     // remove a connection
 private:
     AsyncServer(int listenPort);
+    int loadConfig();
     int init();
     int start();
     void on_accept(Conn_ptr conn, const asio_error & err);              // add a connection
@@ -125,7 +127,7 @@ private:
 
     ip::tcp::socket m_sock_;
     boost::asio::io_context::strand m_strand;
-    enum { max_msg = 4096 };
+    enum { max_msg = 65536 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
     int m_read_pos;

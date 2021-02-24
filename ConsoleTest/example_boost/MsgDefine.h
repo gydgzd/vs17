@@ -16,7 +16,7 @@ struct DeviceMngHead
     short cmdType;              // 命令类型
     int cmd;                    // 命令
     short ret;                  // 返回值
-    short len;                  // 数据长度
+    int len;                  // 数据长度
     DeviceMngHead()
     {
         memset(this, 0, sizeof(*this));

@@ -20,7 +20,16 @@ testAsio::~testAsio()
 void AsyncClient::start(ip::tcp::endpoint ep)
 {
     std::cout << "connecting to " << ep.address().to_string() << ":" << int(ep.port()) << std::endl;//  << " / " << ep.protocol()
-    m_sock_.async_connect(ep, MEM_FN2(on_connect, ep, _1));
+//    m_sock_.async_connect(ep, MEM_FN2(on_connect, ep, _1));
+    try {
+        m_sock_.connect(ep);
+        m_sock_.set_option(boost::asio::ip::tcp::no_delay(true));
+    }
+    catch (boost::system::system_error &err)
+    {
+        std::cout << "on_connect error to " << ep.address().to_string() << ":" << int(ep.port()) << " - " << err.code() << " - " << err.what() << std::endl;
+    }
+   
 }
 
 Client_ptr AsyncClient::start(ip::tcp::endpoint ep, const std::string &message)
@@ -110,9 +119,13 @@ void AsyncClient::do_write(const std::string & msg) {
         m_sock_.send(buffer(write_buffer_, msg.size()));
         do_read();
     }
-    catch (boost::system::system_error &e)
+    catch (boost::system::system_error &err)
     {
-        std::cout << "send error: " << e.code() << " - " << e.what() << std::endl;
+        ip::tcp::endpoint remote_ep = m_sock_.remote_endpoint();
+        ip::tcp::endpoint local_ep = m_sock_.local_endpoint();
+        std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << "send error: " << err.code().value() << " - " << err.what() << std::endl;
+    //    g_mylog.log("%s:%d --> %s:%d send error: %d-%s.", local_ep.address().to_string().c_str(), local_ep.port(), remote_ep.address().to_string().c_str(), remote_ep.port(), err.code().value(), err.what());
+
     }
     
 }
@@ -237,6 +250,57 @@ AsyncServer::AsyncServer(int listenPort) : timer_(iocontext), m_acceptor(ioconte
     mn_listenPort = listenPort;
     m_processor = m_processor->getProcessor(listenPort);
 };
+
+int AsyncServer::loadConfig()
+{
+    // read from file
+    std::ifstream infile;
+    char filename[] = "ServerConfig.cfg";
+    infile.open(filename, std::ios_base::in);
+    char logmsg[1024] = "";
+    if (!infile)
+    {
+        sprintf(logmsg, "ERR: Load config from %s failed:(%d) %s", filename, errno, strerror(errno));
+    //    g_mylog.logException(logmsg);
+        return -1;
+    }
+    std::string linebuf;
+    std::string param, value;
+    std::map<std::string, std::string> map_config;
+    while (getline(infile, linebuf))   // !infile.eof()
+    {
+        if (linebuf.substr(0, 1) == "#" || linebuf.substr(0, 1) == "["
+            || linebuf.substr(0, 1) == "\r" || linebuf.substr(0, 1) == "\0" || linebuf.substr(0, 1) == ";")
+            continue;
+        // remove ' '
+        for (unsigned int i = 0; i < linebuf.size(); )
+        {
+            if (linebuf.at(i) == ' ' || linebuf.at(i) == '\t')
+                linebuf.erase(i, 1);
+            else
+                i++;
+        }
+        // 
+        std::size_t pos = linebuf.find('=');
+        if (pos != std::string::npos)
+        {
+            param = linebuf.substr(0, pos);
+            value = linebuf.substr(pos + 1);
+            if (param.find("0x") != std::string::npos)
+            {
+                std::size_t pos = linebuf.find(':');
+                std::string ip = value.substr(0, pos);
+                int port = atoi(value.substr(pos + 1).c_str());
+            }
+        }
+    }
+    infile.close();
+
+ //   g_mylog.logException("INFO: *********************** BEGIN*********************** ");
+ //   g_mylog.logException("INFO: Load config from file succeed.");
+    return 0;
+}
+
 Server_ptr AsyncServer::start(int listenPort) {
     Server_ptr server(new AsyncServer(listenPort));
     int ret = server->init();
@@ -468,7 +532,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -516,7 +580,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -536,7 +600,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
  }} ";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -584,7 +648,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -605,7 +669,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -626,7 +690,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -648,7 +712,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -670,7 +734,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -695,7 +759,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
         }]    }";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -720,7 +784,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
         }]    }";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -751,7 +815,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
        }]}}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -776,7 +840,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
         }]} ";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -801,7 +865,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
         }]} ";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -828,7 +892,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
        }}}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -850,7 +914,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
         }}}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -871,7 +935,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }}}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -894,7 +958,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -913,7 +977,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -932,7 +996,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -951,7 +1015,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -970,7 +1034,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -989,7 +1053,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1008,7 +1072,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1029,7 +1093,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
         }";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1048,7 +1112,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1072,7 +1136,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1099,7 +1163,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
        }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1160,7 +1224,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 ]}}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1180,7 +1244,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1200,7 +1264,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1237,7 +1301,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
 }]}}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1263,7 +1327,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
        }}";
     len = sizeof(ConferenceMngHead) + msg.length();
     overload->len = htons(len);
-    confHead->len = htons((short)msg.length());
+    confHead->len = htonl(len);
     memcpy(json, msg.c_str(), msg.length());
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
@@ -1298,7 +1362,7 @@ int testUserManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1321,7 +1385,7 @@ int testUserManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + strlen(msg1) + 4;
     overload->len = htons(len);
     deviceHead->len = (short)strlen(msg1);
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg1, strlen(msg1));
     memcpy(json + strlen(msg1), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1350,7 +1414,7 @@ int testUserManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + strlen(msg2) + 4;
     overload->len = htons(len);
     deviceHead->len = (short)strlen(msg2);
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg2, strlen(msg2));
     memcpy(json + strlen(msg2), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1380,7 +1444,7 @@ int testUserManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + strlen(msg3) + 4;
     overload->len = htons(len);
     deviceHead->len = (short)strlen(msg3);
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg3, strlen(msg3));
     memcpy(json + strlen(msg3), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1405,7 +1469,7 @@ int testUserManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + strlen(msg4) + 4;
     overload->len = htons(len);
     deviceHead->len = (short)strlen(msg4);
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg4, strlen(msg4));
     memcpy(json + strlen(msg4), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1435,7 +1499,7 @@ int testUserManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + strlen(msg5) + 4;
     overload->len = htons(len);
     deviceHead->len = (short)strlen(msg5);
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg5, strlen(msg5));
     memcpy(json + strlen(msg5), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1464,7 +1528,7 @@ int testDeviceManager(Client_ptr shrd_client)
     int len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     std::string data = std::string(buffer, sizeof(Overload) + len);
@@ -1487,7 +1551,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1510,7 +1574,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1530,7 +1594,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1550,7 +1614,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1570,7 +1634,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1590,7 +1654,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1610,7 +1674,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1630,7 +1694,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1650,7 +1714,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1670,7 +1734,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1690,7 +1754,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1710,7 +1774,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1730,7 +1794,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1750,7 +1814,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1770,7 +1834,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1790,7 +1854,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1810,7 +1874,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1831,7 +1895,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1851,7 +1915,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1871,7 +1935,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1891,7 +1955,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1911,7 +1975,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1931,7 +1995,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1952,7 +2016,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1972,7 +2036,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -1992,7 +2056,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2012,7 +2076,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2032,7 +2096,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2056,7 +2120,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2080,7 +2144,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2100,7 +2164,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2120,7 +2184,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2140,7 +2204,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2160,7 +2224,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2180,7 +2244,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2200,7 +2264,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2220,7 +2284,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2240,7 +2304,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2260,7 +2324,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2280,7 +2344,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2300,7 +2364,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2320,7 +2384,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2340,7 +2404,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2360,7 +2424,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2380,7 +2444,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2400,7 +2464,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2420,7 +2484,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2440,7 +2504,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2461,7 +2525,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2482,7 +2546,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2508,7 +2572,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2530,7 +2594,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2550,7 +2614,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2570,7 +2634,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2592,7 +2656,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2612,7 +2676,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2632,7 +2696,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2652,7 +2716,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2672,7 +2736,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2692,7 +2756,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2712,7 +2776,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2732,7 +2796,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2752,7 +2816,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2772,7 +2836,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2792,7 +2856,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2812,7 +2876,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2832,7 +2896,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2852,7 +2916,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2874,7 +2938,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2899,7 +2963,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2920,7 +2984,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2940,7 +3004,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2960,7 +3024,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -2981,7 +3045,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3001,7 +3065,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3023,7 +3087,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3043,7 +3107,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3063,7 +3127,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3083,7 +3147,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3103,7 +3167,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3123,7 +3187,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3143,7 +3207,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3163,7 +3227,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3183,7 +3247,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3203,7 +3267,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3223,7 +3287,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3243,7 +3307,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3264,7 +3328,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3284,7 +3348,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3304,7 +3368,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3324,7 +3388,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3344,7 +3408,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3364,7 +3428,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3384,7 +3448,7 @@ int testDeviceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3426,7 +3490,7 @@ int testAuthManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3452,7 +3516,7 @@ int testAuthManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3488,7 +3552,7 @@ int testConferenceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3508,7 +3572,7 @@ int testConferenceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3527,7 +3591,7 @@ int testConferenceManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3563,7 +3627,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3583,7 +3647,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3602,7 +3666,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3621,7 +3685,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3640,7 +3704,7 @@ int testUpgradeManager(Client_ptr shrd_client)
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);
@@ -3649,7 +3713,7 @@ int testUpgradeManager(Client_ptr shrd_client)
 }
 int testConfigManager(Client_ptr shrd_client)
 {
-    char buffer[4096] = {};
+    char buffer[6553] = {};
     int endtag = 0xeeeeeeee;
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6025);
@@ -3667,15 +3731,26 @@ int testConfigManager(Client_ptr shrd_client)
     deviceHead->cmd = htonl(101);
     deviceHead->ret = htons(0);
     msg = "{\"file_name\":\"\",\
-        \"path\":\"\",\
-        \"product\":\"\",\
-        \"version\":\"\",\
-        \"reqId\":\"\",\
-        \"datetime\":\"\"}";
+        \"path\":\"E:\work\CS\CMSServer\BoostAsio\Debug\",\
+        \"product\":\"qiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanli\",\
+        \"version\":\"1.0.21.3\",\
+        \"reqId\":\"qiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanli\",\
+        \"path\":\"D:\work\CS\CMSServer\BoostAsio\Debug\",\
+        \"product\":\"qiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanli\",\
+        \"version\":\"1.0.21.31.0.21.31.0.21.31.0.21.31.0.21.31.0.21.31.0.21.3\",\
+        \"reqId\":\"qiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanli\",\
+        \"path\":\"C:\work\CS\CMSServer\BoostAsio\Debug\",\
+        \"product\":\"qiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanli\",\
+        \"version\":\"1.0.21.31.0.21.31.0.21.31.0.21.1.0.21.31.0.21.31.0.21.31.0.21.331.0.21.31.0.21.3\",\
+        \"reqId\":\"qiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanli\",\
+        \"path\":\"E:\work\CS\CMSServer\BoostAsio\Debug\",\
+        \"product\":\"qiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanliqiushichanpingxianhuiyiguanli\",\
+        \"version\":\"1.0.21.3\",\
+        \"datetime\":\"2020-2010-2020:20202020202022020-2010-2020:20202020202022020-2010-2020:20202020202022020-2010-2020:2020202020202\"}";
     len = sizeof(DeviceMngHead) + msg.length() + 4;
     overload->len = htons(len);
     deviceHead->len = (short)msg.length();
-    deviceHead->len = htons(deviceHead->len);
+    deviceHead->len = htonl(deviceHead->len);
     memcpy(json, msg.c_str(), msg.length());
     memcpy(json + msg.length(), &endtag, 4);
     data = std::string(buffer, sizeof(Overload) + len);

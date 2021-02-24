@@ -16,6 +16,7 @@
 #include <string>
 #include <string.h>   // strlen strerror
 #include <errno.h>    // errno
+#include <stdarg.h>   // va_list
 #ifdef __linux
 #include <sys/stat.h> // mkdir stat
 #include <sys/time.h>

@@ -72,7 +72,7 @@ int BaseProcess::msgGet(const std::string & buff, std::queue<std::string>& q_rec
     while (tmp.length() > sizeof(DeviceMngHead))
     {
         DeviceMngHead *confHead = (DeviceMngHead *)(tmp.c_str());
-        int len = ntohs(confHead->len);
+        int len = ntohl(confHead->len);
         // judge if length is valid
         if (len > 4096)
         {
@@ -99,7 +99,7 @@ int ConferenceDistributor::msgGet(const std::string & buff, std::queue<std::stri
     while (tmp.length() > sizeof(ConferenceMngHead))
     {
         ConferenceMngHead *confHead = (ConferenceMngHead *)(tmp.c_str());
-        int len = ntohs(confHead->len);
+        int len = ntohl(confHead->len);
         // judge if length is valid
         if (len > 4096)
         {
