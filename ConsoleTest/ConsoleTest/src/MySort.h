@@ -165,11 +165,11 @@ public:
     int nonRecursion_quickSort(T a[], int low, int high);
 
 private:
-    int sortKey(T a[], int low, int high);   
+    int sortPartition(T a[], int low, int high);   
 };
 
 template<typename T>
-int QuickSort<T>::sortKey(T a[], int low, int high)
+int QuickSort<T>::sortPartition(T a[], int low, int high)
 {
     T pivot = a[low];
     int idx_small = low;
@@ -203,7 +203,7 @@ int QuickSort<T>::quickSort(T a[], int low, int high)
 {
     if (low < high)
     {
-        int key = sortKey(a, low, high);
+        int key = sortPartition(a, low, high);
         quickSort(a, low, key - 1);
         quickSort(a, key + 1, high);
     }
@@ -230,7 +230,7 @@ inline int QuickSort<T>::nonRecursion_quickSort(T a[], int low, int high)
         values.pop();
         int left = values.top();
         values.pop();
-        key = sortKey(a, left, right);
+        key = sortPartition(a, left, right);
         if (left < key - 1)
         {
             values.push(left);
