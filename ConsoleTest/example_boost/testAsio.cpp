@@ -460,7 +460,7 @@ int testAsio::test()
     Client_ptr client_config = AsyncClient::start(ep_config, "");
     */
     //    std::thread th_device{ testDeviceManager, client_device };
-    std::thread th_user{ testConfigManager, client_user };
+    std::thread th_user{ testConferenceDistributor, client_user };
     //    std::thread th_auth{ testAuthManager, client_auth };
 
     /*   std::thread th_conf{ testConferenceManager, client_conf };

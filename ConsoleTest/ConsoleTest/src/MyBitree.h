@@ -170,7 +170,6 @@ inline int MyBitree<T>::preTraversal(MyBitree * bt)
     while (!tmp.empty())
     {
         cout << pos->m_value;
-
         if(pos->m_rchild != nullptr)
             tmp.emplace(pos->m_rchild);
         if (pos->m_lchild != nullptr)   // go to left 

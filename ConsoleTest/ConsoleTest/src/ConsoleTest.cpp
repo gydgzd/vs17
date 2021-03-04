@@ -190,14 +190,28 @@ void deleteP(char *p)
         printf("unique pointer is deleted.\n");
     }
 }
+int printArray(int a[][3], int m, int n)
+{
+    for(int i = 0; i < m; i++)
+        for (int j = 0; j < n; j++)
+        {
+            std::cout << a[i][j] << " ";
+        }
+    return 0;
+}
 int main(int argc, char** argv)
 {
+    int a[3][3] = { {1,2,3},{4,5,6},{7,8,9} };
+    int b = (3, 4);
+    int c = b = 1;
+    printArray(a, 3, 3);
+
     /*
     testRapidJson();
     cout << maxSubStr("abcabcbb") << endl;
-    initWinSocket();
+    initWinSocket();*/
     testRTTR myRTTR;
-    myRTTR.test();*/
+    myRTTR.test();
     LogInit();
     //   cout << createJSON() << endl;
        /*

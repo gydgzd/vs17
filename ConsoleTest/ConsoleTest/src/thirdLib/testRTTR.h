@@ -1,21 +1,30 @@
 #pragma once
 #include <iostream>
 #include <rttr/registration.h>
+
+#include "to_json.h"
+#include "from_json.h"
 using namespace std;
 using namespace rttr;
 
 struct MyStruct 
 { 
-    MyStruct() {}; 
+    MyStruct() { memset(this, 0, sizeof(*this)); };
     
-    int data; 
+    int length;
+    int width;
     double func(double num)
     { 
         std::cout << num++ << std::endl;
         return num;
     };
 };
-
+struct CIRCLR
+{
+    int posx;
+    int posy;
+    int radius;
+};
 class class2
 {
     int data;
@@ -35,18 +44,27 @@ enum class MetaData_Type
     GUI
 };
 extern int g_value;
+/**/
 RTTR_REGISTRATION
 {
     registration::class_<MyStruct>("MyStruct")
          .constructor<>()
-         .property("data", &MyStruct::data)
+         .property("length", &MyStruct::length)
+         .property("width", &MyStruct::width)
          .method("func", &MyStruct::func);
+    registration::class_<CIRCLR>("CIRCLR")
+        .constructor<>()
+        .property("posx", &CIRCLR::posx)
+        .property("posy",  &CIRCLR::posy)
+        .property("radius", &CIRCLR::radius);
+
     registration::method("hello", &fun);
 
     registration::property("value", &g_value)
     (
         metadata(MetaData_Type::SCRIPTABLE, false),
-        metadata("Description", "This is a value."));
+        metadata("Description", "This is a value.")
+    );
            
     registration::property_readonly("PI", &pi);
     registration::property("global_text", &get_text, &set_text);
@@ -67,11 +85,16 @@ public:
 
         // get and set value by rttr::property
         MyStruct obj;
-        property prop = type::get(obj).get_property("data");
+        property prop = type::get(obj).get_property("length");
         prop.set_value(obj, 23);
 
         variant var_prop = prop.get_value(obj);
         std::cout << var_prop.to_int() << std::endl;; // prints '23'
+        std::string json_string;
+        json_string = io::to_json(obj);
+        std::cout << json_string.c_str() << std::endl;
+        MyStruct obja;
+        io::from_json(json_string, obja);
         //
         variant value = type::get_property_value("PI"); // remark the capitalization of "PI"
         if (value && value.is_type<double>())
