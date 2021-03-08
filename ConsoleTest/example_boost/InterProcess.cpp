@@ -142,3 +142,38 @@ int InterProcess::namedShrMemory(int argc)
     }
     return 0;
 }
+
+
+
+
+int g_count = 100;
+HANDLE g_hSem1 = INVALID_HANDLE_VALUE;
+HANDLE g_hSem2 = INVALID_HANDLE_VALUE;
+ static DWORD WINAPI threadProc(LPVOID IpParamter)
+{
+    int count = 0;
+    while (count < g_count)
+    {
+        WaitForSingleObject(g_hSem1, INFINITE);
+        printf("threadProc()\n");
+        ReleaseSemaphore(g_hSem2, 1, NULL);
+        Sleep(1);
+    }
+    return 0;
+}
+int InterProcess::testSemapthore()
+{
+    g_hSem1 = CreateSemaphore(NULL, 1, 1, NULL);
+    g_hSem2 = CreateSemaphore(NULL, 0, 1, NULL);
+    HANDLE hThread = CreateThread(NULL, 0, threadProc, NULL, 0, NULL);
+    int count = 0;
+    while (count < g_count)
+    {
+        WaitForSingleObject(g_hSem2, INFINITE);
+        printf("main()\n");
+        ReleaseSemaphore(g_hSem1, 1, NULL);
+        Sleep(1);
+    }
+
+    return 0;
+}

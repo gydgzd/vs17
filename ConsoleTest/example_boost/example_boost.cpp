@@ -50,12 +50,12 @@ int main()
     testThread();
     testMultiIndex();
 
-    */
+    
 	testAsio myAsio;
 	myAsio.test();
-
+*/
     InterProcess iproc;
-//    iproc.memPool(0);
+    iproc.testSemapthore();
 
 	system("pause");
 	return 0;
