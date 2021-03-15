@@ -247,8 +247,64 @@ inline int QuickSort<T>::nonRecursion_quickSort(T a[], int low, int high)
     return 0;
 }
 
- 
+template<typename T>
+class HeapSort : public MySort<T>
+{
+public:
+    HeapSort();
+    virtual ~HeapSort();
 
+    void heapSort(vector<int> &arr);
+private:
+    void adjust(vector<int> &arr, int len, int index);
+};
 
+template<typename T>
+HeapSort<T>::HeapSort()
+{
 
+}
+
+template<typename T>
+HeapSort<T>::~HeapSort()
+{
+
+}
+
+template<typename T>
+void HeapSort<T>::heapSort(vector<int> &arr)
+{
+    int size = arr.size();
+    // 构建大根堆（从最后一个非叶子节点向上）
+    for (int i = size / 2 - 1; i >= 0; i--)
+    {
+        adjust(arr, size, i);
+    }
+
+    // 调整大根堆
+    for (int i = size - 1; i >= 1; i--)
+    {
+        swap(arr[0], arr[i]);           // 将当前最大的放置到数组末尾
+        adjust(arr, i, 0);              // 将未完成排序的部分继续进行堆排序
+    }
+}
+
+template<typename T>
+void HeapSort<T>::adjust(vector<int> &arr, int len, int index)
+{
+    int left = 2 * index + 1; // index的左子节点
+    int right = 2 * index + 2;// index的右子节点
+
+    int maxIdx = index;
+    if (left<len && arr[left] > arr[maxIdx])     
+        maxIdx = left;
+    if (right<len && arr[right] > arr[maxIdx])     
+        maxIdx = right;
+
+    if (maxIdx != index)
+    {
+        swap(arr[maxIdx], arr[index]);
+        adjust(arr, len, maxIdx);
+    }
+}
 #endif /* SRC_MYSORT_H_ */

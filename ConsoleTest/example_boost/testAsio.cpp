@@ -440,7 +440,7 @@ int testAsio::test()
     thread1.join();
     thread2.join();
     //10.1.4.75:33300
-    ip::tcp::endpoint ep_user(ip::address::from_string("10.1.4.33"), 33300);
+    ip::tcp::endpoint ep_user(ip::address::from_string("192.168.109.153"), 22359);
     Client_ptr client_user = AsyncClient::start(ep_user, "");
     /*
     ip::tcp::endpoint ep_device(ip::address::from_string("127.0.0.1"), 8002);
@@ -480,19 +480,18 @@ int testConferenceDistributor(Client_ptr shrd_client)
     char buffer[4096] = {};
     Overload *overload = (Overload *)buffer;
     overload->tag = htons(0x6012);
-    ConferenceMngHead *confHead = (ConferenceMngHead *)(buffer + sizeof(Overload));
+    ConferenceMngHead *confHead = (ConferenceMngHead *)(buffer );//+ sizeof(Overload)
     confHead->version[0] = 0x01;
     confHead->version[1] = 0x02;
     confHead->version[2] = 0x08;
     confHead->version[3] = 0x05;
     int id = 0;
-    char* json = (char*)(buffer + sizeof(Overload) + sizeof(ConferenceMngHead));
+    char* json = (char*)(buffer  + sizeof(ConferenceMngHead));//+ sizeof(Overload)
     int len = 0;
     std::string data = "";
     std::string msg = "";
     ////0x0600
-    confHead->cmdType = htons(0x0100);
-    confHead->cmd = htons(0x0600);
+ /*   confHead->cmd = htons(0x0600);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
     confHead->index = htons(1);
@@ -539,7 +538,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0601
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0601);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -587,7 +586,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0602
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0602);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -607,7 +606,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0101
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0101);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -653,31 +652,31 @@ int testConferenceDistributor(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     std::cout << "write id:" << id - 1 << std::endl;
-    ///////0x0103
+  */  ///////0x0103
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
-    confHead->cmd = htons(0x0103);
+    //confHead->cmdType = htons(0x0100);
+    confHead->cmd = (0x0103);
     confHead->id = htonll(id++);
-    confHead->total = htons(1);
-    confHead->index = htons(1);
+    confHead->total = (1);
+    confHead->index = (1);
     msg = "{\
-        \"userId\": \"7dd21363732911ea8362a4bf01303dd7\",\
-        \"uuid\": \"5021846b3db911eba1e2a4bf01303dd7\",\
-        \"content\": {\
-        \"person_num\": 1,\
-        \"dev_num\": 11\
+\"userId\": \"c897498cff2011eabadbac1f6b6c76c6\",\
+\"uuid\": \"60b58b850f904e2c993de0bd7e40fecc\",\
+\"content\": {\
+\"person_num\": 886,\
+\"dev_num\": 11\
 }}";
     len = sizeof(ConferenceMngHead) + msg.length();
-    overload->len = htons(len);
-    confHead->len = htonl(len);
+ //   overload->len = htons(len);
+    confHead->len = (len);
     memcpy(json, msg.c_str(), msg.length());
-    data = std::string(buffer, sizeof(Overload) + len);
+    data = std::string(buffer,  len);//sizeof(Overload) +
     shrd_client->do_write(data);
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0103
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
-    confHead->cmd = htons(0x0103);
+    //confHead->cmdType = htons(0x0100);
+ /*   confHead->cmd = htons(0x0103);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
     confHead->index = htons(1);
@@ -697,7 +696,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0605
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0605);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -719,7 +718,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0606
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0606);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -741,7 +740,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0312
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0312);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -766,7 +765,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0313
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0313);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -791,7 +790,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0153
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0153);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -822,7 +821,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0164
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0164);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -847,7 +846,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0111
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0111);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -872,7 +871,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0141
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0141);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -899,7 +898,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0140
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0140);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -921,7 +920,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0142
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0142);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -942,7 +941,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0143
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0143);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -965,7 +964,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0105
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0105);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -984,7 +983,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0110
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0110);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1003,7 +1002,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0160
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0160);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1022,7 +1021,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0123
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0123);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1041,7 +1040,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0113
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0113);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1060,7 +1059,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0127
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0127);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1079,7 +1078,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0146
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0146);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1100,7 +1099,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0112
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0112);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1119,7 +1118,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0128
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0128);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1143,7 +1142,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0311
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0311);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1170,7 +1169,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0106
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0106);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1231,7 +1230,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0107
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0107);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1251,7 +1250,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0300  //no reply
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0300);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1271,7 +1270,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0126 
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0126);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1308,7 +1307,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     std::cout << "write id:" << id - 1 << std::endl;
     ///////0x0134 
     //std::this_thread::sleep_for(chrono::seconds(2));
-    confHead->cmdType = htons(0x0100);
+    //confHead->cmdType = htons(0x0100);
     confHead->cmd = htons(0x0134);
     confHead->id = htonll(id++);
     confHead->total = htons(1);
@@ -1332,6 +1331,7 @@ int testConferenceDistributor(Client_ptr shrd_client)
     data = std::string(buffer, sizeof(Overload) + len);
     shrd_client->do_write(data);
     std::cout << "write id:" << id - 1 << std::endl;
+    */
     std::this_thread::sleep_for(chrono::seconds(3));
     return 0;
 }

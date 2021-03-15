@@ -131,7 +131,7 @@ int ConferenceDistributor::msgProcess(void * client, const std::string &msg)
     ConferenceMngHead *confHead = (ConferenceMngHead *)(msg.c_str() + sizeof(Overload));
     */
     ConferenceMngHead *confHead = (ConferenceMngHead *)(msg.c_str());
-    confHead->cmdType = ntohs(confHead->cmdType);
+  //confHead->cmdType = ntohs(confHead->cmdType);
     confHead->cmd = ntohs(confHead->cmd);
     confHead->id = ntohll(confHead->id);
     confHead->total = ntohs(confHead->total);
@@ -147,7 +147,7 @@ int ConferenceDistributor::msgProcess(void * client, const std::string &msg)
     ConferenceMngHead *writeConfHead = (ConferenceMngHead *)(write_buffer_);
     writeConfHead->version[0] = 0x01;
     writeConfHead->version[1] = 0x02;
-    writeConfHead->cmdType = htons(confHead->cmdType);
+  //writeConfHead->cmdType = htons(confHead->cmdType);
     writeConfHead->cmd = htons(confHead->cmd);
     writeConfHead->id = htonll(confHead->id);
     writeConfHead->total = htons(confHead->total);

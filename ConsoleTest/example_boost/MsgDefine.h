@@ -27,7 +27,6 @@ struct DeviceMngHead
 struct ConferenceMngHead
 {
     unsigned char version[4];        //版本号
-    unsigned short cmdType;          //消息类型
     unsigned short cmd;              //消息信令
     unsigned int len;                //消息长度
     unsigned long long id;           //消息号
