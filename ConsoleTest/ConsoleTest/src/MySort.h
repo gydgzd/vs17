@@ -246,7 +246,7 @@ inline int QuickSort<T>::nonRecursion_quickSort(T a[], int low, int high)
     cout << "nonRecursion_quickSort cost time: " << m_timer.stop() << " ms, " << m_steps << " steps" << endl;
     return 0;
 }
-
+#include <vector>
 template<typename T>
 class HeapSort : public MySort<T>
 {

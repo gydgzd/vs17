@@ -197,6 +197,7 @@ int printArray(int a[][3], int m, int n)
         {
             std::cout << a[i][j] << " ";
         }
+    std::cout << std::endl;
     return 0;
 }
 int main(int argc, char** argv)
@@ -205,7 +206,8 @@ int main(int argc, char** argv)
     int b = (3, 4);
     int c = b = 1;
     printArray(a, 3, 3);
-
+    Mycounter c1;
+    c1.testThread();
     /*
     testRapidJson();
     cout << maxSubStr("abcabcbb") << endl;

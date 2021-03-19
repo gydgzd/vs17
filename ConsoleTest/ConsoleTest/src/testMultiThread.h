@@ -1,50 +1,52 @@
 #pragma once
 
 #include <iostream>
+#include <vector>
 #include <mutex>
 #include <thread>
+#include <condition_variable>
 #include <windows.h>
 using namespace std;
 
 extern int g_num;
 extern std::mutex g_num_mutex;
+
 class Mycounter
 {
+private:
+    std::vector<int> m_numbers;
+    std::mutex m_list_mutex;
+    std::condition_variable m_cv;
 public:
 	Mycounter() {};
 	~Mycounter() 
 	{
 		printf("~Mycounter()\n");
 	};
-	static int count(int n, int id)
+	int push()
 	{
-		for (int i = 0; i < n; i++)
+		for (int i = 0; i < 10; i++)
 		{
-			std::lock_guard<std::mutex> guard(g_num_mutex);   // 加锁，保证下面语句原子执行
-			cout << id << " " << g_num++ << endl;
+			std::lock_guard<std::mutex> guard(m_list_mutex);   // 加锁，保证下面语句原子执行
+            m_numbers.push_back(i);
+            m_cv.notify_one();
+			cout << "push: " << i << endl;
+            Sleep(200);
 		}
-		Sleep(2000);
 		return 0;
 	}
-	int s_count(int n, int id)
+	int get()
 	{
-		for (int i = 0; i < n; i++)
+		while(true)
 		{
-			std::lock_guard<std::mutex> guard(g_num_mutex);   // 加锁，保证下面语句原子执行
-			cout << id << " " << g_num++ << endl;
+			std::unique_lock<std::mutex> guard(m_list_mutex);   // 加锁，保证下面语句原子执行
+            if (m_numbers.empty())
+                m_cv.wait_for(guard, std::chrono::seconds(2));  // 阻塞前释放锁，让别的线程运行；收到notify通知后再加锁，保证自己运行   
+            if (m_numbers.empty())
+                break;
+			cout << "get: " << m_numbers.front() << endl;
+            m_numbers.erase(m_numbers.begin());
 		}
-		Sleep(2000);
-		return 0;
-	}
-	int mtdCount()
-	{
-		thread th1{ &Mycounter::count, 10, 1 };
-		thread th2{ &Mycounter::count, 10, 2 };
-		thread th3{ &Mycounter::count, 10, 3 };
-		thread th4{ &Mycounter::count, 10, 4 };
-		th1.join();
-		th2.join();
-		th3.join();
 		return 0;
 	}
 	void counter(int iterations, int id)
@@ -56,11 +58,10 @@ public:
 	}
 	void testThread()
 	{
-		Mycounter mc1;
-		mc1.mtdCount();
-
-		std::thread th{ &Mycounter::counter, &mc1,10, 1 };
-		th.detach();
+		std::thread th_push{ &Mycounter::push, this };
+        std::thread th_get{  &Mycounter::get, this };
+        th_push.join();
+        th_get.join();
 		Sleep(10);
 	}
 };
