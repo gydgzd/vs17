@@ -9,7 +9,7 @@ class BaseProcess
 public:
     BaseProcess();
     virtual~BaseProcess() {};
-    static BaseProcess* getProcessor(int port);         // 根据port决定选择哪个子类方法
+    static BaseProcess* getProcessor(const char *tag);         // 根据tag决定选择哪个子类方法
     int headProcess(void *client, std::queue<std::string>& q_recv);    // Conn_ptr 
     virtual int msgProcess(void *client, const std::string &msg);
     //judge if there is a msg in read_buffer, and put it into q_recv;

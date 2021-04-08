@@ -22,7 +22,7 @@
 #include <sys/time.h>
 #elif (defined WINVER ||defined WIN32)
 #include <direct.h>    // _mkdir
-#include <Winsock2.h>        // timeval 
+#include <Winsock2.h>  // timeval 
 #include <windows.h>
 #endif
 #include <time.h>
@@ -34,7 +34,7 @@
 #include <atomic>
 #include <condition_variable>
 // my head files
-#include "thirdLib/sql_conn_cpp.h"
+//#include "thirdLib/sql_conn_cpp.h"
 #include "getDate.h"
 //using namespace std;
 extern const char* LOG_FILENAME;
@@ -58,7 +58,7 @@ public:
 	void setMaxFileSize(long maxsize);
 	int logException(const std::string& logMsg);
 	void log(const char * fmt, ...);
-	int logException(sql::SQLException &e, const char* file, const char* func, const int& line);
+	//int logException(sql::SQLException &e, const char* file, const char* func, const int& line);
 	int checkSize();
 	int shrinkLogFile();
 
@@ -67,10 +67,10 @@ public:
 private:
 	long m_filesize;
 	long max_filesize;
-    std::string mstr_logfile;
+	std::string mstr_logfile;
     std::shared_ptr<char> msp_linebuffer;
     void processEntries();        //background thread
-    std::queue<string> mQueue;
+    std::queue<std::string> mQueue;
 };
 
 

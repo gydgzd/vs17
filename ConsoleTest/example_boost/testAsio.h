@@ -9,8 +9,9 @@
 #include <mutex>
 #include "MsgDefine.h"
 #include "DataProcess.h"
+#include "Mylog.h"
 using namespace boost::asio;
-
+extern Mylog g_mylog;
 class testAsio
 {
 public:
@@ -60,12 +61,12 @@ private:
     void on_write(const asio_error & err, size_t bytes);
 
     ip::tcp::socket m_sock_;
-    boost::asio::io_context::strand m_strand;
     enum { max_msg = 65536 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
     bool m_started_;
     std::string message_;
+    boost::asio::io_context::strand m_strand;
 };
 
 
@@ -78,7 +79,7 @@ public:
     static std::vector<int> s_ports;
 
 public:
-    static Server_ptr start(int listenPort);
+    static Server_ptr start(std::string ip, int listenPort, std::string tag);
     void stop();
     bool started() { std::lock_guard<std::mutex> lock(m_mutex_started); return m_started_; }    // server status
     int msgGet(const std::string &buff, std::queue<std::string>& q_recv);
@@ -86,20 +87,20 @@ public:
 
     void deleteConn(Conn_ptr conn);                                     // remove a connection
 private:
-    AsyncServer(int listenPort);
+    AsyncServer(std::string ip, int listenPort, std::string tag);
     int loadConfig();
     int init();
     int start();
     void on_accept(Conn_ptr conn, const asio_error & err);              // add a connection
-
+    std::string mstr_tag;
+    std::string mstr_ip;
     int mn_listenPort;
-    boost::asio::io_context::strand m_strand;
     bool m_started_;
     std::mutex m_mutex_started;                                         // mutex of m_started
     deadline_timer timer_;
     ip::tcp::acceptor m_acceptor;
     BaseProcess *m_processor;
-
+    boost::asio::io_context::strand m_strand;
 };
 
 //split connection from server
@@ -115,18 +116,18 @@ public:
     void do_write(std::string & msg);
     void do_write(const char* msg, unsigned int size);
 
+    int get_remote_ep(std::string& ip, int& port); // to get remote ip:port
+    int get_local_ep(std::string& ip, int& port);  // to get local  ip:port
+
     size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
     bool connected();
     void close();
 private:
     void on_read(const asio_error & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
+    bool m_connected;                 // connection status: 0:closed, 1:connected
+    std::mutex m_connMutex;           // mutex of m_connected
 
-    bool m_connected;                      // connection status: 0:closed, 1:connected
-    std::mutex m_connMutex;                // mutex of m_connected
-
-    ip::tcp::socket m_sock_;
-    boost::asio::io_context::strand m_strand;
     enum { max_msg = 65536 };
     char read_buffer_[max_msg];
     char write_buffer_[max_msg];
@@ -134,5 +135,12 @@ private:
     int m_write_pos;
     std::queue<std::string> mq_recv;
     std::queue<std::string> mq_send;
+   
+    std::string m_remote_ip;          // remote ip
+    std::string m_local_ip;           // local ip
+    int         m_remote_port;        // remote port
+    int         m_local_port;         // local port
+    ip::tcp::socket m_sock_;
+    boost::asio::io_context::strand m_strand;
     Server_ptr m_pserver;
 };
