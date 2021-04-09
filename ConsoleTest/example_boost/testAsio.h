@@ -43,9 +43,9 @@ class AsyncClient : public boost::enable_shared_from_this<AsyncClient>, boost::n
 
 public:
 
-    static Client_ptr start(ip::tcp::endpoint ep, const std::string &message);
+    static Client_ptr start(std::string ip, int port);
     void stop();
-    bool started() { return m_started_; }
+    bool connected() { return m_connected_; }
 
     size_t is_read_complete(const boost::system::error_code & err, size_t bytes);
 
@@ -54,21 +54,26 @@ public:
 
 private:
     typedef AsyncClient self_type;
-    AsyncClient() : m_sock_(iocontext), m_started_(true), message_(""), m_strand(iocontext) {}
+    AsyncClient() : m_sock_(iocontext), m_connected_(true), message_(""), m_strand(iocontext) { };
+
     void start(ip::tcp::endpoint ep);
     void on_connect(ip::tcp::endpoint ep, const asio_error & err);
     void on_read(const asio_error & err, size_t bytes);
     void on_write(const asio_error & err, size_t bytes);
 
+    std::string mstr_remote_ip;       // remote ip
+    std::string mstr_local_ip;        // local ip
+    int         m_remote_port;        // remote port
+    int         m_local_port;         // local port
+
     ip::tcp::socket m_sock_;
     enum { max_msg = 65536 };
-    char read_buffer_[max_msg];
-    char write_buffer_[max_msg];
-    bool m_started_;
+    char m_read_buffer_[max_msg];
+    char m_write_buffer_[max_msg];
+    bool m_connected_;
     std::string message_;
     boost::asio::io_context::strand m_strand;
 };
-
 
 class AsyncServer : public boost::enable_shared_from_this<AsyncServer>, boost::noncopyable
 {
@@ -136,8 +141,8 @@ private:
     std::queue<std::string> mq_recv;
     std::queue<std::string> mq_send;
    
-    std::string m_remote_ip;          // remote ip
-    std::string m_local_ip;           // local ip
+    std::string mstr_remote_ip;       // remote ip
+    std::string mstr_local_ip;        // local ip
     int         m_remote_port;        // remote port
     int         m_local_port;         // local port
     ip::tcp::socket m_sock_;

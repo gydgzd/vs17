@@ -18,114 +18,126 @@ testAsio::~testAsio()
 }
 
 // start --> async_connect --> on_connect
-void AsyncClient::start(ip::tcp::endpoint ep)
+Client_ptr AsyncClient::start(std::string ip, int port)
 {
-    std::cout << "connecting to " << ep.address().to_string() << ":" << int(ep.port()) << std::endl;//  << " / " << ep.protocol()
-    g_mylog.log("connecting to %s : %d", ep.address().to_string().c_str(), ep.port());
-    m_sock_.async_connect(ep, MEM_FN2(on_connect, ep, _1));
-}
-
-Client_ptr AsyncClient::start(ip::tcp::endpoint ep, const std::string &message)
-{
-    Client_ptr pclient(new AsyncClient());
+    ip::tcp::endpoint ep(ip::address::from_string(ip), port);
+    Client_ptr pclient(new AsyncClient());           // init of shared_ptr
     pclient->start(ep);
     return pclient;
 }
 
+void AsyncClient::start(ip::tcp::endpoint ep)
+{
+    mstr_remote_ip = ep.address().to_string();
+    m_remote_port = ep.port();
+    m_sock_.async_connect(ep, MEM_FN2(on_connect, ep, _1));
+    std::cout << "connecting to " << mstr_remote_ip << ":" << m_remote_port << std::endl;//  << " / " << ep.protocol()
+    g_mylog.log("connecting to %s : %d", mstr_remote_ip.c_str(), m_remote_port);
+}
+
 void AsyncClient::stop()
 {
-    if (!m_started_) return;
-    m_started_ = false;
+    if (!m_connected_) 
+        return;
+    m_connected_ = false;
     m_sock_.close();
+}
+
+size_t AsyncClient::is_read_complete(const boost::system::error_code & err, size_t bytes) {
+    if (err)
+        return 0;
+    bool found = std::find(m_read_buffer_, m_read_buffer_ + bytes, '\n') < m_read_buffer_ + bytes;
+    // 我们一个一个读取直到读到回车，不缓存
+    return found ? 0 : 1;
+}
+
+void AsyncClient::do_read() {
+    if (!connected())
+        return;
+    //    async_read(sock_, buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN3(on_read, boost::ref(sock_), _1, _2));   // sock_ will be error,use boost::ref(sock_)
+    m_sock_.async_read_some(buffer(m_read_buffer_), m_strand.wrap(MEM_FN2(on_read, _1, _2)));   // MEM_FN3(on_read, boost::ref(sock_), _1, _2)
+}
+
+void AsyncClient::do_write(const std::string & msg) {
+    if (!connected())
+        return;
+    std::copy(msg.begin(), msg.end(), m_write_buffer_);
+//    m_sock_.async_write_some(buffer(write_buffer_, msg.size()), m_strand.wrap(MEM_FN2(on_write, _1, _2)));
+    try {
+        m_sock_.send(buffer(m_write_buffer_, msg.size()));
+        do_read();
+    }
+    catch (boost::system::system_error &err)
+    {
+        std::cout << mstr_local_ip << ":" << m_local_port << "-->" << mstr_remote_ip << ":" << m_remote_port << "send error: " << err.code().value() << " - " << err.what() << std::endl;
+        g_mylog.log("%s:%d --> %s:%d send error: %d-%s.", mstr_local_ip.c_str(), m_local_port, mstr_remote_ip.c_str(), m_remote_port, err.code().value(),  err.what());
+    }
 }
 
 void AsyncClient::on_connect(ip::tcp::endpoint ep, const asio_error & err)
 {
+    // get local ep
+    ip::tcp::endpoint local_ep;
+    try {
+        local_ep  = m_sock_.local_endpoint();
+    }
+    catch (boost::system::system_error &e)
+    {
+        std::cout << "get_local_ep error: " << e.code() << " - " << e.what() << std::endl;
+        return ;
+    }
+    // set option
     if (!err.code())
     {
         m_sock_.set_option(boost::asio::ip::tcp::no_delay(true));
-        std::cout << "connected to " << ep.address().to_string() << ":" << int(ep.port()) << std::endl;
-        g_mylog.log("connected to %s : %d", ep.address().to_string().c_str(), ep.port());
+        m_connected_ = true;
+        mstr_local_ip = local_ep.address().to_string();
+        m_local_port = local_ep.port();
+        std::cout << mstr_local_ip.c_str() << ":" << m_local_port << "-->" << mstr_remote_ip.c_str() << ":" << m_remote_port << " connected." << std::endl;
+        g_mylog.log("%d:%s --> %d:%s connected.", mstr_local_ip.c_str(), m_local_port, mstr_remote_ip.c_str(), m_remote_port);
     }
     else
     {
-        std::cout << "on_connect error to " << ep.address().to_string() << ":" << int(ep.port()) << " - " << err.code().value() << " - " << err.what() << std::endl;
-        g_mylog.log("on_connect error to %s:%d : %d-%s", ep.address().to_string().c_str(), ep.port(), err.code().value(), err.what());
+        std::cout << mstr_local_ip.c_str() << ":" << m_local_port << "-->" << mstr_remote_ip.c_str() << ":" << m_remote_port << " connected error. " << err.code().value() << " - " << err.what() << std::endl;
+        g_mylog.log("%d:%s --> %d:%s connected error. %d-%s", mstr_local_ip.c_str(), m_local_port, mstr_remote_ip.c_str(), m_remote_port, err.code().value(), err.what());
         stop();
     }
 }
 
 void AsyncClient::on_read(const asio_error & err, size_t bytes)
 {
-    ip::tcp::endpoint remote_ep = m_sock_.remote_endpoint();
-    ip::tcp::endpoint local_ep = m_sock_.local_endpoint();
     if (!err.code()) {
         if (bytes > 0)
         {
-            std::string msg(read_buffer_, bytes);
-            std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << " received " << bytes << " bytes - " << std::endl;
-            g_mylog.log("%s:%d --> %s:%d received %d bytes.", remote_ep.address().to_string().c_str(), remote_ep.port(), local_ep.address().to_string().c_str(), local_ep.port(), bytes);
+            std::string msg(m_read_buffer_, bytes);
+            std::cout << mstr_remote_ip << ":" << m_remote_port << "-->" << mstr_local_ip << ":" << m_local_port << " received " << bytes << " bytes - " << std::endl;
+            g_mylog.log("%s:%d --> %s:%d received %d bytes.", mstr_remote_ip.c_str(), m_remote_port, mstr_local_ip.c_str(), m_local_port, bytes);
         }
         do_read();
     }
     else
     {
-        std::cout << remote_ep.address().to_string() << ":" << remote_ep.port() << "-->" << local_ep.address().to_string() << ":" << local_ep.port() << "received error: " << err.code().value() << " - " << err.what() << std::endl;
-        g_mylog.log("%s:%d --> %s:%d received error: %d-%s.", remote_ep.address().to_string().c_str(), remote_ep.port(), local_ep.address().to_string().c_str(), local_ep.port(), err.code().value(), err.what());
+        std::cout << mstr_remote_ip << ":" << m_remote_port << "-->" << mstr_local_ip << ":" << m_local_port << "received error: " << err.code().value() << " - " << err.what() << std::endl;
+        g_mylog.log("%s:%d --> %s:%d received error: %d-%s.", mstr_remote_ip.c_str(), m_remote_port, mstr_local_ip.c_str(), m_local_port, err.code().value(), err.what());
         stop();
     }
-}
-
-size_t AsyncClient::is_read_complete(const boost::system::error_code & err, size_t bytes) {
-    if (err)
-        return 0;
-    bool found = std::find(read_buffer_, read_buffer_ + bytes, '\n') < read_buffer_ + bytes;
-    // 我们一个一个读取直到读到回车，不缓存
-    return found ? 0 : 1;
 }
 
 void AsyncClient::on_write(const asio_error & err, size_t bytes)
 {
-    ip::tcp::endpoint remote_ep = m_sock_.remote_endpoint();
-    ip::tcp::endpoint local_ep = m_sock_.local_endpoint();
+
     if (!err.code()) {
-        std::string copy(write_buffer_, bytes);
-        std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << " wrote " << bytes << " Bytes" << std::endl;
-        g_mylog.log("%s:%d --> %s:%d wrote %d bytes.", local_ep.address().to_string().c_str(), local_ep.port(), remote_ep.address().to_string().c_str(), remote_ep.port(), bytes);
+        std::string copy(m_write_buffer_, bytes);
+        std::cout << mstr_local_ip << ":" << m_local_port << "-->" << mstr_remote_ip << ":" << m_remote_port << " wrote " << bytes << " Bytes" << std::endl;
+        g_mylog.log("%s:%d --> %s:%d wrote %d bytes.", mstr_local_ip.c_str(), m_local_port, mstr_remote_ip.c_str(), m_remote_port, bytes);
         do_read();
     }
     else
     {
-        std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << " write error: " << err.code().value() << " - " << err.what() << std::endl;
-        g_mylog.log("%s:%d --> %s:%d write error: %d-%s.", local_ep.address().to_string().c_str(), local_ep.port(), remote_ep.address().to_string().c_str(), remote_ep.port(), err.code().value(),  err.what());
+        std::cout << mstr_local_ip << ":" << m_local_port << "-->" << mstr_remote_ip << ":" << m_remote_port << " write error: " << err.code().value() << " - " << err.what() << std::endl;
+        g_mylog.log("%s:%d --> %s:%d write error: %d-%s.", mstr_local_ip.c_str(), m_local_port, mstr_remote_ip.c_str(), m_remote_port, err.code().value(), err.what());
         stop();
     }
-}
-
-void AsyncClient::do_read() {
-    if (!started())
-        return;
-    //    async_read(sock_, buffer(read_buffer_), MEM_FN2(is_read_complete, _1, _2), MEM_FN3(on_read, boost::ref(sock_), _1, _2));   // sock_ will be error,use boost::ref(sock_)
-    m_sock_.async_read_some(buffer(read_buffer_), m_strand.wrap(MEM_FN2(on_read, _1, _2)));   // MEM_FN3(on_read, boost::ref(sock_), _1, _2)
-}
-
-void AsyncClient::do_write(const std::string & msg) {
-    if (!started())
-        return;
-    std::copy(msg.begin(), msg.end(), write_buffer_);
-//    m_sock_.async_write_some(buffer(write_buffer_, msg.size()), m_strand.wrap(MEM_FN2(on_write, _1, _2)));
-    try {
-        m_sock_.send(buffer(write_buffer_, msg.size()));
-        do_read();
-    }
-    catch (boost::system::system_error &err)
-    {
-        ip::tcp::endpoint remote_ep = m_sock_.remote_endpoint();
-        ip::tcp::endpoint local_ep = m_sock_.local_endpoint();
-        std::cout << local_ep.address().to_string() << ":" << local_ep.port() << "-->" << remote_ep.address().to_string() << ":" << remote_ep.port() << "send error: " << err.code().value() << " - " << err.what() << std::endl;
-        g_mylog.log("%s:%d --> %s:%d send error: %d-%s.", local_ep.address().to_string().c_str(), local_ep.port(), remote_ep.address().to_string().c_str(), remote_ep.port(), err.code().value(),  err.what());
-    }
-    
 }
 
 /******** AsyncConnection **********/
@@ -165,7 +177,7 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes)
     if (err.code())
     {
         close();
-        std::cout << m_remote_ip << ":" << m_remote_port << "-->" << m_local_ip << ":" << m_local_port << "received error: " << err.code() << " - " << err.what() << std::endl;
+        std::cout << mstr_remote_ip << ":" << m_remote_port << "-->" << mstr_local_ip << ":" << m_local_port << "received error: " << err.code() << " - " << err.what() << std::endl;
     }
     if (!connected())
         return;
@@ -173,7 +185,7 @@ void AsyncConnection::on_read(const asio_error & err, size_t bytes)
     {
         m_read_pos += bytes;
         std::string msg(read_buffer_, m_read_pos);
-        std::cout << m_remote_ip << ":" << m_remote_port << "-->" << m_local_ip << ":" << m_local_port << " received " << bytes << " bytes - " << std::endl;
+        std::cout << mstr_remote_ip << ":" << m_remote_port << "-->" << mstr_local_ip << ":" << m_local_port << " received " << bytes << " bytes - " << std::endl;
         int ret = m_pserver->msgGet(msg, mq_recv);
         if (ret > 0)
         {
@@ -227,7 +239,7 @@ int AsyncConnection::get_remote_ep(std::string& ip, int& port)
         return -1;
     }
     ip = remote_ep.address().to_string();
-    m_remote_ip = ip;
+    mstr_remote_ip = ip;
     port = remote_ep.port();
     m_remote_port = port;
     return 0;
@@ -245,7 +257,7 @@ int  AsyncConnection::get_local_ep(std::string& ip, int& port)
         return -1;
     }
     ip = local_ep.address().to_string();
-    m_local_ip = ip;
+    mstr_local_ip = ip;
     port = local_ep.port();
     m_local_port = port;
     return 0;
@@ -498,35 +510,29 @@ int testAsio::test()
     thread1.join();
     thread2.join();
     //10.1.4.75:33300
-    ip::tcp::endpoint ep_dis(ip::address::from_string("172.18.10.129"), 8001);
-    Client_ptr client_dis = AsyncClient::start(ep_dis, "");
+
+    Client_ptr client_dis = AsyncClient::start(std::string("172.18.10.129"), 8001);
     std::thread th_dis   { testConferenceDistributor, client_dis };
     /*
-    ip::tcp::endpoint ep_device(ip::address::from_string("172.18.10.129"), 8002);
-    Client_ptr client_device = AsyncClient::start(ep_device, "");
+
+    Client_ptr client_device = AsyncClient::start(std::string("172.18.10.129"), 8002);
     std::thread th_device{ testDeviceManager, client_device };
 
-    ip::tcp::endpoint ep_user(ip::address::from_string("172.18.10.129"), 8003);
-    Client_ptr client_user = AsyncClient::start(ep_user, "");
+    Client_ptr client_user = AsyncClient::start(std::string("172.18.10.129"), 8003);
     std::thread th_user{ testUserManager, client_user };
 
-    ip::tcp::endpoint ep_auth(ip::address::from_string("172.18.10.129"), 8004);
-    Client_ptr client_auth = AsyncClient::start(ep_auth, "");
+    Client_ptr client_auth = AsyncClient::start(std::string("172.18.10.129"), 8004);
     std::thread th_auth{ testAuthManager, client_auth };
 
-    ip::tcp::endpoint ep_confe(ip::address::from_string("172.18.10.129"), 8005);
-    Client_ptr client_confe = AsyncClient::start(ep_confe, "");
+    Client_ptr client_confe = AsyncClient::start(std::string("172.18.10.129"), 8005);
     std::thread th_confe{ testConferenceManager, client_confe };
 
-    ip::tcp::endpoint ep_upgrade(ip::address::from_string("172.18.10.129"), 8006);
-    Client_ptr client_upgrade = AsyncClient::start(ep_upgrade, "");
+    Client_ptr client_upgrade = AsyncClient::start(std::string("172.18.10.129"), 8006);
     std::thread th_upgrade{ testUpgradeManager, client_upgrade };
 
-    ip::tcp::endpoint ep_config(ip::address::from_string("172.18.10.129"), 8007);
-    Client_ptr client_config = AsyncClient::start(ep_config, "");
+    Client_ptr client_config = AsyncClient::start(std::string("172.18.10.129"), 8007);
     std::thread th_config{ testConfigManager, client_config };
-    */
-
+ */
     iocontext.run();
 
     th_dis.join();
