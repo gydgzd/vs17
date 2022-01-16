@@ -27,11 +27,11 @@ public:
 	{
 		for (int i = 0; i < 10; i++)
 		{
-			std::lock_guard<std::mutex> guard(m_list_mutex);   // 加锁，保证下面语句原子执行
+			std::unique_lock<std::mutex> guard(m_list_mutex);   // 加锁，保证下面语句原子执行
             m_numbers.push_back(i);
-            m_cv.notify_one();
 			cout << "push: " << i << endl;
-            Sleep(200);
+            guard.unlock();
+            m_cv.notify_one();
 		}
 		return 0;
 	}
@@ -41,7 +41,8 @@ public:
 		{
 			std::unique_lock<std::mutex> guard(m_list_mutex);   // 加锁，保证下面语句原子执行
             if (m_numbers.empty())
-                m_cv.wait_for(guard, std::chrono::seconds(2));  // 阻塞前释放锁，让别的线程运行；收到notify通知后再加锁，保证自己运行   
+                m_cv.wait_for(guard, std::chrono::seconds(3));  // 阻塞前释放锁，让别的线程运行；收到notify通知后再加锁，保证自己运行 
+            //    m_cv.wait(guard);
             if (m_numbers.empty())
                 break;
 			cout << "get: " << m_numbers.front() << endl;

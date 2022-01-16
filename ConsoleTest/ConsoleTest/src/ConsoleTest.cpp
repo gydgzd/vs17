@@ -190,12 +190,12 @@ void deleteP(char *p)
         printf("unique pointer is deleted.\n");
     }
 }
-int printArray(int a[][3], int m, int n)
+int printArray(int* a, int m, int n)
 {
     for(int i = 0; i < m; i++)
         for (int j = 0; j < n; j++)
         {
-            std::cout << a[i][j] << " ";
+            std::cout << *(a + i * n + j) << " ";
         }
     std::cout << std::endl;
     return 0;
@@ -205,7 +205,7 @@ int main(int argc, char** argv)
     int a[3][3] = { {1,2,3},{4,5,6},{7,8,9} };
     int b = (3, 4);
     int c = b = 1;
-    printArray(a, 3, 3);
+    printArray(&a[0][0], 3, 3);
     Mycounter c1;
     c1.testThread();
     /*
@@ -301,13 +301,14 @@ int main(int argc, char** argv)
             cout << *it << "  ";
         cout << endl;
     }
-    testArray();
     testVector();
     testList();
     testMap();
     testHashMap();
     testSet();
     fibonacci(10);*/
+    testArray();
+
     MyBitree<int> bt;
     int aray[6] = { 1, 2, 3, 4, 5, 6, };
     bt.init(&bt, aray, 6);
