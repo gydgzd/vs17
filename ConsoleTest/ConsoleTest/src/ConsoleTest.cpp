@@ -358,8 +358,8 @@ int main(int argc, char** argv)
         psort->quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
 */
     QuickSort<double> *pqs = new QuickSort<double>();
-    pqs->nonRecursion_quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
- //   mSort.quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
+ //   pqs->nonRecursion_quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
+    mSort.quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
     for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
         cout << fa[i] << "  ";
     cout << endl;

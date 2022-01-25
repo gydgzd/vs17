@@ -125,7 +125,7 @@ int MySort<T>::shellSort(T a[], int n)
     register int index_m, index_n, h;
     int increments[20], k;
     // Create an appropriate number of increments h
-    for (h = 1,index_m = 0; h < n; index_m++)
+    for (h = 1,index_m = 0; h < n && index_m < 20; index_m++)
     {
         increments[index_m] = h;
         h = 3 * h + 1;
@@ -172,30 +172,29 @@ template<typename T>
 int QuickSort<T>::sortPartition(T a[], int low, int high)
 {
     T pivot = a[low];
-    int idx_small = low;
-    int idx_big = high;
-    while (idx_small < idx_big)
+    while (low < high)
     {
-        // move big idx
-        while (idx_small < idx_big && a[idx_big] >= pivot)
-            idx_big--;
-        if (idx_small < idx_big)
+        // move high index
+        while (low < high && a[high] > pivot)
         {
-            a[idx_small] = a[idx_big];
-            m_steps++;
+            high--;
         }
-        // move small idx
-        while (idx_small < idx_big && a[idx_small] <= pivot)
-            idx_small++;
-        if (idx_small < idx_big)
+        if (low < high)
         {
-            a[idx_big] = a[idx_small];
-            m_steps++;
+            a[low] = a[high];
+        }
+        // move low index
+        while (low < high && a[low] < pivot)
+        {
+            low++;
+        }
+        if (low < high)
+        {
+            a[high] = a[low];
         }
     }
-    a[idx_big] = pivot;
-    m_steps++;
-    return idx_big;
+    a[low] = pivot;
+    return low;
 }
 
 template<typename T>
