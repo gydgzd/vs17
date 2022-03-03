@@ -206,7 +206,6 @@ int QuickSort<T>::quickSort(T a[], int low, int high)
         quickSort(a, low, key - 1);
         quickSort(a, key + 1, high);
     }
-    cout << "quickSort cost time: " << m_timer.stop() << " ms, " << m_steps << " steps" << endl;
     return 0;
 }
 
@@ -253,9 +252,9 @@ public:
     HeapSort();
     virtual ~HeapSort();
 
-    void heapSort(vector<int> &arr);
+    void heapSort(vector<T> &arr);
 private:
-    void adjust(vector<int> &arr, int len, int index);
+    void adjust(vector<T> &arr, int len, int index);
 };
 
 template<typename T>
@@ -271,7 +270,7 @@ HeapSort<T>::~HeapSort()
 }
 
 template<typename T>
-void HeapSort<T>::heapSort(vector<int> &arr)
+void HeapSort<T>::heapSort(vector<T> &arr)
 {
     int size = arr.size();
     // 构建大根堆（从最后一个非叶子节点向上）
@@ -289,15 +288,15 @@ void HeapSort<T>::heapSort(vector<int> &arr)
 }
 
 template<typename T>
-void HeapSort<T>::adjust(vector<int> &arr, int len, int index)
+void HeapSort<T>::adjust(vector<T> &arr, int len, int index)
 {
     int left = 2 * index + 1; // index的左子节点
     int right = 2 * index + 2;// index的右子节点
 
     int maxIdx = index;
-    if (left<len && arr[left] > arr[maxIdx])     
+    if (left < len && arr[left] > arr[maxIdx])     
         maxIdx = left;
-    if (right<len && arr[right] > arr[maxIdx])     
+    if (right < len && arr[right] > arr[maxIdx])     
         maxIdx = right;
 
     if (maxIdx != index)

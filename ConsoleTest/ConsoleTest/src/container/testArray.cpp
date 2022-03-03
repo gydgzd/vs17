@@ -25,5 +25,6 @@ void testArray()
 	cout << endl;
 	end = clock();
 	cout << (double)(end - start) / CLOCKS_PER_SEC << " s" << endl;
-
+    array<std::pair<int, int>, 4> dir{ std::make_pair(1, 0), std::make_pair(-1, 0), std::make_pair(0, 1), std::make_pair(0, -1) };
+    array<std::pair<int, int>, 4> dir{ {{1, 0}, {-1, 0}, {0, 1}, {0, -1}} };
 }

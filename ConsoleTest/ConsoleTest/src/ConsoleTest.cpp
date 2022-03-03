@@ -225,7 +225,7 @@ int main(int argc, char** argv)
        // testValist();
     unsigned int id[4] = {};
     id[0] = 399;
-    id[1] = 166;
+    id[1] = -8;
     unsigned char *p = (unsigned char *)id;               // 高精度转化为低精度，内存占用对应减小，只留下低位
     printf("%d - %d\n", (unsigned int)*p, (unsigned int)*(p + 4));
     printf("%d - %d\n", *(unsigned int*)p, *(unsigned int*)(p + 4)); // 低精度转化为高精度，内存占用不会增大,可以先转换指针类型，然后去引用
@@ -353,17 +353,23 @@ int main(int argc, char** argv)
             cout << fa[i] << "  ";
         cout << endl;
 
-    
+ */   
         MySort<double> *psort = new QuickSort<double>();
         psort->quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
-*/
-    QuickSort<double> *pqs = new QuickSort<double>();
- //   pqs->nonRecursion_quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
-    mSort.quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
+
+    shared_ptr <QuickSort<double> > spquickSort(new QuickSort<double>());
+    //spquickSort->nonRecursion_quickSort(fa, 0, sizeof(fa) / sizeof(fa[0]) - 1);
+    
     for (int i = 0; i < sizeof(fa) / sizeof(fa[0]); i++)
         cout << fa[i] << "  ";
     cout << endl;
 
+    shared_ptr<HeapSort<double> > spheapSort(new HeapSort<double>());
+    vector<double> qa{2, 3, 1};
+    spheapSort->heapSort(qa);
+    for (int i = 0; i < qa.size(); i++)
+        cout << qa[i] << "  ";
+    cout << endl;
     /*
     SERVICE_TABLE_ENTRY ServTable[2];
     ServTable[0].lpServiceName = _T("abcTest");
