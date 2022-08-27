@@ -292,10 +292,10 @@ int main(int argc, char** argv)
     cout << decimalToBinary(17) << endl;;
     cout << binaryToDecimal(1010);
     //       subset();
-/*    extern vector<vector<int>> ans;
+    extern vector<vector<int>> ans;
     vector<int> nums{ 3,5,12,31, 44 };
     backtracing(0, nums);
-    for (auto iter = ans.begin(); iter != ans.end(); iter++)
+ /*   for (auto iter = ans.begin(); iter != ans.end(); iter++)
     {
         for (auto it = iter->begin(); it != iter->end(); it++)
             cout << *it << "  ";
