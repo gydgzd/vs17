@@ -2,8 +2,20 @@
 #include <time.h>
 #define _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING  
 #include <array>
+#include "gtest/gtest.h"
 using namespace std;
 
+TEST(ARRAY_TEST, test_initialize) {
+    // initialize
+    std::array<int, 100> arr_int{ 1, 2, 3, 4, 5 };
+    clock_t start, end;
+    // visit by at()
+    start = clock();
+    for (int i = 0; i < 5; i++)
+        EXPECT_EQ(arr_int.at(i), i+1);
+    for (int i = 5; i < 100; i++)
+        EXPECT_EQ(arr_int.at(i), 0);
+}
 void testArray()
 {
     // initialize

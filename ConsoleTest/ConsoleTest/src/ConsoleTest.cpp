@@ -44,7 +44,7 @@
 #include "thirdLib/sql_conn_cpp.h"  // my sql class
 #include "thirdLib/testRTTR.h"
 #include "thirdLib/HttpServerLibevent.h"
-
+#include "gtest/gtest.h"
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 #pragma comment(lib,"ws2_32.lib")
 
@@ -202,6 +202,9 @@ int printArray(int* a, int m, int n)
 }
 int main(int argc, char** argv)
 {
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
+
     int a[3][3] = { {1,2,3},{4,5,6},{7,8,9} };
     int b = (3, 4);
     int c = b = 1;

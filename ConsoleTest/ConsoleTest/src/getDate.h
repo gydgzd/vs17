@@ -10,7 +10,7 @@
 
 #ifdef __linux
 #include <sys/time.h>
-#elif WINVER || WIN32
+#else
 #include <Winsock2.h>        // timeval 
 #include <windows.h>
 #endif
