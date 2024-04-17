@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include <event2/event.h>
+
 #if defined(_WIN64)
 typedef long int ssize_t;
 #endif

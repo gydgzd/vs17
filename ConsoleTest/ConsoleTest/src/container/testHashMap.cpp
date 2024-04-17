@@ -213,12 +213,14 @@ int testHashMap()
 		printf("found :%s  %d\n", iter->first.c_str() , iter->second );
 	}
 	// 方法2
+	/*
 	std::unordered_multimap<string, int>::iterator  iterBegin = mymtmap.lower_bound("Nick");
 	std::unordered_multimap<string, int>::iterator  iterEnd = mymtmap.upper_bound("Nick");
 	for (; iterBegin != iterEnd; iterBegin++)
 	{
 		printf("found :%s  %d\n", iterBegin->first.c_str(), iterBegin->second);
 	}
+	*/
 	// 方法3
 	auto ret = mymtmap.equal_range("Nick");
 	auto it = ret.first;

@@ -5,7 +5,7 @@
 #include <fcntl.h>
 #include <sys/stat.h>
 #include <locale.h>
-#elif (defined WINVER ||defined WIN32)
+#elif (defined WINVER || defined WIN32 || defined _WIN32)
 #include <windows.h>
 #endif
 

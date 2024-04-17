@@ -43,7 +43,7 @@
 #include "thirdLib/easylogging++.h"    // v9.96.7
 #include "thirdLib/sql_conn_cpp.h"  // my sql class
 #include "thirdLib/testRTTR.h"
-#include "thirdLib/HttpServerLibevent.h"
+//#include "thirdLib/HttpServerLibevent.h"
 #include "gtest/gtest.h"
 INITIALIZE_EASYLOGGINGPP      // needed by easylogging
 #pragma comment(lib,"ws2_32.lib")
@@ -249,7 +249,7 @@ int main(int argc, char** argv)
         }
         mytun.process();
         */
-    HttpServerLibevent hv;
+  //  HttpServerLibevent hv;
     //    hv.testLibevent();
 
     testClass();
@@ -391,7 +391,7 @@ int main(int argc, char** argv)
     LOG(INFO) << "main finished.";
 #if defined(__linux)
     printf("Linux\n");
-#elif (defined WINVER ||defined WIN32)
+#elif (defined WINVER || defined WIN32 || defined _WIN32)
     printf("Windows\n");
 #endif
     system("pause");

@@ -6,7 +6,7 @@
 #include <iostream>
 #include <sstream>
 #include <map>
-#if (defined WIN32 || defined _WIN32)
+#if (defined WINVER || defined WIN32 || defined _WIN32)
 #include <TCHAR.H>
 #include <Windows.h>
 #include <tlhelp32.h>     //  PROCESSENTRY32
@@ -17,7 +17,7 @@
 #endif
 struct ProcessInfo
 {
-#if (defined WIN32 || defined _WIN32)
+#if (defined WINVER || defined WIN32 || defined _WIN32)
 	HANDLE handle;
 	STARTUPINFO startInfo;    // start info
 #endif

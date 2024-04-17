@@ -13,7 +13,7 @@
 //  https://zuhd.org
 //  http://muflihun.com
 //
-#if (defined WIN32 || defined _WIN32)
+#if (defined WINVER || defined WIN32 || defined _WIN32)
 #include <winsock2.h>
 #endif
 

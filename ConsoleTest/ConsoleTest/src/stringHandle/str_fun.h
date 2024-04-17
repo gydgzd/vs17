@@ -14,6 +14,6 @@ int str_replace(char str[], int size, int strlenth);
 #if defined(__linux)
 int utf82gbk(char *gbkStr, const char *srcStr, int maxGbkStrlen);
 int gbk2utf8(char *destStr, const char *srcstr, size_t maxutfstrlen);
-#elif (defined WINVER ||defined WIN32)
+#elif (defined WINVER || defined WIN32 || defined _WIN32)
 std::string Utf8ToGbk(const char *src_str);
 #endif

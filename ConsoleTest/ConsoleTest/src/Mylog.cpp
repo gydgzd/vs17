@@ -128,7 +128,7 @@ int Mylog::logException(const std::string& logMsg)
 	//open log file
 #ifdef __linux
 		mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#elif (defined WINVER ||defined WIN32)
+#elif (defined WINVER || defined WIN32 || defined _WIN32)
 	_mkdir("./log");
 #endif
 	std::ofstream ofs(mstr_logfile.c_str(), std::ios::app);  //c++11 support ofs(mstr_logFileName ,ios::app)
@@ -150,7 +150,7 @@ int Mylog::logException(sql::SQLException &e, const char* file, const char* func
 	//open log file
 #ifdef __linux
 	mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#elif (defined WINVER ||defined WIN32)
+#elif (defined WINVER || defined WIN32 || defined _WIN32)
 	_mkdir("./log");
 #endif
 	//string fullPath = "./log"+logFileName;
@@ -189,7 +189,7 @@ void Mylog::processEntries()
         //open log file
 #if defined __linux
         mkdir("./log", S_IRWXU | S_IRWXG);   //S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH
-#elif (defined WINVER ||defined WIN32)
+#elif (defined WINVER || defined WIN32 || defined _WIN32)
         _mkdir("./log");
 #endif
         ofstream ofs(mstr_logfile.c_str(), std::ios::app);

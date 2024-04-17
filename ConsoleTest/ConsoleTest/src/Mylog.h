@@ -20,7 +20,7 @@
 #ifdef __linux
 #include <sys/stat.h> // mkdir stat
 #include <sys/time.h>
-#elif (defined WINVER ||defined WIN32)
+#elif (defined WINVER || defined WIN32 || defined _WIN32)
 #include <direct.h>    // _mkdir
 #include <Winsock2.h>        // timeval 
 #include <windows.h>

@@ -1,6 +1,7 @@
+#define _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING  
 #include <iostream>
 #include <time.h>
-#define _SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING  
+
 #include <array>
 #include "gtest/gtest.h"
 using namespace std;
