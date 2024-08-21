@@ -18,7 +18,7 @@ int main()
         if (ulp_diff > ULP)
             printf("cuda_math::tanhf(%e) = %e, tanhf(%e) = %e, ulpdiff = %d \n", ss, udata.f32, ss, cdata.f32, ulp_diff);
     }
-    
+
     // test_erff
     std::cout << "test_erff...\n";
     for (int i = 0; i < NUM; i++) {
@@ -30,4 +30,71 @@ int main()
         if (ulp_diff > ULP)
             printf("cuda_math::erff(%e) = %e, erff(%e) = %e, ulpdiff = %d \n", ss, udata.f32, ss, cdata.f32, ulp_diff);
     }
+
+    // compare boundary
+    float boundary[16] = { -INFINITY, -88.8, -1, -1e-10, -0, 0, 1e-10, 1, 88.8, INFINITY, NAN };
+    printf("Input:      ");
+    for (int i = 0; i < 12; i++) {
+        printf("%8.2e  ", boundary[i]);
+    }
+    // tanhf
+    printf("\ncuda_tanhf: ");
+    for (int i = 0; i < 12; i++) {
+        float mydata = cuda_math::tanhf(boundary[i]);
+        printf("%8.2e  ", mydata);
+    }
+    printf("\n c tanhf:   ");
+    for (int i = 0; i < 12; i++) {
+        float cdata = tanhf(boundary[i]);
+        printf("%8.2e  ", cdata);
+    }
+    printf("\n");
+    // erf
+    printf("\ncuda_erf: ");
+    for (int i = 0; i < 12; i++) {
+        float mydata = cuda_math::erf(boundary[i]);
+        printf("%8.2e  ", mydata);
+    }
+    printf("\n c erf:   ");
+    for (int i = 0; i < 12; i++) {
+        float cdata = erf(boundary[i]);
+        printf("%8.2e  ", cdata);
+    }
+    printf("\n");
+    // erff
+    printf("\ncuda_erff: ");
+    for (int i = 0; i < 12; i++) {
+        float mydata = cuda_math::erff(boundary[i]);
+        printf("%8.2e  ", mydata);
+    }
+    printf("\n c erff:   ");
+    for (int i = 0; i < 12; i++) {
+        float cdata = erff(boundary[i]);
+        printf("%8.2e  ", cdata);
+    }
+    printf("\n");
+    // log
+    printf("\ncuda_log: ");
+    for (int i = 0; i < 12; i++) {
+        float mydata = cuda_math::log(boundary[i]);
+        printf("%8.2e  ", mydata);
+    }
+    printf("\n c log:   ");
+    for (int i = 0; i < 12; i++) {
+        float cdata = log(boundary[i]);
+        printf("%8.2e  ", cdata);
+    }
+    printf("\n");
+    // logf
+    printf("\ncuda_logf: ");
+    for (int i = 0; i < 12; i++) {
+        float mydata = cuda_math::logf(boundary[i]);
+        printf("%8.2e  ", mydata);
+    }
+    printf("\n c logf:   ");
+    for (int i = 0; i < 12; i++) {
+        float cdata = logf(boundary[i]);
+        printf("%8.2e  ", cdata);
+    }
+    printf("\n");
 }

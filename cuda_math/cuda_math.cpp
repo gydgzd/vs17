@@ -7,9 +7,10 @@
 namespace cuda_math {
 
     float logf(float x) {
-        union32 r0 = { .f32 = x };
-        bool p0 = x >= 1.175494350822287508e-38f;
-        if (!p0)   x = x * 8388608;
+     /* */ 
+        union32 r0 = {.f32 = x};
+        bool p0 = r0.f32 >= 1.175494350822287508e-38f;
+        if (!p0)   r0.f32 = r0.f32 * 8388608;
         union32 r4 = { .u32 = r0.u32 - 0x3f2aaaab };
         union32 r5 = { .u32 = r4.u32 & 0xff800000 };
         r4.i32 = r0.i32 - r5.i32;
@@ -28,14 +29,48 @@ namespace cuda_math {
         r7 = r6 * r7 + r6;
         r4.f32 = r5.i32 * 1.1920928955078125e-07f + r4.f32;
         r4.f32 = r4.f32 * 0.69314718246459960938f + r7;
-        bool p1 = (x >= INFINITY);
+        bool p1 = (r0.u32 >= 2139095040);
         if (p1) {
             float r9 = INFINITY;
-            r4.f32 = x * r9 + INFINITY;
+            r4.f32 = r0.f32 * r9 + INFINITY;
         }
-        p0 = x != 0;
+        p0 = r0.f32 != 0;
         r5.f32 = p0 ? r4.f32 : -INFINITY;
         return r5.f32;
+       
+        /*
+        union32 min = { .u32 = 0x00800000 };
+        union32 c1 = { .u32 = 0x4B000000 };
+        union32 c2 = { .u32 = 0xC1B80000 };
+        union32 c3 = { .u32 = 0x00000000 };
+        union32 f1, f3, f4;
+        f1.f32 = x < min.f32 ? x * c1.f32 : x;
+        float f7 = x < min.f32 ? c2.f32 : c3.f32;
+        f3.i32 = (f1.i32 - 1059760811) & -8388608;
+        f4.i32 = f1.i32 - f3.i32;                 
+
+        float f11 = f3.i32 * 1.19209289e-7f + f7;
+        float f12 = f4.f32 - 1.0f;
+        float f15 = -0.130188569f * f12 + 0.1408461f;
+        float f17 = f15 * f12 + -0.121486276f;
+        float f19 = f17 * f12 + 0.1398061f;
+        float f21 = f19 * f12 + -0.16684235f;
+        float f23 = f21 * f12 + 0.20012299f;
+        float f25 = f23 * f12 + -0.24999669f;
+        float f27 = f25 * f12 + 0.33333182f;
+        float f29 = f27 * f12 + -0.5f;
+        float f30 = f29 * f12;
+        float f31 = f30 * f12 + f12;
+        float f35 = f11 * 0.69314718f + f31;
+        if (f1.u32 >= 2139095040) {
+            float f33 = INFINITY;
+            f35 = f1.f32 * f33 + f33;
+        }
+
+        bool p3 = f1.f32 == 0;
+        float f34 = p3 ? -INFINITY : f35;
+        return f34;
+        */
     }
 
     double log(double x) {
@@ -206,7 +241,69 @@ namespace cuda_math {
     }
 
     double erf(double x) {
-        return x;
+        double fd1 = x;
+        double fd2 = x >= 0 ? x : -x;    // abs(x)
+        double fd5 = -3.642577040697121e-15 * fd2 + 1.636624707883456e-13;
+        double fd7 = fd5 * fd2 + -3.4079297100747907e-12;
+        double fd9 = fd7 * fd2 + 4.3555974045566826e-11;
+        double fd11 = fd9 * fd2 + -3.806599039253438e-10;
+        double fd13 = fd11 * fd2 + 2.389211325400646e-9;
+        double fd15 = fd13 * fd2 + -1.0909760903049583e-8;
+        double fd17 = fd15 * fd2 + 3.508901186822047e-8;
+        double fd19 = fd17 * fd2 + -6.72032708005184e-8;
+        double fd21 = fd19 * fd2 + -8.299332548682465e-9;
+        double fd23 = fd21 * fd2 + 5.643145203798444e-7;
+        double fd25 = fd23 * fd2 + -0.0000020278249778025215;
+        double fd27 = fd25 * fd2 + 0.0000031218939658311085;
+        double fd29 = fd27 * fd2 + 0.000003180046170354655;
+        double fd31 = fd29 * fd2 + -0.000029583306728241582;
+        double fd33 = fd31 * fd2 + 0.00006442483232470452;
+        double fd35 = fd33 * fd2 + 0.00002590260570264615;
+        double fd37 = fd35 * fd2 + -0.0005901318195328236;
+        double fd39 = fd37 * fd2 + 0.001696207528729842;
+        double fd41 = fd39 * fd2 + -0.00020919483164788562;
+        double fd43 = fd41 * fd2 + -0.019128446995328407;
+        double fd45 = fd43 * fd2 + 0.10277260330144233;
+        double fd47 = fd45 * fd2 + 0.6366197723675876;
+        double fd49 = fd47 * fd2 + 0.1283791670955126;
+        double fd50 = fd49 * fd2 + fd2;
+        double fd51 = fd2 - fd50;
+        double fd52 = fd49 * fd2 + fd51;
+        double fd53 = -fd50;
+        double fd54 = -fd52;
+        float f1 = (float)fd50;
+        float f2 = f1 * -1.44269502f;
+        float f3 = round(f2);  // rni : round to nearest integer, prefer even integer
+        double fd55 = (double)f3;
+        double fd56 = -fd55;
+        double fd58 = fd56 * 0.6931471805599453 + fd53;
+        double fd61 = 2.506210197447926e-8 * fd58 + 2.762626470761021e-7;
+        double fd63 = fd61 * fd58 + 0.0000027557381798574225;
+        double fd65 = fd63 * fd58 + 0.000024801504596442702;
+        double fd67 = fd65 * fd58 + 0.00019841269746984988;
+        double fd69 = fd67 * fd58 + 0.0013888888932264757;
+        double fd71 = fd69 * fd58 + 0.008333333333377164;
+        double fd73 = fd71 * fd58 + 0.041666666666573884;
+        double fd75 = fd73 * fd58 + 0.16666666666666607;
+        double fd77 = fd75 * fd58 + 0.5000000000000006;
+        double fd78 = fd58 * fd77;
+        double fd79 = fd78 * fd58 + fd54;
+        double fd80 = fd58 + fd79;
+        float f4 = 0;
+        f4 = exp2f(f3);    // f4 = exp2f(f3);
+        double fd81 = (double)f4;
+        double fd83 = 1.0 - fd81;
+        double fd84 = -fd80;
+        double fd85 = fd84 * fd81 + fd83;
+        double fd86 = fd2 >= 5.9215871957945065 ? 1.0 : fd85;
+        union64 u1, u2;
+        u1.f64 = fd1;
+        u2.f64 = fd86;
+        uint32_t r4 = 0, r5 = 0;
+        r4 = u1.st64.hi32 & -2147483648;
+        r5 = u2.st64.hi32 | r4;
+        u2.st64.hi32 = r5;
+        return u2.f64;
     }
 
 
