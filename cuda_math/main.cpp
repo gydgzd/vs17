@@ -1,9 +1,9 @@
 #include <iostream>
 #include "cuda_math.h"
 
-int const NUM = 1280;
+int const NUM = 12800;
 float const MIN = 0.0f;
-float const MAX = 2.0f;
+float const MAX = 10.0f;
 int const ULP = 1;
 int main()
 {
@@ -30,10 +30,21 @@ int main()
         if (ulp_diff > ULP)
             printf("cuda_math::erff(%e) = %e, erff(%e) = %e, ulpdiff = %d \n", ss, udata.f32, ss, cdata.f32, ulp_diff);
     }
+    // test_expf
+    std::cout << "test_expf...\n";
+    for (int i = 0; i < NUM; i++) {
+        float ss = MIN + i * (MAX - MIN) / NUM;
+        union32 udata = { 0 }, cdata = { 0 };
+        udata.f32 = cuda_math::expf(ss);
+        cdata.f32 = expf(ss);
+        int ulp_diff = abs(udata.i32 - cdata.i32);
+        if (ulp_diff > ULP)
+            printf("cuda_math::expf(%e) = %e, expf(%e) = %e, ulpdiff = %d \n", ss, udata.f32, ss, cdata.f32, ulp_diff);
+    }
 
     // compare boundary
     float boundary[16] = { -INFINITY, -88.8, -1, -1e-10, -0, 0, 1e-10, 1, 88.8, INFINITY, NAN };
-    printf("Input:      ");
+    printf("Input:   ");
     for (int i = 0; i < 12; i++) {
         printf("%8.2e  ", boundary[i]);
     }
@@ -43,19 +54,19 @@ int main()
         float mydata = cuda_math::tanhf(boundary[i]);
         printf("%8.2e  ", mydata);
     }
-    printf("\n c tanhf:   ");
+    printf("\n   c tanhf: ");
     for (int i = 0; i < 12; i++) {
         float cdata = tanhf(boundary[i]);
         printf("%8.2e  ", cdata);
     }
     printf("\n");
     // erf
-    printf("\ncuda_erf: ");
+    printf("\n cuda_erf: ");
     for (int i = 0; i < 12; i++) {
         float mydata = cuda_math::erf(boundary[i]);
         printf("%8.2e  ", mydata);
     }
-    printf("\n c erf:   ");
+    printf("\n    c erf: ");
     for (int i = 0; i < 12; i++) {
         float cdata = erf(boundary[i]);
         printf("%8.2e  ", cdata);
@@ -67,19 +78,19 @@ int main()
         float mydata = cuda_math::erff(boundary[i]);
         printf("%8.2e  ", mydata);
     }
-    printf("\n c erff:   ");
+    printf("\n   c erff: ");
     for (int i = 0; i < 12; i++) {
         float cdata = erff(boundary[i]);
         printf("%8.2e  ", cdata);
     }
     printf("\n");
     // log
-    printf("\ncuda_log: ");
+    printf("\n cuda_log: ");
     for (int i = 0; i < 12; i++) {
         float mydata = cuda_math::log(boundary[i]);
         printf("%8.2e  ", mydata);
     }
-    printf("\n c log:   ");
+    printf("\n    c log: ");
     for (int i = 0; i < 12; i++) {
         float cdata = log(boundary[i]);
         printf("%8.2e  ", cdata);
@@ -91,9 +102,21 @@ int main()
         float mydata = cuda_math::logf(boundary[i]);
         printf("%8.2e  ", mydata);
     }
-    printf("\n c logf:   ");
+    printf("\n   c logf: ");
     for (int i = 0; i < 12; i++) {
         float cdata = logf(boundary[i]);
+        printf("%8.2e  ", cdata);
+    }
+    printf("\n");
+    // expf
+    printf("\ncuda_expf: ");
+    for (int i = 0; i < 12; i++) {
+        float mydata = cuda_math::expf(boundary[i]);
+        printf("%8.2e  ", mydata);
+    }
+    printf("\n   c expf: ");
+    for (int i = 0; i < 12; i++) {
+        float cdata = expf(boundary[i]);
         printf("%8.2e  ", cdata);
     }
     printf("\n");

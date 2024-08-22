@@ -28,4 +28,7 @@ namespace cuda_math {
 
     float erff(float x);
     double erf(double x);
+
+    float expf(float x);
+
 }
