@@ -1,7 +1,7 @@
 ﻿// cuda_math.cpp : 此文件包含 "main" 函数。程序执行将在此处开始并结束。
 //
 #include "cuda_math.h"
-
+#include <cmath>    // std::fma
 
 
 namespace cuda_math {
@@ -305,14 +305,18 @@ namespace cuda_math {
         u2.st64.hi32 = r5;
         return u2.f64;
     }
-
+    /*
+    * e^x = 2^y 
+    * --> y = log_2(e^x) = x * log_2(e)
+    * --> e^x = 2^(x * log_2(e)) = 2^x * 2^log_2(e)
+    */
     float expf(float x) {
         float f1 = x;
         float f4 = f1 * 0.00572498003f + 0.5f;
         float f7 = fminf(fmaxf(f4, 0.0f), 1.0f);
         float f9 = f7 * 252.0f + 12582913.0f;
         float f10 = f9 + -12583039.0f;                          
-        float f12 = f1 * 1.44269502f + -f10;
+       float f12 = std::fmaf(f1, 1.44269502f, -f10);  // fma has high precision than multi-add
         float f14 = f1 * 1.925963033500011e-8 + f12;
         union32 r2 = { .f32 = f9 };
         union32 r3 = { .u32 = r2.u32 << 23 };
@@ -320,6 +324,7 @@ namespace cuda_math {
         float f16 = exp2f(f14);
         float f17 = f16 * f15;
         return f17;
+
     }
 
 

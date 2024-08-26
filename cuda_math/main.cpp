@@ -1,7 +1,7 @@
 #include <iostream>
 #include "cuda_math.h"
 
-int const NUM = 12800;
+int const NUM = 128000;
 float const MIN = 0.0f;
 float const MAX = 10.0f;
 int const ULP = 1;
