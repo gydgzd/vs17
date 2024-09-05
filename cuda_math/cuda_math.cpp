@@ -214,20 +214,20 @@ namespace cuda_math {
         float f7 = p2 ? f5 : f6;
         float f8 = p2 ? 0.00011219871521461755f : 0.00008483494457323104f;
         float f9 = p2 ? -0.0013275252422317863f : -0.0008213091641664505f;
-        float f10 = f8 * f7 + f9;
+        float f10 = std::fmaf(f8, f7, f9);    //  f8* f7 + f9;
         float f11 = p2 ? 0.00839653518050909f : 0.005213488824665546f;
-        float f12 = f10 * f7 + f11;
+        float f12 = std::fmaf(f10, f7, f11);  // f10 * f7 + f11;
         float f13 = p2 ? -0.04024658352136612f : -0.026868773624300957f;
-        float f14 = f12 * f7 + f13;
+        float f14 = std::fmaf(f12, f7, f13);  // f12 * f7 + f13;
         float f15 = p2 ? 0.15950430929660797f : 0.11284004896879196f;
-        float f16 = f14 * f7 + f15;
+        float f16 = std::fmaf(f14, f7, f15);  // f14* f7 + f15;
         float f17 = p2 ? 0.9129176735877991f : -0.37612664699554443f;
-        float f18 = f16 * f7 + f17;
+        float f18 = std::fmaf(f16, f7, f17);  // f16 * f7 + f17;
         float f19 = p2 ? 0.6290600299835205f : 0.12837915122509003f;
-        float f20 = f18 * f7 + f19;
+        float f20 = std::fmaf(f18, f7, f19);  // f18 * f7 + f19;
         float f21 = -f5;
         float f22 = p2 ? f21 : f1;
-        float f26 = f20 * f22 + f22;
+        float f26 = std::fmaf(f20, f22, f22);  // f20 * f22 + f22;
         if (p1)
             return f26;
         float f23 = exp2f(f26);
@@ -316,7 +316,7 @@ namespace cuda_math {
         float f7 = fminf(fmaxf(f4, 0.0f), 1.0f);
         float f9 = f7 * 252.0f + 12582913.0f;
         float f10 = f9 + -12583039.0f;                          
-       float f12 = std::fmaf(f1, 1.44269502f, -f10);  // fma has high precision than multi-add
+       float f12 = std::fmaf(f1, 1.44269502f, -f10);  // fma has higher precision than multi-add
         float f14 = f1 * 1.925963033500011e-8 + f12;
         union32 r2 = { .f32 = f9 };
         union32 r3 = { .u32 = r2.u32 << 23 };
