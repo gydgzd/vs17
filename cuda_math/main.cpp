@@ -43,7 +43,7 @@ int main()
     }
 
     // compare boundary
-    float boundary[16] = { -INFINITY, -88.8f, -1.0f, -1e-10f, -0.0f, 0.0f, 1e-10f, 1.0f, 88.8f, INFINITY, NAN };
+    float boundary[16] = { -INFINITY, -88.8f, -1.0f, -1e-10f, -0.0f, 0.0f, 1e-10f, 1.0f, 88.8f, INFINITY, NAN, 2.66e-39f };
     printf("Input:   ");
     for (int i = 0; i < 12; i++) {
         printf("%8.2e  ", boundary[i]);
