@@ -3,6 +3,7 @@
 #include <time.h>
 
 #include <array>
+#include <algorithm>   // for sort
 #include "gtest/gtest.h"
 using namespace std;
 
@@ -68,6 +69,16 @@ TEST(ARRAY_TEST, test_modify) {
 
 }
 
+TEST(ARRAY_TEST, test_size) {
+    // initialize
+    std::array<int, 1000> arr_int;
+    std::array<int, 4> arr_int1;
+    EXPECT_EQ(arr_int.size(), 1000);
+    EXPECT_EQ(arr_int1.size(), 4);
+    EXPECT_EQ(arr_int.empty(), false);
+    EXPECT_EQ(arr_int1.empty(), false);
+}
+
 TEST(ARRAY_TEST, test_pair_array) {
     //
     std::array<std::pair<int, int>, 4> arr_pair{ std::make_pair(1, 0), std::make_pair(-1, 0), std::make_pair(0, 1), std::make_pair(0, -1) };
@@ -77,7 +88,21 @@ TEST(ARRAY_TEST, test_pair_array) {
     // data() : return the pointer of the first element
     std::pair<int, int>* px = arr_pair.data();
     cout << "visit by data:" << px->first << endl;
-    cout << "array front:" << arr_pair.front().first << endl;
 
+    cout << "array front:" << arr_pair.front().first << endl;
 }
 
+TEST(ARRAY_TEST, test_sort) {
+    //
+    std::array<int, 4> arr_int{1, 4, 2, 5};
+    cout << "before sort:" << arr_int[0] << " " << arr_int[1] << " " << arr_int[2] << " " << arr_int[3] << endl;
+
+    // sort
+    std::sort(arr_int.begin(), arr_int.end());
+    cout << "after  sort:" << arr_int[0] << " " << arr_int[1] << " " << arr_int[2] << " " << arr_int[3] << endl;
+
+    EXPECT_EQ(arr_int[0], 1);
+    EXPECT_EQ(arr_int[1], 2);
+    EXPECT_EQ(arr_int[2], 4);
+    EXPECT_EQ(arr_int[3], 5);
+}
