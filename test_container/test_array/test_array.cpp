@@ -4,7 +4,10 @@
 
 #include <array>
 #include <algorithm>   // for sort
+#include <numeric>     // for accumulate
+#include <execution>
 #include "gtest/gtest.h"
+
 using namespace std;
 
 TEST(ARRAY_TEST, test_initialize) {
@@ -58,8 +61,8 @@ TEST(ARRAY_TEST, test_modify) {
     // initialize
     std::array<int, 1000> arr_int{ 1, 2, 3, 4, 5 };
 
-    // assign(): change every element to one value
-    arr_int.assign(12);
+	// assign(): change every element to one value, removed in C++17, use fill() instead
+    arr_int.fill(12);
     for (int i = 0; i < arr_int.size(); i++) {
         EXPECT_EQ(arr_int[i], 12);
     }
@@ -83,7 +86,7 @@ TEST(ARRAY_TEST, test_pair_array) {
     //
     std::array<std::pair<int, int>, 4> arr_pair{ std::make_pair(1, 0), std::make_pair(-1, 0), std::make_pair(0, 1), std::make_pair(0, -1) };
     // assign(): change every element to one value
-    arr_pair.assign(std::make_pair(2, 2));
+    arr_pair.fill(std::make_pair(2, 2));
 
     // data() : return the pointer of the first element
     std::pair<int, int>* px = arr_pair.data();
@@ -92,17 +95,35 @@ TEST(ARRAY_TEST, test_pair_array) {
     cout << "array front:" << arr_pair.front().first << endl;
 }
 
-TEST(ARRAY_TEST, test_sort) {
+TEST(ARRAY_TEST, test_function) {
     //
     std::array<int, 4> arr_int{1, 4, 2, 5};
     cout << "before sort:" << arr_int[0] << " " << arr_int[1] << " " << arr_int[2] << " " << arr_int[3] << endl;
 
-    // sort
+	// sort   std::execution is supported after C++17,
+#if (defined(__cplusplus) && __cplusplus >= 201703L) 
+    || (defined(_MSVC_LANG) && _MSVC_LANG >= 201703L)
+    std::sort(std::execution::seq, arr_int.begin(), arr_int.end());
+#  else
     std::sort(arr_int.begin(), arr_int.end());
+#  endif
+
     cout << "after  sort:" << arr_int[0] << " " << arr_int[1] << " " << arr_int[2] << " " << arr_int[3] << endl;
 
     EXPECT_EQ(arr_int[0], 1);
     EXPECT_EQ(arr_int[1], 2);
     EXPECT_EQ(arr_int[2], 4);
     EXPECT_EQ(arr_int[3], 5);
+
+    // find
+    std::array<int, 4> arr_int1{ 1, 4, 2, 5 };
+    auto found = find(arr_int1.begin(), arr_int1.end(), 2);
+    EXPECT_EQ(*found, 2);
+
+    auto found1 = find(arr_int1.begin(), arr_int1.end(), 6);
+    EXPECT_EQ(found1, arr_int1.end());
+
+	// accumulate: calculate the sum of all elements
+    int sum = accumulate(arr_int1.begin(), arr_int1.end(), 0);
+    EXPECT_EQ(sum, 12);
 }
