@@ -229,7 +229,7 @@ int testHashMap()
 		printf("found :%s  %d\n", it->first.c_str(), it->second);
 		++it;
 	}
-    // use tie
+     // use tie
     std::unordered_multimap<string, int>::iterator  iterFirst, iterSec;
     std::tie(iterFirst, iterSec) = mymtmap.equal_range("Nick");
     while (iterFirst != iterSec)
