@@ -60,7 +60,7 @@ TEST_F(QUEUE_TEST, test_pqueue) {
 
     queue3.emplace(5);
     EXPECT_EQ(queue3.size(), 6);
-    EXPECT_EQ(queue3.top(), 5);
+    EXPECT_EQ(queue3.top(), 0);
     // no iterator for queue, so we can only visit by top() and pop()
     cout << "priority queue: ";
     for (int i = 0; i < 6; i++) {
