@@ -33,14 +33,14 @@ TEST_F(MAP_TEST, test_add) {
     m_map.insert({13, 'z'});
     EXPECT_EQ(m_map.size(), 5);
 
-	m_map.insert({ 13, 'c' });      // not wording, because key 13 already exists
+	m_map.insert({ 13, 'c' });      // not working, because key 13 already exists
     EXPECT_EQ(m_map.size(), 5);
 
     m_map.emplace(5, ' ');
     EXPECT_EQ(m_map[5], ' ');
     EXPECT_EQ(m_map.size(), 6);
 
-	m_map.emplace(3, ' ');         // not wording, because key 3 already exists
+	m_map.emplace(3, ' ');         // not working, because key 3 already exists
     EXPECT_EQ(m_map[3], 'b');
     EXPECT_EQ(m_map.size(), 6);
 
