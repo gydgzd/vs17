@@ -9,12 +9,18 @@ using namespace std;
 class MAP_TEST : public testing::Test {
 protected:
     MAP_TEST() {
-        m_map.insert(std::pair<int, char>(1, '0'));
-        m_map.insert(std::pair<int, char>(2, 'a'));
+        m_map.insert(std::pair<int, char>(2, '0'));
+        m_map.insert(std::pair<int, char>(1, 'a'));
         m_map.insert(std::pair<int, char>(3, 'b'));
+        m_mmap.insert(std::pair<int, char>(2, '0'));
+        m_mmap.insert(std::pair<int, char>(1, 'a'));
+        m_mmap.insert(std::pair<int, char>(3, 'b'));
+        EXPECT_EQ(m_map.size(), 3);
+        EXPECT_EQ(m_mmap.size(), 3);
     }
     // map is ordered
     std::map<int, char> m_map;
+	std::multimap<int, char> m_mmap;
 };
 
 TEST_F(MAP_TEST, test_initialize) {
@@ -26,28 +32,39 @@ TEST_F(MAP_TEST, test_initialize) {
     std::map<int, char>::iterator iter = map_t.begin();
     EXPECT_EQ(iter->first, 2);
     EXPECT_EQ(iter->second, 'b');
+
+    // multimap
+    std::multimap<int, char> mmap_t{ {3,'a'}, {2,'b'}, {4, 'e'} };
+    EXPECT_EQ(mmap_t.size(), 3);
+    std::multimap<int, char>::iterator iter1 = mmap_t.begin();
+    EXPECT_EQ(iter1->first, 2);
+    EXPECT_EQ(iter1->second, 'b');
 }
 
 TEST_F(MAP_TEST, test_add) {
-    m_map.insert({11, 'a'});
     m_map.insert({13, 'z'});
-    EXPECT_EQ(m_map.size(), 5);
+    EXPECT_EQ(m_map.size(), 4);
 
 	m_map.insert({ 13, 'c' });      // not working, because key 13 already exists
-    EXPECT_EQ(m_map.size(), 5);
+    EXPECT_EQ(m_map.size(), 4);
 
     m_map.emplace(5, ' ');
-    EXPECT_EQ(m_map[5], ' ');
-    EXPECT_EQ(m_map.size(), 6);
-
+    EXPECT_EQ(m_map.size(), 5);
 	m_map.emplace(3, ' ');         // not working, because key 3 already exists
     EXPECT_EQ(m_map[3], 'b');
-    EXPECT_EQ(m_map.size(), 6);
+    EXPECT_EQ(m_map.size(), 5);
 
-    // remove
 	m_map.erase(5);
     EXPECT_EQ(m_map.find(5), m_map.end());
-    EXPECT_EQ(m_map.size(), 5);
+    EXPECT_EQ(m_map.size(), 4);
+
+	// multimap allows duplicate keys
+    m_mmap.insert({ 13, 'z' });
+    EXPECT_EQ(m_mmap.size(), 4);
+    m_mmap.insert({ 13, 'c' });
+	EXPECT_EQ(m_mmap.size(), 5);
+    m_mmap.erase(13);
+    EXPECT_EQ(m_mmap.size(), 3);
 }
 
 TEST_F(MAP_TEST, test_modify) {
