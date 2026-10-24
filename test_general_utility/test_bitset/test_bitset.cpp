@@ -9,7 +9,8 @@ using namespace std;
 class BITSET_TEST : public testing::Test {
 protected:
     BITSET_TEST() : m_bitset(15), m_bitset1("11100000") {
-
+		// m_bitset is set to 15, which is 0000000000001111 in binary
+		// m_bitset1 is set to "11100000" in binary
     }
     std::bitset<64> m_bitset;
     std::bitset<8> m_bitset1;

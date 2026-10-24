@@ -69,6 +69,13 @@ TEST(VECTOR_TEST, test_insert) {
 
 	vec_int.reserve(10);
     EXPECT_EQ(vec_int.capacity(), 10);
+	vec_int.reserve(4);   // reserve() will not reduce the capacity
+    EXPECT_EQ(vec_int.capacity(), 10);
+
+    vec_int.resize(10);
+    EXPECT_EQ(vec_int.size(), 10);
+	vec_int.resize(4);   // resize() will reduce the size
+    EXPECT_EQ(vec_int.size(), 4);
 }
 
 TEST(VECTOR_TEST, test_remove) {
@@ -110,7 +117,8 @@ TEST(VECTOR_TEST, test_size) {
 
 TEST(VECTOR_TEST, test_pair_vector) {
     //
-    std::vector<std::pair<int, int>> arr_pair{ std::make_pair(1, 0), std::make_pair(-1, 0), std::make_pair(0, 1), std::make_pair(0, -1) };
+    std::vector<std::pair<int, int>> arr_pair{ std::make_pair(1, 0), 
+        std::make_pair(-1, 0), std::make_pair(0, 1), std::make_pair(0, -1) };
     // assign(): change every element to one value
 	std::fill(arr_pair.begin(), arr_pair.end(), std::make_pair(2, 2));
 
